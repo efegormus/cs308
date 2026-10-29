@@ -40,8 +40,8 @@ registration, migrations, database creation, and connection verification.
   must generate it as `AUTO_INCREMENT` when SCRUM-40 creates migrations.
 - `CreatedAt` represents UTC and is initialized with `DateTime.UtcNow` by the
   entity. There is no database timestamp default. MySQL `DATETIME(6)` stores no
-  timezone or .NET `DateTime.Kind`; subsequent application/provider setup must
-  treat reads as UTC and ensure explicit writes also use UTC.
+  timezone or .NET `DateTime.Kind`; SCRUM-40 configures `DateTimeKind=Utc` on the
+  connection so reads have UTC kind. Explicit writes must also use UTC.
 
 ## Relationships
 
@@ -192,20 +192,23 @@ input remain application validation responsibilities. Inventory reservation,
 concurrent stock changes, checkout transactions, and order lifecycle rules are
 also outside this schema-only task.
 
-## SCRUM-40 handoff and verification
+## SCRUM-40 integration and verification
 
-1. Install a MySQL EF Core provider compatible with EF Core 8 and the chosen
-   server. Keep any additional Microsoft EF Core packages on compatible 8.x
-   versions. The current relational dependency is pinned to 8.0.32.
-2. Supply the connection string through the team's configuration/secrets
-   mechanism and register `StoreDbContext` in `Program.cs` with provider options.
-3. Ensure the server/database uses InnoDB, `utf8mb4`, strict SQL mode, and a
-   compatible collation. Add EF design-time tooling as needed.
-4. Generate the initial migration from this model. Review generated SQL for
-   `AUTO_INCREMENT`, column types, collation inheritance, checks, foreign keys,
-   deletion actions, defaults, and indexes before applying it to a local or
-   disposable database.
-5. Verify that products can be saved and queried by category. Exercise duplicate
+SCRUM-40 adds Pomelo 8.0.3, EF Core design-time tooling 8.0.32, scoped
+`StoreDbContext` registration, secure connection configuration, and the initial
+migration generated from this model. The [README](../README.md) contains local
+MySQL provisioning requirements, User Secrets setup, and exact EF commands.
+No entities or relationship definitions are duplicated.
+
+1. Supply the connection string through User Secrets in Development or through
+   environment/secret configuration. Confirm the intended development database
+   and `MySql:ServerVersion` before applying migrations.
+2. Ensure the server/database uses InnoDB, `utf8mb4`, strict SQL mode, and a
+   compatible collation.
+3. Review the generated migration SQL for `AUTO_INCREMENT`, column types,
+   collation inheritance, checks, foreign keys, deletion actions, defaults,
+   and indexes before applying it to a local or disposable database.
+4. Verify that products can be saved and queried by category. Exercise duplicate
    email/SKU/category/line inserts, orphan foreign keys, negative money/stock,
    zero quantity, unknown status, explicit `IsActive = false`, and the deletion
    rules against real MySQL. Confirm that updating a product does not change
@@ -219,8 +222,8 @@ dotnet restore OnlineStore/OnlineStore.csproj
 dotnet build OnlineStore/OnlineStore.csproj --no-restore
 ```
 
-There is no existing test project. Real MySQL constraint and migration checks
-require the provider and connection work in SCRUM-40; an in-memory provider
+There is no existing test project. Real MySQL constraint, migration-application,
+and read/write checks require a configured MySQL server; an in-memory provider
 would not validate MySQL's relational behavior.
 
 ## References
