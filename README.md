@@ -34,5 +34,4 @@ OnlineStore/          ASP.NET Core project
 ## Team workflow
 
 - Work is tracked in Jira (project SCRUM) in two-week sprints.
-- Each task is developed on its own branch and merged into `main` through a pull request.
 - Commit messages are short and describe the change, for example `Add product list API`.
