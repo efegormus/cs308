@@ -6,7 +6,6 @@ namespace OnlineStore.Data;
 
 public class StoreDbContext : DbContext
 {
-    // The MySQL provider and connection options will be supplied by SCRUM-40.
     public StoreDbContext(DbContextOptions<StoreDbContext> options) : base(options)
     {
     }
