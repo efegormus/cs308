@@ -1,0 +1,38 @@
+# Builds the backend and runs the xUnit tests on every pull request and on pushes to main.
+# See docs/ci.md for the required checks and how to run the same commands locally.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+# The job only reads the code, so the automatic GITHUB_TOKEN gets no write access.
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    # This name is the status check to require in branch protection.
+    name: Backend build and test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Restore dependencies
+        run: dotnet restore cs308.sln
+
+      - name: Build
+        run: dotnet build cs308.sln --no-restore
+
+      # Tests use an in-memory database, so no MySQL service or secrets are needed.
+      - name: Test
+        run: dotnet test cs308.sln --no-build --logger "console;verbosity=normal"
