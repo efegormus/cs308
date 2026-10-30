@@ -49,6 +49,7 @@ app.UseStaticFiles();
 // Simple endpoint to check that the API is running.
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
 app.MapCatalogEndpoints();
+app.MapProductEndpoints();
 
 app.Run();
 
