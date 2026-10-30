@@ -132,8 +132,17 @@ namespace OnlineStore.Data.Migrations
                     b.Property<int>("CategoryId")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("Cost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<string>("Description")
                         .HasColumnType("text");
+
+                    b.Property<string>("DistributorInformation")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)");
 
                     b.Property<string>("ImageUrl")
                         .HasMaxLength(2048)
@@ -144,6 +153,11 @@ namespace OnlineStore.Data.Migrations
                         .HasColumnType("tinyint(1)")
                         .HasDefaultValue(true);
 
+                    b.Property<string>("Model")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
@@ -152,6 +166,11 @@ namespace OnlineStore.Data.Migrations
                     b.Property<decimal>("Price")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
+
+                    b.Property<string>("SerialNumber")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Sku")
                         .IsRequired()
@@ -163,6 +182,11 @@ namespace OnlineStore.Data.Migrations
                         .HasColumnType("int")
                         .HasDefaultValue(0);
 
+                    b.Property<string>("WarrantyStatus")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("Sku")
@@ -172,6 +196,8 @@ namespace OnlineStore.Data.Migrations
 
                     b.ToTable("Products", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Products_Cost", "`Cost` IS NULL OR `Cost` >= 0");
+
                             t.HasCheckConstraint("CK_Products_Price", "`Price` >= 0");
 
                             t.HasCheckConstraint("CK_Products_StockQuantity", "`StockQuantity` >= 0");
