@@ -131,6 +131,32 @@ relationships, and database verification steps. Database reads/writes and
 constraint enforcement need a running MySQL instance; generating a script or
 calling `/api/health` does not validate them.
 
+## Product catalog (SCRUM-44)
+
+Open `/products.html` or follow **Browse products by category** from the home page.
+The page loads `GET /api/catalog`, which returns categories and their active
+products from MySQL, ordered by name. Each category has an anchor link, and each
+product shows its name, description, TRY price, stock availability, and image
+with a fallback when no image can be loaded. Out-of-stock products remain visible;
+inactive products are excluded. Empty categories and an empty catalog have explicit
+messages. Database failures return a generic HTTP 503 and the page offers a retry.
+
+The API uses the existing `Categories` and `Products` tables. Apply migrations
+and populate these tables in your development database to see products. The
+`SeedData/seed-products.json` file is sample data only; it is not automatically
+imported or served as live inventory.
+
+Run backend integration tests and the existing seed validation tests with:
+
+```sh
+dotnet test OnlineStore.Tests/OnlineStore.Tests.csproj
+```
+
+Catalog tests host the application with an isolated in-memory database and check
+grouping, ordering, inactive and out-of-stock products, empty results, public
+response fields, and static assets. A closed local MySQL port checks the HTTP 503
+response; these tests do not validate a live MySQL installation.
+
 ## Team workflow
 
 - Work is tracked in Jira (project SCRUM) in two-week sprints.

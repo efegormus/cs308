@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 using OnlineStore.Data;
+using OnlineStore.Catalog;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,5 +48,9 @@ app.UseStaticFiles();
 
 // Simple endpoint to check that the API is running.
 app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapCatalogEndpoints();
 
 app.Run();
+
+// Allows integration tests to host the application in process.
+public partial class Program { }
