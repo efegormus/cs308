@@ -1,4 +1,4 @@
-# Database schema — SCRUM-39
+# Database schema 
 
 This schema supports the category-based product catalog and establishes the
 relationships needed for users and orders. The source of truth is the EF Core
