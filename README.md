@@ -141,10 +141,18 @@ with a fallback when no image can be loaded. Out-of-stock products remain visibl
 inactive products are excluded. Empty categories and an empty catalog have explicit
 messages. Database failures return a generic HTTP 503 and the page offers a retry.
 
-The API uses the existing `Categories` and `Products` tables. Apply migrations
-and populate these tables in your development database to see products. The
-`SeedData/seed-products.json` file is sample data only; it is not automatically
-imported or served as live inventory.
+The API uses the existing `Categories` and `Products` tables. To fill them with the
+sample catalog from `SeedData/seed-products.json`, apply the migrations and run:
+
+```sh
+dotnet run --project OnlineStore --launch-profile http -- --seed
+```
+
+The command only runs in the Development environment, writes the sample categories
+and products, and exits without starting the website. It is safe to run again: a
+category with the same name or a product with the same SKU (the seed key) is skipped,
+so nothing is duplicated and existing rows are not overwritten. The sample data is
+for development and demos only; it is never imported automatically at startup.
 
 Run backend integration tests and the existing seed validation tests with:
 

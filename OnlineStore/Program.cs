@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 using OnlineStore.Data;
 using OnlineStore.Catalog;
+using OnlineStore.Seeding;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,13 @@ builder.Services.AddDbContext<StoreDbContext>(options =>
     options.UseMySql(connectionOptions.ConnectionString, new MySqlServerVersion(serverVersion)));
 
 var app = builder.Build();
+
+// `dotnet run --project OnlineStore -- --seed` loads the sample data and exits (development only).
+if (args.Contains(SeedCommand.Flag))
+{
+    Environment.ExitCode = await SeedCommand.RunAsync(app);
+    return;
+}
 
 // Serve the plain HTML/CSS/JS front end from the wwwroot folder.
 app.UseDefaultFiles();
