@@ -1,0 +1,38 @@
+:root { font-family: Arial, sans-serif; color: #222; background: #f6f7f9; }
+* { box-sizing: border-box; }
+body { margin: 0; }
+[hidden] { display: none !important; }
+a { color: #174a8b; }
+a:focus-visible, button:focus-visible { outline: 3px solid #b66d00; outline-offset: 4px; }
+.skip-link { position: absolute; top: -5rem; left: 1rem; padding: 1rem; background: white; }
+.skip-link:focus { top: 1rem; }
+.site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: 1rem; padding: 1.25rem max(1rem, calc((100% - 1152px) / 2)); background: #1f2937; }
+.site-header a { color: white; text-decoration: none; }
+.site-header nav { display: flex; gap: 1.5rem; }
+.site-header [aria-current] { text-decoration: underline; text-underline-offset: .35rem; }
+.logo { font-size: 1.4rem; font-weight: bold; }
+main { max-width: 1200px; margin: auto; padding: 2.5rem 1.5rem; min-height: 75vh; }
+h1 { margin: 0 0 .75rem; }
+.intro, .category-description { color: #505966; line-height: 1.6; }
+.category-nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.75rem 0; }
+.category-nav a, button { padding: .75rem 1rem; border: 1px solid #b9c4d2;
+  border-radius: .4rem; background: white; font: inherit; }
+button { cursor: pointer; color: #174a8b; }
+.category-section { margin-top: 2.5rem; scroll-margin-top: 1.5rem; }
+.category-section h2 { margin-bottom: .5rem; overflow-wrap: anywhere; }
+.product-count { font-size: .9rem; font-weight: normal; color: #505966; }
+.product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
+  gap: 1.25rem; padding: 0; list-style: none; }
+.product-card { height: 100%; display: flex; flex-direction: column; padding: 1.25rem;
+  border: 1px solid #dce0e6; border-radius: .6rem; background: white; overflow-wrap: anywhere; }
+.product-image, .image-placeholder { width: 100%; height: 180px; object-fit: contain;
+  border-radius: .3rem; background: #f0f2f5; }
+.image-placeholder { display: flex; align-items: center; justify-content: center; color: #626c79; }
+.product-card h3 { margin: 1rem 0 .5rem; font-size: 1.1rem; }
+.product-description { color: #505966; line-height: 1.5; margin: 0 0 1rem; }
+.price { margin: auto 0 .5rem; padding-top: 1rem; font-size: 1.2rem; font-weight: bold; }
+.stock { margin: 0; color: #24613b; }
+.out-of-stock { color: #8a351e; }
+footer { padding: 1.5rem; border-top: 1px solid #dce0e6; text-align: center; color: #505966; }
+@media (max-width: 480px) { main { padding: 2rem 1rem; } h1 { font-size: 1.8rem; } }
