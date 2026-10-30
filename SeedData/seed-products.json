@@ -134,7 +134,7 @@
       "model": "Tab P12",
       "serialNumber": "DEMO-SERIAL-TABLET-005",
       "description": "Lenovo tablet demonstration item",
-      "quantityInStock": 9,
+      "quantityInStock": 0,
       "price": 15000,
       "cost": 7500.0,
       "warrantyStatus": "Active",
