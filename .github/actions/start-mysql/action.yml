@@ -29,7 +29,8 @@ runs:
         password="$(openssl rand -hex 24)"
         echo "::add-mask::${password}"
         echo "MYSQL_APP_PASSWORD=${password}" >> "$GITHUB_ENV"
-        export MYSQL_APP_PASSWORD="${password}"
+        # docker run --env MYSQL_PASSWORD reads this variable, so the password never appears in arguments.
+        export MYSQL_PASSWORD="${password}"
 
         # Same server settings as compose.yaml so CI behaves like local development.
         docker run --detach --name ci-mysql \
