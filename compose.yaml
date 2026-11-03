@@ -1,0 +1,36 @@
+name: cs308
+
+services:
+  mysql:
+    image: mysql:8.4.13
+    command:
+      - --character-set-server=utf8mb4
+      - --collation-server=utf8mb4_0900_ai_ci
+      - --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+    environment:
+      MYSQL_DATABASE: onlinestore
+      MYSQL_USER: onlinestore
+      MYSQL_PASSWORD_FILE: /run/secrets/mysql-password
+      MYSQL_ROOT_PASSWORD_FILE: /run/secrets/mysql-root-password
+    ports:
+      - "127.0.0.1:${MYSQL_PORT:-3306}:3306"
+    secrets:
+      - mysql-password
+      - mysql-root-password
+    volumes:
+      - mysql-data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "MYSQL_PWD=\"$$(cat /run/secrets/mysql-password)\" mysql --host=127.0.0.1 --protocol=TCP --user=onlinestore --database=onlinestore --execute='SELECT 1' >/dev/null 2>&1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 30s
+
+secrets:
+  mysql-password:
+    file: ./.local/mysql-password
+  mysql-root-password:
+    file: ./.local/mysql-root-password
+
+volumes:
+  mysql-data:

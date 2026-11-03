@@ -12,7 +12,8 @@ public record ProductListItemDto(
     bool InStock,
     string? ImageUrl,
     int CategoryId,
-    string CategoryName)
+    string CategoryName,
+    string? Description = null)
 {
     // Kept as an Expression so EF Core can translate it into SQL
     // (only the needed columns are selected) and tests can still Compile() it.
@@ -25,5 +26,6 @@ public record ProductListItemDto(
             product.StockQuantity > 0,
             product.ImageUrl,
             product.CategoryId,
-            product.Category.Name);
+            product.Category.Name,
+            product.Description);
 }

@@ -1,8 +1,8 @@
 # Product catalog API contract (SCRUM-57)
 
 This document describes the REST contract between the front end (`wwwroot`) and the
-ASP.NET Core back end for the product catalog. It was written from the code on `main`
-(commit `3ed4b95`) and checked against a running instance. Anything that is not in
+ASP.NET Core back end for the product catalog. Originally recorded at commit
+`3ed4b95`, it is updated here for SCRUM-54's canonical API integration. Anything that is not in
 the code is marked **Planned** and must not be relied on yet.
 
 Related items: SCRUM-39 (database schema), SCRUM-41 (product model), SCRUM-43
@@ -29,9 +29,9 @@ SCRUM-50 (search), SCRUM-51 (sorting), SCRUM-54 (front end integration).
 | Method and path | Status | Purpose |
 | --- | --- | --- |
 | `GET /api/health` | Implemented | Liveness check, does not use the database. |
-| `GET /api/catalog` | Implemented (SCRUM-44) | Categories with their active products, used by `products.html`. |
-| `GET /api/products` | Implemented (SCRUM-43) | Flat list of active products, optional category filter. |
-| `GET /api/categories` | Implemented (SCRUM-43) | List of categories. |
+| `GET /api/catalog` | Implemented (SCRUM-44) | Compatible grouped view of categories and active products. |
+| `GET /api/products` | Implemented (SCRUM-43/54) | Flat active products, optional category filter; used by products.html. |
+| `GET /api/categories` | Implemented (SCRUM-43/54) | Categories used for grouping and homepage links. |
 | `GET /api/products/{id}` | **Planned** (SCRUM-45) | One product for the detail page. Not on `main` yet. |
 | `GET /api/products?search=` | **Planned** (SCRUM-50) | Search by name or description. |
 | `GET /api/products?sort=&order=` | **Planned** (SCRUM-51) | Sort by price or popularity. |
@@ -52,8 +52,8 @@ No parameters. Response `200`:
 
 ### 3.2 `GET /api/catalog`
 
-Returns every category (also empty ones) with its active products. Used by the
-catalog page.
+Returns every category (also empty ones) with its active products. Retained for
+compatible clients; the page now groups the canonical flat list by category ID.
 
 Parameters: none.
 
@@ -147,8 +147,9 @@ Response `200`: array of products.
 | `imageUrl` | string or `null` | |
 | `categoryId` | integer | |
 | `categoryName` | string | |
+| `description` | string or `null` | Added by SCRUM-54 to retain catalog descriptions without a second inventory API. |
 
-The response does **not** contain description, model, serial number, warranty,
+The response does **not** contain model, serial number, warranty,
 distributor, SKU, `isActive` or cost.
 
 Example request and response (all products, shortened):
@@ -245,7 +246,7 @@ field is visible today.
 | `name` | VARCHAR(200) | Yes | `/api/catalog`, `/api/products` |
 | `model` | VARCHAR(100) | Yes | No (Planned in the detail endpoint) |
 | `serialNumber` | VARCHAR(100) | Yes | No (see open question in section 5) |
-| `description` | TEXT | No | `/api/catalog` only |
+| `description` | TEXT | No | `/api/catalog`, `/api/products` |
 | `stockQuantity` (quantity in stock) | INT, `>= 0`, default 0 | Yes | `/api/catalog`, `/api/products` |
 | `price` | DECIMAL(18,2), `>= 0` | Yes | `/api/catalog`, `/api/products` |
 | `warrantyStatus` | VARCHAR(100) | Yes | No (Planned in the detail endpoint) |
@@ -351,9 +352,10 @@ button for any failed catalog request.
 These are recommendations, not agreed decisions. The reviewers can accept or change
 them.
 
-1. **Two list endpoints stay, with different jobs.** `GET /api/catalog` is the grouped
-   view for the category page and stays unchanged. `GET /api/products` is the flat
-   list for filtering, search and sorting (SCRUM-50, SCRUM-51). On `/api/catalog`
+1. **Two list endpoints stay, with different jobs.** `GET /api/catalog` remains a
+   compatible grouped view. The page now consumes `GET /api/products` and
+   `GET /api/categories`; the flat list also supports future filtering, search and
+   sorting (SCRUM-50, SCRUM-51). On `/api/catalog`
    clients derive availability from `stockQuantity > 0`; adding an `inStock` field
    later would not break existing clients.
 2. **Planned query parameters and the detail endpoint** are accepted as described in

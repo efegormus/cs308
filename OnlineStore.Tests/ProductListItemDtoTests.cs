@@ -69,4 +69,14 @@ public class ProductListItemDtoTests
 
         Assert.Equal("/images/phone.png", dto.ImageUrl);
     }
+
+    [Fact]
+    public void Map_CopiesDescriptionForCatalogIntegration()
+    {
+        var product = CreateProduct(stock: 4);
+        product.Description = "A phone for everyday use";
+        Assert.Equal(product.Description, Map(product).Description);
+        product.Description = null;
+        Assert.Null(Map(product).Description);
+    }
 }

@@ -27,6 +27,11 @@ See [course requirements](docs/project-requirements.md), the
 
 ## Getting started
 
+For a fresh clone, follow the [reproducible local setup](docs/local-development.md)
+using `python3 scripts/dev.py init`, `database`, `migrate`, `seed`, and `run`.
+It creates private random credentials and starts the pinned MySQL Compose service.
+The manual setup below remains available for an existing local MySQL installation.
+
 1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Set up a MySQL development database and local credentials as described below.
 3. From the repository root, restore dependencies and tools:
@@ -138,8 +143,9 @@ calling `/api/health` does not validate them.
 ## Product catalog (SCRUM-44)
 
 Open `/products.html` or follow **Browse products by category** from the home page.
-The page loads `GET /api/catalog`, which returns categories and their active
-products from MySQL, ordered by name. Each category has an anchor link, and each
+The page loads `GET /api/categories` and `GET /api/products` from SCRUM-43 and
+groups active MySQL products by category ID. Both lists are ordered by name.
+`GET /api/catalog` remains available for compatible clients. Each category has an anchor link, and each
 product shows its name, description, TRY price, stock availability, and image
 with a fallback when no image can be loaded. Out-of-stock products remain visible;
 inactive products are excluded. Empty categories and an empty catalog have explicit
@@ -173,6 +179,8 @@ response; these tests do not validate a live MySQL installation.
 
 See [authentication and role boundaries](docs/authentication.md) for the shared
 registration/login APIs, CSRF token flow and trusted staff-role assignment.
+See [catalog integration verification](docs/catalog-integration.md) for the
+live MySQL/browser check and controlled loading/error/retry scenarios.
 
 - Work is tracked in Jira (project SCRUM) in two-week sprints.
 - Commit messages are short and describe the change, for example `Add product list API`.
