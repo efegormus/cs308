@@ -27,6 +27,11 @@ See [course requirements](docs/project-requirements.md), the
 
 ## Getting started
 
+For a fresh clone, follow the [reproducible local setup](docs/local-development.md)
+using `python3 scripts/dev.py init`, `database`, `migrate`, `seed`, and `run`.
+It creates private random credentials and starts the pinned MySQL Compose service.
+The manual setup below remains available for an existing local MySQL installation.
+
 1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
 2. Set up a MySQL development database and local credentials as described below.
 3. From the repository root, restore dependencies and tools:

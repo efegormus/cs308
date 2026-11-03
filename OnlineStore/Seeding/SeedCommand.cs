@@ -1,5 +1,3 @@
-using System.Data.Common;
-using Microsoft.EntityFrameworkCore;
 using OnlineStore.Data;
 
 namespace OnlineStore.Seeding;
@@ -42,7 +40,7 @@ public static class SeedCommand
             Console.Error.WriteLine(exception.Message);
             return 1;
         }
-        catch (Exception exception) when (exception is DbException or DbUpdateException)
+        catch (Exception exception) when (DatabaseErrors.IsUnavailable(exception))
         {
             // No exception text here: it could contain connection details.
             Console.Error.WriteLine(
