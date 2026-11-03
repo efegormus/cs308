@@ -340,9 +340,8 @@ button for any failed catalog request.
 ## 7. Compatibility checks
 
 - Field names and types match the `Product` and `Category` models (SCRUM-41), their
-  EF Core configuration and the migrations. `docs/database-schema.md` has not been
-  updated for the SCRUM-41 columns yet (`Model`, `SerialNumber`, `WarrantyStatus`,
-  `DistributorInformation`, `Cost`), so section 4 of this file lists them.
+  EF Core configuration and the migrations. `docs/database-schema.md` lists the SCRUM-41 fields and distinguishes
+  the current schema from the complete future domain design.
 - `stockQuantity` cannot be negative and `price` cannot be negative: both are enforced
   by database check constraints.
 - The contract does not require any schema change.
@@ -365,8 +364,8 @@ them.
    Development, empty otherwise) comes from the framework default and is not a
    designed format; clients must not depend on it. Centralized validation and error
    handling belongs to SCRUM-60.
-4. **Data fields:** section 4 matches the models and migrations. The older
-   `docs/database-schema.md` needs a follow-up update for the SCRUM-41 columns.
+4. **Data fields:** section 4 matches the models and migrations. The
+   [schema documentation](database-schema.md) also includes the SCRUM-41 columns.
 
 ## 9. Review
 

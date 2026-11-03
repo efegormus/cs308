@@ -21,6 +21,10 @@ OnlineStore/          ASP.NET Core project
 docs/                 database schema documentation
 ```
 
+See [course requirements](docs/project-requirements.md), the
+[implemented database schema](docs/database-schema.md), and the
+[full target ER design](docs/database-target.md) before extending the domain.
+
 ## Getting started
 
 1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
@@ -166,6 +170,9 @@ response fields, and static assets. A closed local MySQL port checks the HTTP 50
 response; these tests do not validate a live MySQL installation.
 
 ## Team workflow
+
+See [authentication and role boundaries](docs/authentication.md) for the shared
+registration/login APIs, CSRF token flow and trusted staff-role assignment.
 
 - Work is tracked in Jira (project SCRUM) in two-week sprints.
 - Commit messages are short and describe the change, for example `Add product list API`.

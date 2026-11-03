@@ -3,6 +3,7 @@ using MySqlConnector;
 using OnlineStore.Data;
 using OnlineStore.Catalog;
 using OnlineStore.Seeding;
+using OnlineStore.Accounts;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,8 +41,15 @@ if (string.IsNullOrWhiteSpace(connectionOptions.Database))
 
 builder.Services.AddDbContext<StoreDbContext>(options =>
     options.UseMySql(connectionOptions.ConnectionString, new MySqlServerVersion(serverVersion)));
+builder.AddStoreAccounts();
 
 var app = builder.Build();
+
+if (args.Contains(RoleCommand.Flag))
+{
+    Environment.ExitCode = await RoleCommand.RunAsync(app, args);
+    return;
+}
 
 // `dotnet run --project OnlineStore -- --seed` loads the sample data and exits (development only).
 if (args.Contains(SeedCommand.Flag))
@@ -53,11 +61,15 @@ if (args.Contains(SeedCommand.Flag))
 // Serve the plain HTML/CSS/JS front end from the wwwroot folder.
 app.UseDefaultFiles();
 app.UseStaticFiles();
+app.UseAuthentication();
+app.UseAuthorization();
+app.UseRateLimiter();
 
 // Simple endpoint to check that the API is running.
-app.MapGet("/api/health", () => Results.Ok(new { status = "ok" }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).AllowAnonymous();
 app.MapCatalogEndpoints();
 app.MapProductEndpoints();
+app.MapAccountEndpoints();
 
 app.Run();
 

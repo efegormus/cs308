@@ -37,7 +37,7 @@ public static class ProductEndpoints
             {
                 return Unavailable(loggerFactory, "products");
             }
-        });
+        }).AllowAnonymous();
 
         // Public: lists all categories so the site can group products.
         app.MapGet("/api/categories", async (
@@ -58,7 +58,7 @@ public static class ProductEndpoints
             {
                 return Unavailable(loggerFactory, "categories");
             }
-        });
+        }).AllowAnonymous();
     }
 
     private static bool IsDatabaseFailure(Exception exception) =>

@@ -42,7 +42,7 @@ public static class CatalogEndpoints
                     title: "The catalog is temporarily unavailable.",
                     detail: "Please try again shortly.");
             }
-        });
+        }).AllowAnonymous();
     }
 }
 
