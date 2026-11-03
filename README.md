@@ -21,6 +21,10 @@ OnlineStore/          ASP.NET Core project
 docs/                 database schema documentation
 ```
 
+See [course requirements](docs/project-requirements.md), the
+[implemented database schema](docs/database-schema.md), and the
+[full target ER design](docs/database-target.md) before extending the domain.
+
 ## Getting started
 
 1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
