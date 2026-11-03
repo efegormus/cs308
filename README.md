@@ -171,5 +171,8 @@ response; these tests do not validate a live MySQL installation.
 
 ## Team workflow
 
+See [authentication and role boundaries](docs/authentication.md) for the shared
+registration/login APIs, CSRF token flow and trusted staff-role assignment.
+
 - Work is tracked in Jira (project SCRUM) in two-week sprints.
 - Commit messages are short and describe the change, for example `Add product list API`.

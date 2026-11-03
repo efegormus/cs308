@@ -236,6 +236,20 @@ namespace OnlineStore.Data.Migrations
                         .HasMaxLength(512)
                         .HasColumnType("varchar(512)");
 
+                    b.Property<string>("Role")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)")
+                        .HasDefaultValue("Customer")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<string>("SecurityStamp")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)")
+                        .UseCollation("utf8mb4_bin");
+
                     b.Property<string>("TaxId")
                         .IsRequired()
                         .HasMaxLength(64)
@@ -246,7 +260,10 @@ namespace OnlineStore.Data.Migrations
                     b.HasIndex("Email")
                         .IsUnique();
 
-                    b.ToTable("Users", (string)null);
+                    b.ToTable("Users", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Users_Role", "`Role` IN ('Customer', 'SalesManager', 'ProductManager', 'SupportAgent')");
+                        });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Order", b =>

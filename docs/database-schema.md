@@ -45,6 +45,8 @@ erDiagram
         varchar_64 TaxId
         varchar_1000 HomeAddress
         varchar_512 PasswordHash
+        varchar_32 Role
+        varchar_32 SecurityStamp
         datetime_6 CreatedAt
     }
     Orders {
@@ -84,6 +86,13 @@ requires a purchase-time order-line cost snapshot (target design).
   field is not a separate physical-inventory model.
 
 ## Relationships and deletion
+
+SCRUM-48 adds Role (default Customer, checked against exactly the four basic
+roles, case-sensitive) and SecurityStamp (a random session-revocation value).
+Password, role changes and logout rotate the stamp. Authentication revalidates
+the stored role/stamp; no public endpoint accepts a staff role. Legacy accounts
+receive an empty stamp through the migration and get a random one only after
+successful password verification. Invalid legacy password strings cannot log in.
 
 SCRUM-71 adds required TaxId (64 characters) and HomeAddress (1000 characters)
 to Users. New/updated customer profiles must pass CustomerProfileValidation,
