@@ -15,6 +15,10 @@ public class UserConfiguration : IEntityTypeConfiguration<User>
             .HasColumnType("varchar(100)").HasMaxLength(100).IsRequired();
         builder.Property(user => user.Email)
             .HasColumnType("varchar(254)").HasMaxLength(254).IsRequired();
+        builder.Property(user => user.TaxId)
+            .HasColumnType("varchar(64)").HasMaxLength(64).IsRequired();
+        builder.Property(user => user.HomeAddress)
+            .HasColumnType("varchar(1000)").HasMaxLength(1000).IsRequired();
         builder.Property(user => user.PasswordHash)
             .HasColumnType("varchar(512)").HasMaxLength(512).IsRequired();
         builder.Property(user => user.CreatedAt).HasColumnType("datetime(6)").HasPrecision(6);

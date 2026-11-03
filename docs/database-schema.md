@@ -42,6 +42,8 @@ erDiagram
         int Id PK
         varchar_100 Name
         varchar_254 Email UK
+        varchar_64 TaxId
+        varchar_1000 HomeAddress
         varchar_512 PasswordHash
         datetime_6 CreatedAt
     }
@@ -82,6 +84,14 @@ requires a purchase-time order-line cost snapshot (target design).
   field is not a separate physical-inventory model.
 
 ## Relationships and deletion
+
+SCRUM-71 adds required TaxId (64 characters) and HomeAddress (1000 characters)
+to Users. New/updated customer profiles must pass CustomerProfileValidation,
+including nonblank fields and a valid email address. The migration fills these
+columns with empty strings on legacy accounts: their real details must be
+completed by the owner; no fictional tax IDs or addresses are invented. TaxId is
+not unique (the PDF does not require uniqueness); Email remains unique under the
+database collation. Profile DTOs exclude PasswordHash and are owner-only data.
 
 | Foreign key | ON DELETE |
 | --- | --- |
