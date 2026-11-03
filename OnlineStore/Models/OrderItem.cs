@@ -13,8 +13,12 @@ public class OrderItem
     public decimal? UnitCost { get; set; }
     public int Quantity { get; set; }
 
+    // The discount applied when the product was bought, if any.
+    public int? DiscountId { get; set; }
+
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
+    public Discount? Discount { get; set; }
 
     public static OrderItem Snapshot(Product product, int quantity, decimal? paidUnitPrice = null)
     {

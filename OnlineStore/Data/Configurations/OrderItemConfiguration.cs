@@ -24,9 +24,11 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(item => item.UnitPrice).HasColumnType("decimal(18,2)").HasPrecision(18, 2);
         builder.Property(item => item.UnitCost).HasColumnType("decimal(18,2)").HasPrecision(18, 2);
         builder.Property(item => item.Quantity).HasColumnType("int");
+        builder.Property(item => item.DiscountId).HasColumnType("int");
 
         builder.HasIndex(item => new { item.OrderId, item.ProductId }).IsUnique();
         builder.HasIndex(item => item.ProductId);
+        builder.HasIndex(item => item.DiscountId);
 
         builder.HasOne(item => item.Order)
             .WithMany(order => order.OrderItems)
@@ -36,6 +38,11 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.HasOne(item => item.Product)
             .WithMany(product => product.OrderItems)
             .HasForeignKey(item => item.ProductId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(item => item.Discount)
+            .WithMany(discount => discount.OrderItems)
+            .HasForeignKey(item => item.DiscountId)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }

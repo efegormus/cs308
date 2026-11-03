@@ -1,9 +1,10 @@
 # Full e-commerce data model
 
 This is the **target design** for SCRUM-97 and the feature owners, derived from
-Course Project.pdf requirements 1–18. Only the five tables in the
-[implemented schema](database-schema.md) currently exist. New fields/entities
-require reviewed EF migrations; this is not a second, handwritten DDL.
+Course Project.pdf requirements 1–18. SCRUM-97 implemented it as 22 tables (see the
+[implemented schema](database-schema.md)); where the two differ, the implemented schema
+wins. New fields/entities require reviewed EF migrations; this is not a second,
+handwritten DDL.
 
 ## Identity: customers and staff share one account table
 
@@ -101,7 +102,8 @@ erDiagram
         int Id PK
         int UserId FK
         datetime PurchasedAt "nullable until paid or unknown for legacy"
-        string FulfillmentStatus
+        string Status
+        string PaymentStatus
         string CustomerNameSnapshot
         string TaxIdSnapshot
         string EmailSnapshot
@@ -130,6 +132,9 @@ erDiagram
         int Id PK
         int OrderId FK,UK
         string InvoiceNumber UK
+        string CustomerNameSnapshot
+        string TaxIdSnapshot
+        string AddressSnapshot
         string ProtectedDocumentKey
         datetime IssuedAt
         datetime EmailedAt "nullable"
@@ -256,8 +261,8 @@ InMemory tests do not enforce relational checks or prove concurrency.
 1. Keep the original migrations and the customer/role/order-lifecycle extensions.
    New identity, payment and order data must reuse these types rather than creating
    parallel Customer/Seller credential tables or resetting the migration history.
-2. SCRUM-97 introduces the full schema extension. Separate payment/fulfillment
-   with an explicit translation of old statuses that preserves paid/unpaid data.
+2. SCRUM-97 introduced the full schema extension (`AddFullEcommerceSchema`) on top of
+   the payment/fulfillment separation, without rewriting existing orders.
 3. Implement the checkout/delivery, review, wishlist/discount, refund and support
    services in their separate tasks. Persist cost/price/address snapshots at the
    correct transaction boundary.

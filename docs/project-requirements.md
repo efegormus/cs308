@@ -43,8 +43,8 @@ contribution, not artificial changes to meet counts.
   fulfillment and preserves known legacy paid/unpaid information. Unknown legacy
   cancellation payment, dates and costs require reconciliation; none are invented.
 - Order lines already preserve product name and paid unit price. UnitCost now
-  preserves known purchase-time cost for profit calculations. Invoice/delivery addresses must be
-  purchase-time snapshots, unaffected by later profile edits.
+  preserves known purchase-time cost for profit calculations. Order, invoice and delivery
+  customer data are purchase-time snapshots (SCRUM-97), unaffected by later profile edits.
 - Ratings and comments need separate visibility rules. A pending comment must
   not hide a rating that requires no approval.
 - The return window starts at **purchase**, with delivery as a prerequisite.
