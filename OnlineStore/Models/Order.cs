@@ -10,8 +10,18 @@ public class Order
     public DateTime? PurchasedAt { get; private set; }
     public DateTime? DeliveredAt { get; private set; }
 
+    // Customer data as it was at purchase time. Later profile edits do not change old orders.
+    public string? CustomerNameSnapshot { get; set; }
+    public string? TaxIdSnapshot { get; set; }
+    public string? EmailSnapshot { get; set; }
+    public string? AddressSnapshot { get; set; }
+
+    // Updated by MySQL on every change, so two users cannot silently overwrite each other's update.
+    public DateTime RowVersion { get; set; }
+
     public User User { get; set; } = null!;
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
+    public ICollection<Payment> Payments { get; set; } = new List<Payment>();
 
     // The checkout service must persist this with guarded stock updates and snapshots in one transaction.
     public bool ConfirmPayment(DateTime purchasedAtUtc)

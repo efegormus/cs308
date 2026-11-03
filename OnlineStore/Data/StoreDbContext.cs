@@ -16,6 +16,9 @@ public class StoreDbContext : DbContext
     public DbSet<User> Users => Set<User>();
     public DbSet<Order> Orders => Set<Order>();
     public DbSet<OrderItem> OrderItems => Set<OrderItem>();
+    public DbSet<Discount> Discounts => Set<Discount>();
+    public DbSet<DiscountProduct> DiscountProducts => Set<DiscountProduct>();
+    public DbSet<Payment> Payments => Set<Payment>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -50,5 +53,8 @@ public class StoreDbContext : DbContext
         modelBuilder.ApplyConfiguration(new UserConfiguration());
         modelBuilder.ApplyConfiguration(new OrderConfiguration());
         modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
+        modelBuilder.ApplyConfiguration(new DiscountConfiguration());
+        modelBuilder.ApplyConfiguration(new DiscountProductConfiguration());
+        modelBuilder.ApplyConfiguration(new PaymentConfiguration());
     }
 }
