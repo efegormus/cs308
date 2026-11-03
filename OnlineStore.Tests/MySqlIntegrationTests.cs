@@ -80,8 +80,10 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         foreach (var field in new[] { "price", "stock", "cost", "category" })
         {
             await using var attempt = fixture.Create();
-            attempt.Products.Add(new Product { Sku = field, Name = "Invalid", CategoryId = field == "category" ? int.MaxValue : category.Id,
-                Price = field == "price" ? -1 : 1, StockQuantity = field == "stock" ? -1 : 1, Cost = field == "cost" ? -1 : null });
+            var product = new Product { Sku = field, Name = "Invalid", CategoryId = field == "category" ? int.MaxValue : category.Id,
+                Price = field == "price" ? -1 : 1, StockQuantity = field == "stock" ? -1 : 1, Cost = field == "cost" ? -1 : null };
+            CatalogFixture.CompleteDetails(product);
+            attempt.Products.Add(product);
             var error = await Assert.ThrowsAsync<DbUpdateException>(() => attempt.SaveChangesAsync());
             Assert.IsType<MySqlException>(error.InnerException);
         }
@@ -122,6 +124,7 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         var user = NewUser("buyer@example.com");
         var category = new Category { Name = "Phones" };
         var product = new Product { Sku = "PHONE", Name = "Original phone", Price = 10, Category = category };
+        CatalogFixture.CompleteDetails(product);
         var order = new Order { User = user,
             OrderItems = [new OrderItem { Product = product, ProductName = product.Name, UnitPrice = product.Price, Quantity = 2 }] };
         order.ConfirmPayment(DateTime.UtcNow);
@@ -146,6 +149,45 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         await db.Orders.Where(existing => existing.Id == order.Id).ExecuteDeleteAsync();
         Assert.Empty(await db.OrderItems.ToListAsync());
         Assert.Single(await db.Products.ToListAsync());
+    }
+
+    [MySqlFact]
+    public async Task MySql_PersistsSeparatePaymentAndFulfillmentAndGuardsCatalogDetails()
+    {
+        await fixture.ResetAsync();
+        await using var db = fixture.Create();
+        var product = new Product { Sku = "SNAPSHOT", Name = "Snapshot phone", Price = 100, Cost = 40,
+            StockQuantity = 5, Category = new Category { Name = "Phones" } };
+        CatalogFixture.CompleteDetails(product);
+        var purchasedAt = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
+        var order = new Order { User = NewUser("snapshot@example.com"), OrderItems = [OrderItem.Snapshot(product, 2)] };
+        Assert.True(order.ConfirmPayment(purchasedAt));
+        db.Orders.Add(order);
+        await db.SaveChangesAsync();
+        Assert.True(order.TransitionTo(OrderStatus.InTransit, purchasedAt.AddDays(1)));
+        Assert.True(order.TransitionTo(OrderStatus.Delivered, purchasedAt.AddDays(2)));
+        await db.SaveChangesAsync();
+
+        product.Price = 200;
+        product.Cost = 90;
+        await db.SaveChangesAsync();
+        await using var check = fixture.Create();
+        var persisted = await check.Orders.Include(value => value.OrderItems).SingleAsync();
+        Assert.Equal(OrderStatus.Delivered, persisted.Status);
+        Assert.Equal(PaymentStatus.Confirmed, persisted.PaymentStatus);
+        Assert.Equal(purchasedAt, persisted.PurchasedAt);
+        Assert.Equal(DateTimeKind.Utc, persisted.PurchasedAt!.Value.Kind);
+        Assert.Equal(100, persisted.OrderItems.Single().UnitPrice);
+        Assert.Equal(40, persisted.OrderItems.Single().UnitCost);
+        Assert.True(persisted.CanRequestReturn(purchasedAt.AddDays(30)));
+        Assert.False(persisted.CanRequestReturn(purchasedAt.AddDays(31)));
+        Assert.Equal(3819, (await Assert.ThrowsAsync<MySqlException>(() =>
+            check.Database.ExecuteSqlRawAsync("UPDATE Orders SET PaymentStatus = 'Pending' WHERE Status = 'Delivered'"))).Number);
+        Assert.Equal(3819, (await Assert.ThrowsAsync<MySqlException>(() =>
+            check.Database.ExecuteSqlRawAsync("UPDATE Products SET Description = NULL WHERE IsActive = 1"))).Number);
+        await check.Database.ExecuteSqlRawAsync("UPDATE Products SET IsActive = 0, Description = NULL");
+        Assert.Equal(3819, (await Assert.ThrowsAsync<MySqlException>(() =>
+            check.Database.ExecuteSqlRawAsync("UPDATE Products SET IsActive = 1"))).Number);
     }
 
     private static User NewUser(string email)

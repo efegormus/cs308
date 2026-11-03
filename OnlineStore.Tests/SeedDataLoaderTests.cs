@@ -122,6 +122,8 @@ public class SeedDataLoaderTests
             db.Products.Add(new Product
             {
                 Sku = "P-1", Name = "Edited by a manager", Price = 1m, StockQuantity = 99,
+                Model = "Edited model", SerialNumber = "EDITED-1", Description = "Edited description",
+                WarrantyStatus = "Active", DistributorInformation = "Test distributor",
                 Category = new Category { Name = "Phones" }
             });
             await db.SaveChangesAsync();

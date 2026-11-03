@@ -222,6 +222,8 @@ namespace OnlineStore.Data.Migrations
 
                     b.ToTable("Products", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Products_ActiveDetails", "`IsActive` = 0 OR (CHAR_LENGTH(TRIM(`Sku`)) > 0 AND CHAR_LENGTH(TRIM(`Name`)) > 0 AND CHAR_LENGTH(TRIM(`Model`)) > 0 AND CHAR_LENGTH(TRIM(`SerialNumber`)) > 0 AND `Description` IS NOT NULL AND CHAR_LENGTH(TRIM(`Description`)) > 0 AND CHAR_LENGTH(TRIM(`WarrantyStatus`)) > 0 AND CHAR_LENGTH(TRIM(`DistributorInformation`)) > 0)");
+
                             t.HasCheckConstraint("CK_Products_Cost", "`Cost` IS NULL OR `Cost` >= 0");
 
                             t.HasCheckConstraint("CK_Products_Price", "`Price` >= 0");

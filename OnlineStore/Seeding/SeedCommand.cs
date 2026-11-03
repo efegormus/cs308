@@ -1,4 +1,5 @@
 using OnlineStore.Data;
+using System.ComponentModel.DataAnnotations;
 
 namespace OnlineStore.Seeding;
 
@@ -38,6 +39,11 @@ public static class SeedCommand
         catch (InvalidDataException exception)
         {
             Console.Error.WriteLine(exception.Message);
+            return 1;
+        }
+        catch (ValidationException)
+        {
+            Console.Error.WriteLine("Seed data contains incomplete or overlong active product fields.");
             return 1;
         }
         catch (Exception exception) when (DatabaseErrors.IsUnavailable(exception))
