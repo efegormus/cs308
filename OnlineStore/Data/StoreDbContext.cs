@@ -27,6 +27,12 @@ public class StoreDbContext : DbContext
     public DbSet<DeliveryItem> DeliveryItems => Set<DeliveryItem>();
     public DbSet<Rating> Ratings => Set<Rating>();
     public DbSet<Comment> Comments => Set<Comment>();
+    public DbSet<ReturnRequest> ReturnRequests => Set<ReturnRequest>();
+    public DbSet<Refund> Refunds => Set<Refund>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<Conversation> Conversations => Set<Conversation>();
+    public DbSet<ChatMessage> ChatMessages => Set<ChatMessage>();
+    public DbSet<ChatAttachment> ChatAttachments => Set<ChatAttachment>();
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
@@ -72,5 +78,11 @@ public class StoreDbContext : DbContext
         modelBuilder.ApplyConfiguration(new DeliveryItemConfiguration());
         modelBuilder.ApplyConfiguration(new RatingConfiguration());
         modelBuilder.ApplyConfiguration(new CommentConfiguration());
+        modelBuilder.ApplyConfiguration(new ReturnRequestConfiguration());
+        modelBuilder.ApplyConfiguration(new RefundConfiguration());
+        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
+        modelBuilder.ApplyConfiguration(new ConversationConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatMessageConfiguration());
+        modelBuilder.ApplyConfiguration(new ChatAttachmentConfiguration());
     }
 }
