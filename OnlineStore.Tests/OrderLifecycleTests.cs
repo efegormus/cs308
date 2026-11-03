@@ -111,4 +111,17 @@ public class OrderLifecycleTests
         Assert.Equal(2, line.Quantity);
         Assert.Throws<ArgumentOutOfRangeException>(() => OrderItem.Snapshot(product, 0));
     }
+
+    [Fact]
+    public void ItemSnapshot_UsesConfirmedDiscountedPriceWithoutMutatingProduct()
+    {
+        var product = new Product { Name = "Phone", Sku = "PHONE", Price = 100 };
+        var discounted = OrderItem.Snapshot(product, 1, paidUnitPrice: 80);
+        Assert.Equal(80, discounted.UnitPrice);
+        Assert.Equal(40, discounted.UnitCost);
+        Assert.Equal(100, product.Price);
+        product.Cost = 60;
+        Assert.Equal(60, OrderItem.Snapshot(product, 1, paidUnitPrice: 80).UnitCost);
+        Assert.Throws<ArgumentOutOfRangeException>(() => OrderItem.Snapshot(product, 1, paidUnitPrice: -1));
+    }
 }

@@ -16,13 +16,15 @@ public class OrderItem
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
 
-    public static OrderItem Snapshot(Product product, int quantity)
+    public static OrderItem Snapshot(Product product, int quantity, decimal? paidUnitPrice = null)
     {
         if (quantity <= 0) throw new ArgumentOutOfRangeException(nameof(quantity));
+        var price = paidUnitPrice ?? product.Price;
+        if (price < 0) throw new ArgumentOutOfRangeException(nameof(paidUnitPrice));
         return new OrderItem
         {
             Product = product, ProductId = product.Id, ProductName = product.Name,
-            UnitPrice = product.Price, UnitCost = product.EffectiveCost, Quantity = quantity
+            UnitPrice = price, UnitCost = product.Cost ?? Math.Round(price * 0.5m, 2), Quantity = quantity
         };
     }
 }
