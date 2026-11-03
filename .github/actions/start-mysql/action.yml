@@ -1,0 +1,57 @@
+name: Start disposable MySQL
+description: >
+  Starts mysql:8.4.13 (the version pinned in compose.yaml) on 127.0.0.1 with a random password
+  generated for this run. The password is masked in the logs and exported to later steps as
+  MYSQL_APP_PASSWORD; it is never committed and no repository secret is needed.
+
+inputs:
+  database:
+    description: Database to create. Use a name ending in _tests for the integration tests.
+    required: true
+  port:
+    description: Host port, bound to 127.0.0.1 only.
+    required: false
+    default: "3306"
+
+runs:
+  using: composite
+  steps:
+    - name: Start MySQL and wait until it accepts logins
+      shell: bash
+      env:
+        DATABASE: ${{ inputs.database }}
+        PORT: ${{ inputs.port }}
+      run: |
+        set -euo pipefail
+        [[ "$DATABASE" =~ ^[a-z0-9_]+$ ]] || { echo "Invalid database name" >&2; exit 1; }
+        [[ "$PORT" =~ ^[0-9]+$ ]] || { echo "Invalid port" >&2; exit 1; }
+
+        password="$(openssl rand -hex 24)"
+        echo "::add-mask::${password}"
+        echo "MYSQL_APP_PASSWORD=${password}" >> "$GITHUB_ENV"
+        export MYSQL_APP_PASSWORD="${password}"
+
+        # Same server settings as compose.yaml so CI behaves like local development.
+        docker run --detach --name ci-mysql \
+          --publish "127.0.0.1:${PORT}:3306" \
+          --env MYSQL_DATABASE="${DATABASE}" \
+          --env MYSQL_USER=onlinestore \
+          --env MYSQL_PASSWORD \
+          --env MYSQL_RANDOM_ROOT_PASSWORD=yes \
+          mysql:8.4.13 \
+          --character-set-server=utf8mb4 \
+          --collation-server=utf8mb4_0900_ai_ci \
+          --sql-mode=STRICT_TRANS_TABLES,ERROR_FOR_DIVISION_BY_ZERO,NO_ENGINE_SUBSTITUTION
+
+        for attempt in $(seq 1 40); do
+          if MYSQL_PWD="${password}" docker exec --env MYSQL_PWD ci-mysql \
+              mysql --host=127.0.0.1 --protocol=TCP --user=onlinestore --database="${DATABASE}" \
+              --execute='SELECT 1' >/dev/null 2>&1; then
+            echo "MySQL is ready after ${attempt} attempt(s)."
+            exit 0
+          fi
+          sleep 3
+        done
+        echo "MySQL did not become ready in time." >&2
+        docker logs ci-mysql 2>&1 | tail -n 50 >&2
+        exit 1
