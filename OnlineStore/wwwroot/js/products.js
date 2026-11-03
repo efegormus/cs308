@@ -1,3 +1,5 @@
+import { fetchCatalog } from "./catalog-api.js";
+
 const priceFormat = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
 
 function element(tag, className, text) {
@@ -79,13 +81,13 @@ const status = document.querySelector("#catalog-status");
 const retry = document.querySelector("#retry");
 
 async function loadCatalog() {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 15000);
   catalog.setAttribute("aria-busy", "true");
   retry.hidden = true;
   status.textContent = "Loading products…";
   try {
-    const response = await fetch("/api/catalog", { headers: { Accept: "application/json" } });
-    if (!response.ok) throw new Error("Catalog request failed.");
-    const categories = await response.json();
+    const categories = await fetchCatalog(controller.signal);
     renderCatalog(categories, catalog, navigation);
     const count = categories.reduce((total, category) => total + category.products.length, 0);
     status.textContent = count === 0 ? "No products available yet. Please check back soon."
@@ -94,12 +96,14 @@ async function loadCatalog() {
     const target = document.getElementById(window.location.hash.slice(1));
     if (target) target.scrollIntoView();
   } catch {
+    controller.abort();
     catalog.replaceChildren();
     navigation.replaceChildren();
     navigation.hidden = true;
     status.textContent = "We couldn't load the products. Please try again.";
     retry.hidden = false;
   } finally {
+    clearTimeout(timeout);
     catalog.setAttribute("aria-busy", "false");
   }
 }

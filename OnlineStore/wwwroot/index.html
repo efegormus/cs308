@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Online Store</title>
+  <script type="module" src="/js/home-categories.js"></script>
   <style>
     body { margin: 0; font-family: Arial, sans-serif; color: #222; }
     header { display: flex; justify-content: space-between; align-items: center;
@@ -14,6 +15,10 @@
     .categories { display: flex; gap: 24px; padding: 40px 32px; justify-content: center; }
     .category { border: 1px solid #ddd; border-radius: 8px; padding: 24px; width: 220px; text-align: center; }
     footer { padding: 16px 32px; text-align: center; color: #666; border-top: 1px solid #eee; }
+    header, header nav, .categories { flex-wrap: wrap; }
+    header { gap: 16px; }
+    header nav { display: flex; gap: 16px; }
+    header nav a { margin-left: 0; }
   </style>
 </head>
 <body>
@@ -21,9 +26,9 @@
   <header>
     <div class="logo">Online Store</div>
     <nav>
-      <a href="#">Home</a>
-      <a href="#phones">Phones</a>
-      <a href="#tablets">Tablets</a>
+      <a href="/">Home</a>
+      <a href="/products.html" data-category-name="Phones">Phones</a>
+      <a href="/products.html" data-category-name="Tablets">Tablets</a>
       <a href="#">Cart</a>
       <a href="#">Login</a>
     </nav>
@@ -39,10 +44,12 @@
     <div class="category" id="phones">
       <h2>Phones</h2>
       <p>Latest smartphones</p>
+      <a href="/products.html" data-category-name="Phones">Browse phones</a>
     </div>
     <div class="category" id="tablets">
       <h2>Tablets</h2>
       <p>Tablets for work and fun</p>
+      <a href="/products.html" data-category-name="Tablets">Browse tablets</a>
     </div>
   </section>
 

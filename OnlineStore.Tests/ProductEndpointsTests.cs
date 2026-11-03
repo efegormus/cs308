@@ -22,7 +22,7 @@ public class ProductEndpointsTests
             {
                 new() { Id = 1, Sku = "HIDDEN", Name = "Hidden", Price = 99, IsActive = false },
                 new() { Id = 2, Sku = "S25", Name = "Samsung Galaxy S25", Price = 48000, StockQuantity = 0 },
-                new() { Id = 3, Sku = "PIXEL", Name = "Google Pixel 9", Price = 43000.50m,
+                new() { Id = 3, Sku = "PIXEL", Name = "Google Pixel 9", Description = "A smartphone", Price = 43000.50m,
                     StockQuantity = 12, ImageUrl = "/images/pixel.jpg" }
             }
         },
@@ -53,6 +53,7 @@ public class ProductEndpointsTests
         Assert.False(products[1].InStock);   // out of stock is listed but flagged
         Assert.Equal("Phones", products[0].CategoryName);
         Assert.Equal(43000.50m, products[0].Price);
+        Assert.Equal("A smartphone", products[0].Description);
     }
 
     [Fact]

@@ -107,6 +107,8 @@ def main(argv=None):
 if __name__ == "__main__":
     try:
         main()
+    except KeyboardInterrupt:
+        sys.exit(130)
     except ValueError as error:
         print(str(error), file=sys.stderr)
         sys.exit(1)

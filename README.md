@@ -143,8 +143,9 @@ calling `/api/health` does not validate them.
 ## Product catalog (SCRUM-44)
 
 Open `/products.html` or follow **Browse products by category** from the home page.
-The page loads `GET /api/catalog`, which returns categories and their active
-products from MySQL, ordered by name. Each category has an anchor link, and each
+The page loads `GET /api/categories` and `GET /api/products` from SCRUM-43 and
+groups active MySQL products by category ID. Both lists are ordered by name.
+`GET /api/catalog` remains available for compatible clients. Each category has an anchor link, and each
 product shows its name, description, TRY price, stock availability, and image
 with a fallback when no image can be loaded. Out-of-stock products remain visible;
 inactive products are excluded. Empty categories and an empty catalog have explicit
@@ -178,6 +179,8 @@ response; these tests do not validate a live MySQL installation.
 
 See [authentication and role boundaries](docs/authentication.md) for the shared
 registration/login APIs, CSRF token flow and trusted staff-role assignment.
+See [catalog integration verification](docs/catalog-integration.md) for the
+live MySQL/browser check and controlled loading/error/retry scenarios.
 
 - Work is tracked in Jira (project SCRUM) in two-week sprints.
 - Commit messages are short and describe the change, for example `Add product list API`.

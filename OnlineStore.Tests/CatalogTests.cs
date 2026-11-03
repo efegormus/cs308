@@ -92,7 +92,9 @@ public class CatalogTests
     [Theory]
     [InlineData("/", "Browse products by category")]
     [InlineData("/products.html", "Shop by category")]
-    [InlineData("/js/products.js", "/api/catalog")]
+    [InlineData("/js/products.js", "fetchCatalog")]
+    [InlineData("/js/catalog-api.js", "/api/products")]
+    [InlineData("/js/home-categories.js", "data-category-name")]
     [InlineData("/css/products.css", ".product-grid")]
     public async Task Catalog_PageAndAssetsAreServed(string path, string expected)
     {
