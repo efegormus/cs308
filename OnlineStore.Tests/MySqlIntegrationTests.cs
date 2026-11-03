@@ -122,8 +122,9 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         var user = NewUser("buyer@example.com");
         var category = new Category { Name = "Phones" };
         var product = new Product { Sku = "PHONE", Name = "Original phone", Price = 10, Category = category };
-        var order = new Order { User = user, Status = OrderStatus.Paid,
+        var order = new Order { User = user,
             OrderItems = [new OrderItem { Product = product, ProductName = product.Name, UnitPrice = product.Price, Quantity = 2 }] };
+        order.ConfirmPayment(DateTime.UtcNow);
         db.Orders.Add(order);
         await db.SaveChangesAsync();
         product.Name = "Renamed phone";

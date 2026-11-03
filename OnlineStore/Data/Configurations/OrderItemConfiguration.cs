@@ -11,6 +11,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.ToTable("OrderItems", table =>
         {
             table.HasCheckConstraint("CK_OrderItems_UnitPrice", "`UnitPrice` >= 0");
+            table.HasCheckConstraint("CK_OrderItems_UnitCost", "`UnitCost` IS NULL OR `UnitCost` >= 0");
             table.HasCheckConstraint("CK_OrderItems_Quantity", "`Quantity` > 0");
         });
 
@@ -21,6 +22,7 @@ public class OrderItemConfiguration : IEntityTypeConfiguration<OrderItem>
         builder.Property(item => item.ProductName)
             .HasColumnType("varchar(200)").HasMaxLength(200).IsRequired();
         builder.Property(item => item.UnitPrice).HasColumnType("decimal(18,2)").HasPrecision(18, 2);
+        builder.Property(item => item.UnitCost).HasColumnType("decimal(18,2)").HasPrecision(18, 2);
         builder.Property(item => item.Quantity).HasColumnType("int");
 
         builder.HasIndex(item => new { item.OrderId, item.ProductId }).IsUnique();
