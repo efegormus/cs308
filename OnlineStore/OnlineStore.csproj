@@ -10,6 +10,8 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Version="8.0.32" />
     <PackageReference Include="Pomelo.EntityFrameworkCore.MySql" Version="8.0.3" />
+    <!-- Pomelo 8.0.3 allows MySqlConnector 2.3.5 or later; 2.6.1 is the first version with the fix for GHSA-473q-m89c-ghf8. -->
+    <PackageReference Include="MySqlConnector" Version="2.6.1" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="8.0.32">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
