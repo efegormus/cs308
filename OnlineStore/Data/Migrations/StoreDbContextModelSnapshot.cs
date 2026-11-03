@@ -59,12 +59,28 @@ namespace OnlineStore.Data.Migrations
                         .HasPrecision(6)
                         .HasColumnType("datetime(6)");
 
-                    b.Property<string>("Status")
+                    b.Property<DateTime?>("DeliveredAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PaymentStatus")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
                         .HasDefaultValue("Pending")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<DateTime?>("PurchasedAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasDefaultValue("Processing")
                         .UseCollation("utf8mb4_bin");
 
                     b.Property<int>("UserId")
@@ -76,7 +92,11 @@ namespace OnlineStore.Data.Migrations
 
                     b.ToTable("Orders", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Orders_Status", "`Status` IN ('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled')");
+                            t.HasCheckConstraint("CK_Orders_FulfillmentPayment", "`Status` NOT IN ('InTransit', 'Delivered') OR (`Status` = 'InTransit' AND `PaymentStatus` = 'Confirmed') OR (`Status` = 'Delivered' AND `PaymentStatus` IN ('Confirmed', 'Refunded'))");
+
+                            t.HasCheckConstraint("CK_Orders_PaymentStatus", "`PaymentStatus` IN ('Pending', 'Confirmed', 'Failed', 'Refunded', 'Unknown')");
+
+                            t.HasCheckConstraint("CK_Orders_Status", "`Status` IN ('Processing', 'InTransit', 'Delivered', 'Cancelled')");
                         });
                 });
 
@@ -102,6 +122,10 @@ namespace OnlineStore.Data.Migrations
                     b.Property<int>("Quantity")
                         .HasColumnType("int");
 
+                    b.Property<decimal?>("UnitCost")
+                        .HasPrecision(18, 2)
+                        .HasColumnType("decimal(18,2)");
+
                     b.Property<decimal>("UnitPrice")
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
@@ -116,6 +140,8 @@ namespace OnlineStore.Data.Migrations
                     b.ToTable("OrderItems", null, t =>
                         {
                             t.HasCheckConstraint("CK_OrderItems_Quantity", "`Quantity` > 0");
+
+                            t.HasCheckConstraint("CK_OrderItems_UnitCost", "`UnitCost` IS NULL OR `UnitCost` >= 0");
 
                             t.HasCheckConstraint("CK_OrderItems_UnitPrice", "`UnitPrice` >= 0");
                         });
@@ -196,6 +222,8 @@ namespace OnlineStore.Data.Migrations
 
                     b.ToTable("Products", null, t =>
                         {
+                            t.HasCheckConstraint("CK_Products_ActiveDetails", "`IsActive` = 0 OR (CHAR_LENGTH(TRIM(`Sku`)) > 0 AND CHAR_LENGTH(TRIM(`Name`)) > 0 AND CHAR_LENGTH(TRIM(`Model`)) > 0 AND CHAR_LENGTH(TRIM(`SerialNumber`)) > 0 AND `Description` IS NOT NULL AND CHAR_LENGTH(TRIM(`Description`)) > 0 AND CHAR_LENGTH(TRIM(`WarrantyStatus`)) > 0 AND CHAR_LENGTH(TRIM(`DistributorInformation`)) > 0)");
+
                             t.HasCheckConstraint("CK_Products_Cost", "`Cost` IS NULL OR `Cost` >= 0");
 
                             t.HasCheckConstraint("CK_Products_Price", "`Price` >= 0");

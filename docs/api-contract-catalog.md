@@ -246,7 +246,7 @@ field is visible today.
 | `name` | VARCHAR(200) | Yes | `/api/catalog`, `/api/products` |
 | `model` | VARCHAR(100) | Yes | No (Planned in the detail endpoint) |
 | `serialNumber` | VARCHAR(100) | Yes | No (see open question in section 5) |
-| `description` | TEXT | No | `/api/catalog`, `/api/products` |
+| `description` | TEXT | Required when active; nullable for drafts | `/api/catalog`, `/api/products` |
 | `stockQuantity` (quantity in stock) | INT, `>= 0`, default 0 | Yes | `/api/catalog`, `/api/products` |
 | `price` | DECIMAL(18,2), `>= 0` | Yes | `/api/catalog`, `/api/products` |
 | `warrantyStatus` | VARCHAR(100) | Yes | No (Planned in the detail endpoint) |
@@ -304,7 +304,10 @@ hiding a button in the page is not enough.
 - An unknown `sort` or `order` value returns `400`.
 - Ties are broken by `name`, then `id`, so the order is stable.
 - Proposed meaning of "popularity": the total `Quantity` sold in `OrderItems` whose
-  order is not `Pending` or `Cancelled`, highest first. Until orders exist every
+  order has `PaymentStatus = Confirmed` and is not cancelled, highest first.
+  Fulfillment and payment are separate; do not filter by the removed Paid/Pending
+  fulfillment names. Fully refunded orders are excluded; partial-return accounting
+  is defined by the later return/refund tasks. Until orders exist every
   product has 0, so the order falls back to name, then id.
 
 ### 5.4 Error format for new endpoints

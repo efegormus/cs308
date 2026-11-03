@@ -5,6 +5,32 @@ Course Project.pdf requirements 1–18. Only the five tables in the
 [implemented schema](database-schema.md) currently exist. New fields/entities
 require reviewed EF migrations; this is not a second, handwritten DDL.
 
+## Identity: customers and staff share one account table
+
+Keep **one Users table** for account ID, name, unique email, password hash,
+security stamp and role. The PDF describes a store with Customer, SalesManager,
+ProductManager and SupportAgent roles, not independent marketplace sellers.
+SalesManager controls prices/discounts; ProductManager controls catalog/stock and
+delivery. Neither requires a second login table or a seller-owned storefront.
+
+The current checked UserRole enum is adequate for one basic role per account.
+If multiple roles per identity become an agreed requirement, add Roles/UserRoles
+and adapt authorization explicitly instead of duplicating account credentials.
+Role-specific information can later live in one-to-one CustomerProfiles or
+StaffProfiles keyed by Users.Id if it grows. The current TaxId/HomeAddress fields
+can remain on Users; customer registration/profile validation requires them.
+Orders reference the account owner and the service enforces Customer privileges;
+staff access must never grant ownership of another customer's order.
+
+The table count follows responsibilities and integrity rules. The existing five
+tables are enough only for the initial catalog/order foundation. The purchasing
+MVP needs cart, payment, invoice and delivery persistence (and reliable email
+delivery state); the full PDF also needs reviews, wishlist/discounts, returns,
+refunds and protected chat/attachments. The diagram below is that target, not
+proof that its additional tables already exist.
+
+## Target relationships
+
 ```mermaid
 erDiagram
     Categories ||--o{ Products : contains
@@ -74,7 +100,7 @@ erDiagram
     Orders {
         int Id PK
         int UserId FK
-        datetime PurchasedAt "nullable until paid"
+        datetime PurchasedAt "nullable until paid or unknown for legacy"
         string FulfillmentStatus
         string CustomerNameSnapshot
         string TaxIdSnapshot
@@ -88,7 +114,7 @@ erDiagram
         int DiscountId FK "nullable"
         string ProductName
         decimal UnitPrice
-        decimal UnitCost
+        decimal UnitCost "nullable only for unknown legacy cost"
         int Quantity
     }
     Payments {
@@ -201,7 +227,8 @@ erDiagram
 ```
 
 Products and Categories retain all fields in the implemented diagram; Users
-retain CreatedAt. New mutable entities also need UTC timestamps/concurrency
+retain CreatedAt and SecurityStamp; Orders retain the separate payment/fulfillment
+contract and known purchase/delivery timestamps. New mutable entities also need UTC timestamps/concurrency
 tokens. Roles are fixed by the PDF: a checked string enum with explicit policies
 is sufficient; a configurable permissions editor is not required.
 
@@ -226,8 +253,9 @@ InMemory tests do not enforce relational checks or prove concurrency.
 
 ## Migration order
 
-1. Keep the original migrations; add customer fields (71) and roles/auth (48)
-   through incremental migrations.
+1. Keep the original migrations and the customer/role/order-lifecycle extensions.
+   New identity, payment and order data must reuse these types rather than creating
+   parallel Customer/Seller credential tables or resetting the migration history.
 2. SCRUM-97 introduces the full schema extension. Separate payment/fulfillment
    with an explicit translation of old statuses that preserves paid/unpaid data.
 3. Implement the checkout/delivery, review, wishlist/discount, refund and support

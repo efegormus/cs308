@@ -2,9 +2,8 @@ namespace OnlineStore.Models;
 
 public enum OrderStatus
 {
-    Pending,
-    Paid,
-    Shipped,
-    Completed,
+    Processing,
+    InTransit,
+    Delivered,
     Cancelled
 }

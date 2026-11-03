@@ -157,6 +157,7 @@ public class ProductEndpointsTests
 
         public async Task SeedAsync(params Category[] categories)
         {
+            CatalogFixture.CompleteDetails(categories);
             using var scope = Services.CreateScope();
             var db = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
             db.Categories.AddRange(categories);
