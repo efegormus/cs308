@@ -1,5 +1,6 @@
-# Builds the backend and runs the xUnit tests on every pull request and on pushes to main.
-# See docs/ci.md for the required checks and how to run the same commands locally.
+# Continuous integration for pull requests and for pushes to main (SCRUM-59, extended by SCRUM-106).
+# Jobs run in parallel. See docs/ci.md for what each one checks, which ones are required
+# and how to run the same commands locally.
 name: CI
 
 on:
@@ -7,13 +8,24 @@ on:
   push:
     branches: [main]
 
-# The job only reads the code, so the automatic GITHUB_TOKEN gets no write access.
+# Every job only reads the code, so the automatic GITHUB_TOKEN gets no write access.
 permissions:
   contents: read
 
+# A new push to a pull request cancels the older run of the same branch. Runs on main are never cancelled.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+  # Matches compose.yaml and the version used by MySqlIntegrationTests.
+  MySql__ServerVersion: 8.4.13
+
 jobs:
   backend:
-    # This name is the status check to require in branch protection.
+    # This name is a required status check in branch protection. Do not rename it.
     name: Backend build and test
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -36,3 +48,215 @@ jobs:
       # Tests use an in-memory database, so no MySQL service or secrets are needed.
       - name: Test
         run: dotnet test cs308.sln --no-build --logger "console;verbosity=normal"
+
+  mysql-tests:
+    name: MySQL integration tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      # The fixture only accepts a local database whose name ends in _tests.
+      - name: Start MySQL
+        uses: ./.github/actions/start-mysql
+        with:
+          database: onlinestore_tests
+
+      - name: Restore dependencies
+        run: dotnet restore cs308.sln
+
+      - name: Build
+        run: dotnet build cs308.sln --no-restore
+
+      - name: Run the MySQL tests
+        env:
+          ONLINESTORE_TEST_MYSQL: Server=127.0.0.1;Port=3306;Database=onlinestore_tests;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
+        run: >
+          dotnet test cs308.sln --no-build
+          --filter "FullyQualifiedName~MySql"
+          --logger "trx;LogFileName=mysql.trx"
+          --logger "console;verbosity=normal"
+          --results-directory "$RUNNER_TEMP/mysql-results"
+
+      # A skipped MySQL test still exits with 0, so prove that tests really ran and none were skipped.
+      - name: Require that no MySQL test was skipped
+        run: python3 -I scripts/ci_require_executed.py "$(find "$RUNNER_TEMP/mysql-results" -name mysql.trx -printf '%h' -quit)"
+
+      - name: Show MySQL log on failure
+        if: failure()
+        run: docker logs ci-mysql 2>&1 | tail -n 100
+
+  browser-e2e:
+    name: Browser end-to-end
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      ASPNETCORE_ENVIRONMENT: Development
+      ASPNETCORE_URLS: http://127.0.0.1:5200
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: Start MySQL
+        uses: ./.github/actions/start-mysql
+        with:
+          database: onlinestore
+
+      - name: Restore and build
+        run: |
+          dotnet restore cs308.sln
+          dotnet build cs308.sln --no-restore
+
+      # Same sequence as docs/local-development.md: explicit migrations, then the explicit seed command.
+      - name: Apply migrations
+        env:
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
+        run: |
+          dotnet tool restore
+          dotnet ef database update --project OnlineStore --no-build
+
+      - name: Seed sample catalog
+        env:
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
+        run: dotnet run --project OnlineStore --no-build --no-launch-profile -- --seed
+
+      - name: Start the application
+        env:
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
+        run: |
+          nohup dotnet run --project OnlineStore --no-build --no-launch-profile > "$RUNNER_TEMP/app.log" 2>&1 &
+          for attempt in $(seq 1 40); do
+            if curl --silent --fail http://127.0.0.1:5200/api/health >/dev/null; then
+              echo "Application is healthy after ${attempt} attempt(s)."
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Application did not become healthy." >&2
+          tail -n 50 "$RUNNER_TEMP/app.log" >&2
+          exit 1
+
+      - name: Check database-backed API
+        run: python3 -I scripts/dev.py check
+
+      - name: Install Playwright and Chromium
+        run: |
+          python3 -m pip install -r scripts/requirements-browser.txt
+          python3 -m playwright install --with-deps chromium
+
+      - name: Run the browser check
+        run: python3 scripts/verify_catalog_browser.py --url http://127.0.0.1:5200 --expect-seeded
+
+      - name: Upload application log on failure
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: browser-e2e-app-log
+          path: ${{ runner.temp }}/app.log
+          if-no-files-found: ignore
+          retention-days: 7
+
+  frontend:
+    name: Frontend and script checks
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Set up Python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+
+      - name: JavaScript syntax check
+        run: |
+          shopt -s globstar nullglob
+          files=(OnlineStore/wwwroot/**/*.js)
+          [ "${#files[@]}" -gt 0 ] || { echo "No JavaScript files found." >&2; exit 1; }
+          for file in "${files[@]}"; do
+            echo "Checking $file"
+            node --check "$file"
+          done
+
+      # The rules live in .htmlvalidate.json. The version is pinned so new releases cannot break CI.
+      - name: HTML validation
+        run: npx --yes html-validate@11.18.0 "OnlineStore/wwwroot/**/*.html"
+
+      # Browser-side unit tests (for example js/validators.test.js) run with Node's built-in test runner.
+      - name: JavaScript unit tests
+        run: |
+          shopt -s globstar nullglob
+          tests=(OnlineStore/wwwroot/**/*.test.js)
+          if [ "${#tests[@]}" -eq 0 ]; then
+            echo "No *.test.js files yet."
+          else
+            node --test "${tests[@]}"
+          fi
+
+      - name: Python script tests
+        run: python3 -I -m unittest discover -s scripts -p 'test_*.py'
+
+      - name: Lint GitHub Actions workflows
+        run: |
+          bash <(curl --silent --show-error --fail https://raw.githubusercontent.com/rhysd/actionlint/v1.7.12/scripts/download-actionlint.bash) 1.7.12
+          ./actionlint -color
+
+  security:
+    name: Security hygiene
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    # Report only for now: findings show up in the log without blocking merges (see docs/ci.md).
+    continue-on-error: true
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Set up .NET 8 SDK
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Scan history for committed secrets
+        run: |
+          version=8.30.1
+          curl --silent --show-error --fail --location \
+            "https://github.com/gitleaks/gitleaks/releases/download/v${version}/gitleaks_${version}_linux_x64.tar.gz" \
+            | tar --extract --gzip --file - gitleaks
+          ./gitleaks git --redact --verbose .
+
+      - name: Report vulnerable NuGet packages
+        run: |
+          dotnet restore cs308.sln
+          dotnet list cs308.sln package --vulnerable --include-transitive | tee "$RUNNER_TEMP/vulnerable.txt"
+          if grep -q "has the following vulnerable packages" "$RUNNER_TEMP/vulnerable.txt"; then
+            echo "Vulnerable packages found." >&2
+            exit 1
+          fi
