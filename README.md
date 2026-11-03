@@ -71,7 +71,8 @@ Have a local MySQL administrator create a dedicated development database named
 Create a separate database user with privileges on that database only. Applying
 the initial migration requires permission to create tables and indexes,
 references, and migration-history records; subsequent application access needs
-SELECT, INSERT, UPDATE, and DELETE. Do not point development migration commands
+SELECT, INSERT, UPDATE, and DELETE. Rolling a migration back (`Down`) also needs
+the DROP privilege. Do not point development migration commands
 at a shared or production database.
 
 For a local server reached over TCP at `127.0.0.1`, an administrator can run

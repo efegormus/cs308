@@ -7,9 +7,10 @@ See [requirements traceability](project-requirements.md) for all 18 requirements
 
 ## Implemented schema
 
-Migrations create five tables. `AddProductDetailsAndCost` extends the original
-product model. AlignOrderLifecycle separates payment and fulfillment;
-RequireActiveProductDetails protects published catalog records. Apply the full
+Migrations create 22 tables. The first five are described below; `AddFullEcommerceSchema`
+(SCRUM-97) adds the other 17, see [Full e-commerce schema](#full-e-commerce-schema-scrum-97).
+`AddProductDetailsAndCost` extends the original product model. AlignOrderLifecycle separates
+payment and fulfillment; RequireActiveProductDetails protects published catalog records. Apply the full
 chain; do not replace an already applied initial migration. Development sample data is loaded explicitly with `--seed`.
 
 ```mermaid
@@ -119,7 +120,7 @@ database collation. Profile DTOs exclude PasswordHash and are owner-only data.
 | OrderItems.ProductId → Products.Id | RESTRICT |
 
 A product has one category; an order has one registered user; each line has one
-order and one product. Guest carts are not implemented by these five tables.
+order and one product. Guest carts belong to the later tables below.
 An order may temporarily have zero lines; checkout must require nonempty orders.
 Deactivate historical products using IsActive=false. Cancellation changes status,
 not order deletion. Future invoice/delivery/refund references must preserve history.
@@ -162,8 +163,59 @@ preserve the UTC purchase/delivery timestamps. See [the lifecycle contract](orde
 for legacy status mapping, return eligibility and unknown historical values.
 
 The guarded domain model does not itself implement payment, stock transactions,
-invoice creation or delivery APIs. SCRUM-72/73/74/79 and SCRUM-97 supply those
-application services and additional tables under the [Sprint 2 plan](sprint-2-mvp.md).
+invoice creation or delivery APIs. SCRUM-97 supplies the tables; SCRUM-72/73/74/79 supply
+the application services under the [Sprint 2 plan](sprint-2-mvp.md).
+
+## Full e-commerce schema (SCRUM-97)
+
+One extension migration, `AddFullEcommerceSchema`, adds the rest of the course domain on
+top of the existing chain. It only adds: Users, the customer fields, `Orders.Status` /
+`PaymentStatus` and the lifecycle domain methods from `AlignOrderLifecycle` are unchanged,
+and no existing order is rewritten.
+
+| Area | New tables |
+| --- | --- |
+| Checkout | Discounts, DiscountProducts, Payments, Invoices, Deliveries, DeliveryItems |
+| Shopping | Carts, CartItems, WishlistItems |
+| Feedback | Ratings, Comments |
+| After sales | ReturnRequests, Refunds, Notifications |
+| Support | Conversations, ChatMessages, ChatAttachments |
+
+What changed on the existing tables:
+
+- **Orders** gain customer snapshots (name, tax ID, email, address) and a `RowVersion` that
+  MySQL updates on every change. A purchased order (`PurchasedAt` set) must carry all four
+  snapshots (`CK_Orders_PurchaseSnapshot`). Older orders keep `NULL` snapshots, as they keep a
+  `NULL` `PurchasedAt`; nothing is invented for them.
+- **OrderItems** gain an optional `DiscountId`: the discount applied when the product was bought.
+- **Payments** are the individual payment attempts of an order (`Pending`, `Confirmed`, `Failed`);
+  `Orders.PaymentStatus` stays the summary of the order. No card data is stored, and a unique
+  `IdempotencyKey` makes a retried payment safe.
+- **Invoices** store a name, tax ID and address snapshot, so a later profile edit never changes
+  an issued invoice. **Deliveries** store an address snapshot and use the `OrderStatus` values.
+
+Rules the database enforces: status columns are text with a CHECK listing every allowed value;
+money is `decimal(18,2)` (a discount rate is `decimal(5,4)`, above 0 and at most 1); timestamps
+are UTC `datetime(6)`; a rating is 1 to 5 stars; a cart or chat belongs to exactly one owner (user
+or hashed guest token); an approved comment, return or active chat names the person who handled
+it. Invoices, payments, deliveries, ratings, comments, returns and refunds use ON DELETE
+RESTRICT, so deleting a product, user or order never destroys paid history. Only owned drafts
+cascade (cart lines, delivery lines, chat messages and attachments, wishlist, notifications).
+Deleting a cart sets the chat's `CartId` to null. A refund is unique per return request.
+
+Rules that stay in the service layer, because MySQL cannot express them: one open cart per owner,
+that a rating or comment refers to a delivered line of the same user and product, cumulative
+returned quantity, and the 30-day return window counted from `PurchasedAt`.
+
+`Down` drops tables and columns, so the migration user also needs the DROP privilege.
+
+### Tests
+
+`SchemaModelTests` read the EF model and run in CI: the table list, status checks against the
+enums, delete behaviors, unique keys, money and time types, snapshot lengths, and that the
+migrations match the model. `SchemaMySqlTests` and `MySqlIntegrationTests` prove on a real MySQL
+that the constraints are enforced; they run only when `ONLINESTORE_TEST_MYSQL` points to a local
+database ending in `_tests`.
 
 ## Verification
 
