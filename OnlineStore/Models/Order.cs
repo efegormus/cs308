@@ -22,6 +22,8 @@ public class Order
     public User User { get; set; } = null!;
     public ICollection<OrderItem> OrderItems { get; set; } = new List<OrderItem>();
     public ICollection<Payment> Payments { get; set; } = new List<Payment>();
+    public Invoice? Invoice { get; set; }
+    public ICollection<Delivery> Deliveries { get; set; } = new List<Delivery>();
 
     // The checkout service must persist this with guarded stock updates and snapshots in one transaction.
     public bool ConfirmPayment(DateTime purchasedAtUtc)
