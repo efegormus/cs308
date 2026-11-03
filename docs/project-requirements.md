@@ -15,7 +15,7 @@ analysis does not imply that all the features below are implemented.
 | 6 / 1 | Attractive, usable, professional UI | 56/98; keep catalog responsive during redesign |
 | 7 / 1–2 | Search names/descriptions; sort price/popularity; out-of-stock items searchable but not cartable | 50/51/65/67/70/101; server stock checks as well as UI |
 | 8 / 2 | Customer shopping UI and custom manager UI | 68/69/77–79/83/86/87/92/98 |
-| 9 / 2 | Product ID, name, model, serial, description, stock, price, warranty, distributor | 41 adds fields; new-product validation must require description, which currently allows null |
+| 9 / 2 | Product ID, name, model, serial, description, stock, price, warranty, distributor | 41 adds fields; active-product validation/check now requires description and all catalog details |
 | 10 / 2 | Customer, SalesManager, ProductManager, SupportAgent are distinct roles | 48; public requests cannot grant staff roles |
 | 11 / 2 | Sales managers set prices/discounts, notify wishlists, export invoices by date, chart revenue/profit; default cost 50% | 83–87; snapshot paid price and unit cost for historical reports |
 | 12 / 2 | Product managers manage catalog/stock, delivery list/status, comment approval | 77–81; delivery ID/customer/product/quantity/total/address/completion |
@@ -39,18 +39,18 @@ contribution, not artificial changes to meet counts.
 - Tax ID and home address belong on the existing user/customer record (71),
   rather than in an unrelated duplicate account table. A PasswordHash column
   alone does not implement secure authentication or role boundaries (48).
-- Current order states Pending/Paid/Shipped/Completed do not directly match the
-  required fulfillment lifecycle Processing/InTransit/Delivered. Future migration
-  work must separate payment and fulfillment without losing paid/unpaid history.
-- Order lines already preserve product name and paid unit price. They also need
-  a cost snapshot for profit calculations. Invoice/delivery addresses must be
+- AlignOrderLifecycle now separates payment from Processing/InTransit/Delivered
+  fulfillment and preserves known legacy paid/unpaid information. Unknown legacy
+  cancellation payment, dates and costs require reconciliation; none are invented.
+- Order lines already preserve product name and paid unit price. UnitCost now
+  preserves known purchase-time cost for profit calculations. Invoice/delivery addresses must be
   purchase-time snapshots, unaffected by later profile edits.
 - Ratings and comments need separate visibility rules. A pending comment must
   not hide a rating that requires no approval.
 - The return window starts at **purchase**, with delivery as a prerequisite.
-  SCRUM-89's title says “30 days of delivery”; follow the PDF when implementing it.
-- Homepage category links must reach actual API categories (54), rather than
-  only decorative cards. Verify browser → API → seeded MySQL.
+  SCRUM-89 has been corrected to purchase-based eligibility, with delivery required.
+- Homepage links now reach real API category IDs through SCRUM-54. The browser
+  verification covers real MySQL, category grouping and failure/retry states.
 
 ## Delivery branches
 
@@ -67,3 +67,6 @@ own diff is against its preceding branch. No main history rewrite is needed.
 SCRUM-97 (Tuna) owns the full schema implementation; SCRUM-64 (Rümeysa) owns
 broader schema documentation. This correction provides their design inputs,
 without claiming their unimplemented application features are complete.
+
+The current planning/ownership update is recorded in [Sprint 2 MVP](sprint-2-mvp.md);
+legacy migration behavior and return timing are in [order lifecycle](order-lifecycle.md).

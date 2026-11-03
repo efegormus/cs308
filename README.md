@@ -24,6 +24,8 @@ docs/                 database schema documentation
 See [course requirements](docs/project-requirements.md), the
 [implemented database schema](docs/database-schema.md), and the
 [full target ER design](docs/database-target.md) before extending the domain.
+The [order/payment rules](docs/order-lifecycle.md) and
+[Sprint 2 purchasing plan](docs/sprint-2-mvp.md) define the current integration contract.
 
 ## Getting started
 

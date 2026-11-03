@@ -8,8 +8,9 @@ See [requirements traceability](project-requirements.md) for all 18 requirements
 ## Implemented schema
 
 Migrations create five tables. `AddProductDetailsAndCost` extends the original
-product model. Apply the full chain; do not replace an already applied initial
-migration. Development sample data is loaded explicitly with `--seed`.
+product model. AlignOrderLifecycle separates payment and fulfillment;
+RequireActiveProductDetails protects published catalog records. Apply the full
+chain; do not replace an already applied initial migration. Development sample data is loaded explicitly with `--seed`.
 
 ```mermaid
 erDiagram
@@ -29,7 +30,7 @@ erDiagram
         varchar_200 Name
         varchar_100 Model
         varchar_100 SerialNumber
-        text Description "nullable"
+        text Description "nullable for inactive drafts"
         decimal_18_2 Price
         decimal_18_2 Cost "nullable"
         int StockQuantity
@@ -54,6 +55,9 @@ erDiagram
         int UserId FK
         datetime_6 CreatedAt
         varchar_20 Status
+        varchar_20 PaymentStatus
+        datetime_6 PurchasedAt "nullable for unknown legacy dates"
+        datetime_6 DeliveredAt "nullable until delivery or unknown legacy dates"
     }
     OrderItems {
         int Id PK
@@ -61,13 +65,14 @@ erDiagram
         int ProductId FK
         varchar_200 ProductName
         decimal_18_2 UnitPrice
+        decimal_18_2 UnitCost "nullable for unknown legacy costs"
         int Quantity
     }
 ```
 
 `EffectiveCost` is a calculated C# property, not a stored column: configured
-Cost or 50% of the current Price, rounded to two decimals. Historical profit
-requires a purchase-time order-line cost snapshot (target design).
+Cost or 50% of the current Price, rounded to two decimals. OrderItems.UnitCost
+preserves purchase-time cost; unknown legacy costs remain null. New snapshots use the explicit cost or 50% of the final paid price.
 
 ## Types and conventions
 
@@ -78,12 +83,16 @@ requires a purchase-time order-line cost snapshot (target design).
 - Money is DECIMAL(18,2) / C# decimal; the storefront uses TRY.
 - DATETIME(6) values are UTC. CreatedAt defaults to DateTime.UtcNow in C#;
   no database timestamp default exists. The connection materializes UTC values.
-- All fields are required except those marked nullable. Required strings can
-  still be empty in SQL; application validation must reject missing input.
+- All fields are required except those marked nullable. Active products must
+  pass ProductCatalogValidation on SaveChanges and the CK_Products_ActiveDetails
+  SQL check. Inactive drafts and legacy customer fields
+  may still be incomplete; profile/checkout validation must require real input.
 - Model, SerialNumber, WarrantyStatus and DistributorInformation were added with
-  empty defaults to preserve older rows. Complete legacy records before treating
-  them as valid new products. SerialNumber has no unique index; the product-level
-  field is not a separate physical-inventory model.
+  empty defaults to preserve older rows. RequireActiveProductDetails deactivates
+  incomplete legacy records while preserving them and their order references. Complete real details before
+  reactivation. Rolling back that check does not reactivate incomplete records.
+  SerialNumber has no unique index; the product-level field is not a separate
+  physical-inventory model.
 
 ## Relationships and deletion
 
@@ -133,22 +142,28 @@ product/order; multiple units use Quantity.
 | CK_Products_Price | Price >= 0 |
 | CK_Products_Cost | Cost IS NULL OR Cost >= 0 |
 | CK_Products_StockQuantity | StockQuantity >= 0 |
+| CK_Products_ActiveDetails | Inactive draft, or nonblank SKU/name/model/serial/description/warranty/distributor; active description cannot be null |
 | CK_OrderItems_UnitPrice | UnitPrice >= 0 |
+| CK_OrderItems_UnitCost | UnitCost IS NULL OR UnitCost >= 0 |
 | CK_OrderItems_Quantity | Quantity > 0 |
-| CK_Orders_Status | Status IN ('Pending', 'Paid', 'Shipped', 'Completed', 'Cancelled') |
+| CK_Orders_Status | Status IN ('Processing', 'InTransit', 'Delivered', 'Cancelled') |
+| CK_Orders_PaymentStatus | PaymentStatus IN ('Pending', 'Confirmed', 'Failed', 'Refunded', 'Unknown') |
+| CK_Orders_FulfillmentPayment | InTransit requires Confirmed payment; Delivered requires Confirmed or Refunded payment |
 
 ProductName and UnitPrice are purchase-time snapshots. Calculate order totals
 from line UnitPrice × Quantity, not today's product prices. Refunds preserve the
 paid price, including any discount.
 
-## Lifecycle gap
+## Order lifecycle
 
-The existing enum differs from the required Processing → InTransit → Delivered
-fulfillment lifecycle. Cancellation is only allowed while Processing. Payment
-confirmation needs a separate state. A migration must preserve legacy paid/unpaid
-information rather than blindly collapsing enum values. Address/cost snapshots,
-payments, invoices, deliveries, reviews, refunds and chat belong to the target
-model and their implementation tasks; a diagram alone does not implement them.
+Fulfillment uses Processing → InTransit → Delivered, with cancellation only from
+Processing. Payment is stored separately. Domain methods guard transitions and
+preserve the UTC purchase/delivery timestamps. See [the lifecycle contract](order-lifecycle.md)
+for legacy status mapping, return eligibility and unknown historical values.
+
+The guarded domain model does not itself implement payment, stock transactions,
+invoice creation or delivery APIs. SCRUM-72/73/74/79 and SCRUM-97 supply those
+application services and additional tables under the [Sprint 2 plan](sprint-2-mvp.md).
 
 ## Verification
 
