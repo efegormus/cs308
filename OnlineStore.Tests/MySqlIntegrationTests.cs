@@ -38,7 +38,25 @@ public sealed class MySqlFixture : IAsyncLifetime
     public async Task ResetAsync()
     {
         await using var db = Create();
+        // Children before parents: payments, carts, comments and the rest would block deleting orders, products and users.
+        await db.ChatAttachments.ExecuteDeleteAsync();
+        await db.ChatMessages.ExecuteDeleteAsync();
+        await db.Conversations.ExecuteDeleteAsync();
+        await db.Refunds.ExecuteDeleteAsync();
+        await db.ReturnRequests.ExecuteDeleteAsync();
+        await db.Ratings.ExecuteDeleteAsync();
+        await db.Comments.ExecuteDeleteAsync();
+        await db.Notifications.ExecuteDeleteAsync();
+        await db.WishlistItems.ExecuteDeleteAsync();
+        await db.CartItems.ExecuteDeleteAsync();
+        await db.Carts.ExecuteDeleteAsync();
+        await db.DeliveryItems.ExecuteDeleteAsync();
+        await db.Deliveries.ExecuteDeleteAsync();
+        await db.Invoices.ExecuteDeleteAsync();
+        await db.Payments.ExecuteDeleteAsync();
+        await db.DiscountProducts.ExecuteDeleteAsync();
         await db.OrderItems.ExecuteDeleteAsync();
+        await db.Discounts.ExecuteDeleteAsync();
         await db.Orders.ExecuteDeleteAsync();
         await db.Products.ExecuteDeleteAsync();
         await db.Categories.ExecuteDeleteAsync();
@@ -48,6 +66,24 @@ public sealed class MySqlFixture : IAsyncLifetime
     public Task DisposeAsync() => Task.CompletedTask;
 }
 
+// A purchased order must carry the customer data of that moment; the database requires it.
+public static class PurchaseSnapshots
+{
+    public static Order WithCustomerSnapshot(this Order order, User user)
+    {
+        order.CustomerNameSnapshot = user.Name;
+        order.TaxIdSnapshot = user.TaxId;
+        order.EmailSnapshot = user.Email;
+        order.AddressSnapshot = user.HomeAddress;
+        return order;
+    }
+}
+
+// The MySQL test classes share one database, so xUnit must not run them at the same time.
+[CollectionDefinition("MySql")]
+public sealed class MySqlCollection;
+
+[Collection("MySql")]
 public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFixture>
 {
     private static SeedCatalog SampleCatalog() => SeedCatalogReader.ReadFromFile(Path.GetFullPath(
@@ -127,7 +163,7 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         CatalogFixture.CompleteDetails(product);
         var order = new Order { User = user,
             OrderItems = [new OrderItem { Product = product, ProductName = product.Name, UnitPrice = product.Price, Quantity = 2 }] };
-        order.ConfirmPayment(DateTime.UtcNow);
+        order.WithCustomerSnapshot(user).ConfirmPayment(DateTime.UtcNow);
         db.Orders.Add(order);
         await db.SaveChangesAsync();
         product.Name = "Renamed phone";
@@ -160,7 +196,8 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
             StockQuantity = 5, Category = new Category { Name = "Phones" } };
         CatalogFixture.CompleteDetails(product);
         var purchasedAt = new DateTime(2026, 1, 1, 12, 0, 0, DateTimeKind.Utc);
-        var order = new Order { User = NewUser("snapshot@example.com"), OrderItems = [OrderItem.Snapshot(product, 2)] };
+        var buyer = NewUser("snapshot@example.com");
+        var order = new Order { User = buyer, OrderItems = [OrderItem.Snapshot(product, 2)] }.WithCustomerSnapshot(buyer);
         Assert.True(order.ConfirmPayment(purchasedAt));
         db.Orders.Add(order);
         await db.SaveChangesAsync();
