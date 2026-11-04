@@ -1,0 +1,176 @@
+/* Login page and header login state. Decisions and tokens: docs/ui-design.md.
+   Every color lives in the tokens below, so changing the palette is a one-place edit.
+   This file also loads on catalog pages: only custom properties sit on :root, and every other
+   rule is scoped to #auth-link, #user-name, #logout or .auth-page. */
+:root {
+  --font-display: 'Poppins', Arial, sans-serif;
+  --font-body: 'Open Sans', Arial, sans-serif;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --header: #1f2937;
+  --header-fg: #ffffff;
+  --header-fg-soft: #e5e7eb;
+  --header-hover: rgba(255, 255, 255, 0.12);
+  --fg: #222222;
+  --muted: #505966;
+  --line: #dce0e6;
+  --field-line: #6b7280;
+  --accent: #174a8b;
+  --accent-hover: #0f3363;
+  --accent-fg: #ffffff;
+  --link: #174a8b;
+  --focus: #b66d00;
+  --danger: #a32b12;
+  --danger-bg: #fdecea;
+  --danger-fg: #7a1f0d;
+  --ok: #1a7f37;
+  --shadow: 0 1px 3px rgba(31, 41, 55, 0.08);
+  --btn-glow: rgba(255, 255, 255, 0.28);
+  --ring-glow: rgba(23, 74, 139, 0.22);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff; --header-fg-soft: #cfd5df;
+    --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+    --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
+    --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff; --header-fg-soft: #cfd5df;
+  --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+  --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
+  --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
+}
+
+/* Header login state, on every page. Pages without the Poppins link fall back to Arial. */
+nav:has(> #auth-link) { flex-wrap: wrap; align-items: center; }
+#auth-link[hidden], #user-name[hidden], #logout[hidden] { display: none; }
+#auth-link:focus-visible, #logout:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#user-name {
+  display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  vertical-align: middle; font-family: var(--font-body); font-weight: 400; color: var(--header-fg-soft);
+}
+#logout {
+  height: 36px; padding: 0 16px; border: 1px solid var(--header-fg); border-radius: 6px; background: transparent;
+  color: var(--header-fg); font-family: var(--font-display); font-size: 14px; font-weight: 500; cursor: pointer;
+}
+#logout:hover { background: var(--header-hover); }
+#logout:disabled { opacity: 0.7; cursor: progress; }
+
+/* Login page. Everything below applies only inside <body class="auth-page">. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .auth-page { color-scheme: dark; }
+}
+:root[data-theme="dark"] .auth-page { color-scheme: dark; }
+
+.auth-page, .auth-page * { box-sizing: border-box; }
+.auth-page { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; }
+.auth-page [hidden] { display: none !important; }
+.auth-page a { color: var(--link); }
+.auth-page a:hover { color: var(--accent-hover); }
+.auth-page :is(input, button, a):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+.auth-page .page { min-height: 100vh; display: flex; flex-direction: column; }
+
+.auth-page .site-header { background: var(--header); }
+.auth-page .site-header-inner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 16px;
+  padding: 20px 32px; max-width: 1280px; margin: 0 auto;
+}
+.auth-page .logo { font-family: var(--font-display); font-size: 23px; font-weight: 600; color: var(--header-fg); text-decoration: none; }
+.auth-page .logo:hover { color: var(--header-fg); }
+.auth-page .nav { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 24px; font-family: var(--font-display); font-weight: 500; }
+.auth-page .nav a { color: var(--header-fg); text-decoration: none; }
+.auth-page .nav a:hover, .auth-page .nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
+
+.auth-page main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 16px; }
+.auth-page .card {
+  width: 100%; max-width: 420px; padding: 36px 32px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow);
+}
+.auth-page .card h1 { margin: 0 0 8px; font-family: var(--font-display); font-size: 28px; font-weight: 600; text-wrap: balance; }
+.auth-page .lead { margin: 0 0 24px; line-height: 1.55; color: var(--muted); }
+.auth-page .stack { display: flex; flex-direction: column; gap: 18px; }
+.auth-page .field { display: flex; flex-direction: column; gap: 6px; }
+.auth-page .field label { font-size: 14px; font-weight: 600; }
+.auth-page .field input {
+  height: 44px; padding: 0 12px; font: inherit; font-size: 16px; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--field-line); border-radius: 6px;
+}
+.auth-page .field input[aria-invalid="true"] { border: 2px solid var(--danger); }
+.auth-page .field-error { font-size: 13px; font-weight: 600; color: var(--danger); }
+.auth-page .banner {
+  margin-bottom: 18px; padding: 12px 14px; border: 1px solid var(--danger); border-radius: 6px;
+  background: var(--danger-bg); color: var(--danger-fg); font-size: 14px; font-weight: 600;
+}
+.auth-page .switch { margin: 24px 0 0; text-align: center; color: var(--muted); }
+
+/* Primary button: spotlight follows the cursor, spinner while loading, green fill then check on success. */
+.auth-page .submit {
+  position: relative; overflow: hidden; width: 100%; height: 48px; margin-top: 6px; border: 0; border-radius: 6px;
+  background: var(--accent); color: var(--accent-fg);
+  font-family: var(--font-display); font-size: 16px; font-weight: 500; cursor: pointer;
+  transition: box-shadow 0.25s ease, background-color 0.25s ease;
+}
+.auth-page .submit::after {
+  content: ""; position: absolute; inset: 0; pointer-events: none; opacity: 0; transition: opacity 0.2s ease;
+  background: radial-gradient(circle 90px at var(--mx, 50%) var(--my, 50%), var(--btn-glow), transparent);
+}
+.auth-page .submit:disabled { opacity: 0.7; cursor: progress; }
+@media (hover: hover) {
+  .auth-page .submit:hover:not(:disabled) { box-shadow: 0 0 0 4px var(--ring-glow), 0 8px 24px var(--ring-glow); }
+  .auth-page .submit:hover:not(:disabled)::after { opacity: 1; }
+}
+.auth-page .submit.is-loading::before {
+  content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
+  border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: auth-spin 0.7s linear infinite;
+}
+@keyframes auth-spin { to { transform: rotate(360deg); } }
+.auth-page .submit.fill {
+  background-image: linear-gradient(var(--ok), var(--ok)); background-repeat: no-repeat; background-size: 0 100%;
+  animation: auth-fill-x 0.95s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+@keyframes auth-fill-x { to { background-size: 100% 100%; } }
+.auth-page .submit.is-ok { background: var(--ok); }
+.auth-page .submit.is-ok:disabled, .auth-page .submit.fill:disabled { opacity: 1; cursor: default; }
+.auth-page .submit.is-ok::before {
+  content: ""; display: inline-block; width: 6px; height: 12px; margin-right: 10px; vertical-align: 2px;
+  border: solid currentColor; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
+  animation: auth-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes auth-pop { from { transform: rotate(45deg) scale(0); } to { transform: rotate(45deg) scale(1); } }
+
+/* Shake once on an empty, invalid or rejected field. */
+.auth-page .shake { animation: auth-shake 0.45s cubic-bezier(0.36, 0.07, 0.19, 0.97) both; }
+@keyframes auth-shake {
+  10%, 90% { transform: translateX(-2px); }
+  20%, 80% { transform: translateX(4px); }
+  30%, 50%, 70% { transform: translateX(-8px); }
+  40%, 60% { transform: translateX(8px); }
+}
+
+/* Masked reveal-up: every line sits in an overflow-hidden mask and drifts up with a soft blur, staggered by --i. */
+.auth-page .r, .auth-page .ri { display: block; }
+.auth-page .ri.field { display: flex; }
+.auth-page .play .r:not(.done) { overflow: hidden; }
+.auth-page .play .ri {
+  animation: auth-reveal-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(120ms + var(--i, 0) * 110ms);
+}
+@keyframes auth-reveal-up {
+  from { transform: translateY(110%); opacity: 0; filter: blur(4px); }
+  to { transform: translateY(0); opacity: 1; filter: blur(0); }
+}
+
+.auth-page footer { padding: 24px 16px; border-top: 1px solid var(--line); background: var(--surface); text-align: center; color: var(--muted); }
+
+@media (max-width: 480px) { .auth-page .card { padding: 28px 20px; } }
+@media (prefers-reduced-motion: reduce) {
+  .auth-page .play .ri, .auth-page .shake, .auth-page .submit.is-loading::before, .auth-page .submit.is-ok::before { animation: none; }
+  /* No animation means no animationend, so the masks have to come off here or they clip the focus ring. */
+  .auth-page .play .r:not(.done) { overflow: visible; }
+  .auth-page .submit, .auth-page .submit::after { transition: none; }
+}

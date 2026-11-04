@@ -66,6 +66,67 @@ The synchronizer-token check uses the framework's
 [IAntiforgery API](https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.antiforgery.iantiforgery.validaterequestasync?view=aspnetcore-8.0).
 There are no browser-stored bearer tokens and no wildcard credentialed CORS.
 
+## Frontend contract
+
+`js/auth.js` is the shared client for this API. Load it on every page; see
+[Add the login header to a new page](ui-design.md#add-the-login-header-to-a-new-page).
+A guest gets 401 from `/api/auth/me` on every page. That is normal: it shows no error.
+
+```js
+window.StoreAuth = {
+  getAccount(),  // current { id, name, email, role }, or null (also null before the first /me check)
+  csrfToken(),   // Promise<string> with the latest token; rejects if it cannot be fetched
+  onLogin(fn)    // fn(account) may return a Promise; runs on the login page before the redirect
+};
+```
+
+`auth:changed` is a `window` event fired after the first `/me` check on every page,
+and after login and logout:
+
+```js
+window.addEventListener("auth:changed", event => {
+  const { authenticated, account } = event.detail; // account is null when signed out
+});
+```
+
+Send the token as `X-CSRF-TOKEN` on every POST. `csrfToken()` already returns a new
+token after login and logout, so do not keep your own copy.
+
+### onLogin hooks (for SCRUM-100)
+
+- A hook only runs if its script is loaded on `login.html`. Load it as a module after
+  `/js/auth.js`, so `window.StoreAuth` exists.
+- Hooks run after the session and the new CSRF token are ready, so a hook can POST
+  straight away with `await StoreAuth.csrfToken()`.
+- `login.js` waits for all hooks, for at most 5 seconds in total, and then redirects.
+  A hook that fails or is too slow never blocks the login, and the redirect may cut
+  off its request. A hook's server work must therefore be safe to repeat.
+
+### returnUrl
+
+`/login.html?returnUrl=<URL-encoded path>` sends the visitor there after login, and
+also straight away if they are already signed in. The header's Login link carries the
+current path, query and hash. `safeReturnUrl` in `js/auth-utils.js` accepts only a
+same-site path starting with a single `/`, and otherwise falls back to `/`. It rejects:
+
+- `//…`, backslashes and any scheme (`https:`, `javascript:` …)
+- control characters and anything longer than 2048 characters
+- an encoded slash, backslash, dot, percent sign or control character in the path
+- the login page itself, which would redirect forever
+
+### Login errors
+
+| Response | What the page does |
+| --- | --- |
+| 401 | "Invalid email or password." for a wrong password and for an unknown account; the password is cleared and focused |
+| 429 | "Too many attempts. Please try again in a minute."; the button counts down from `Retry-After`, or 60 s if it is missing. The backend does not send this header today, so the countdown is 60 s |
+| 503 | "Service is temporarily unavailable. Please try again." |
+| 400 | Fetches a new CSRF token; "Something went wrong. Please try again." |
+| Network error or 15 s timeout | "Could not reach the server. Check your connection and try again." |
+
+The 12-character password minimum is not checked on login, so the page does not reveal
+the password policy.
+
 ## Role boundaries for feature owners
 
 New endpoints require authentication by default. Public browsing must opt in
