@@ -241,7 +241,14 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         await using var check = fixture.Create();
         var order = await check.Orders.Include(o => o.OrderItems).SingleAsync();
         Assert.Equal("Delivered", PurchaseViews.Receipt(order).Status);
-        Assert.Equal(delivered.DeliveredAt, order.DeliveredAt);
+        Assert.NotNull(order.DeliveredAt);
+
+        // MySQL stores timestamps at microsecond precision.
+        // Allow at most one microsecond of persistence precision difference.
+        Assert.InRange(
+            Math.Abs((delivered.DeliveredAt!.Value - order.DeliveredAt.Value).Ticks),
+            0L,
+            10L);
     }
 
     [MySqlFact]
