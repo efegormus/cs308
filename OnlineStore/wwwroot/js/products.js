@@ -34,7 +34,11 @@ function productImage(product) {
 function productCard(product) {
   const item = element("li");
   const card = element("article", "product-card");
-  card.append(productImage(product), element("h3", "", product.name));
+  const title = element("h3");
+  const link = element("a", "", product.name);
+  link.href = `/product.html?id=${product.id}`;
+  title.append(link);
+  card.append(productImage(product), title);
   if (product.description) card.append(element("p", "product-description", product.description));
   card.append(element("p", "price", priceFormat.format(product.price)));
   const inStock = product.stockQuantity > 0;

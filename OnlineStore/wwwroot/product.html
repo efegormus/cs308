@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Product | Online Store</title>
+  <link rel="stylesheet" href="/css/products.css">
+  <script type="module" src="/js/product.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to product</a>
+  <header class="site-header">
+    <a class="logo" href="/">Online Store</a>
+    <nav aria-label="Main navigation">
+      <a href="/">Home</a>
+      <a href="/products.html">Products</a>
+    </nav>
+  </header>
+  <main id="main">
+    <p><a href="/products.html">&larr; Back to all products</a></p>
+    <p id="product-status" role="status" aria-live="polite">Loading product…</p>
+    <button id="retry" type="button" hidden>Try again</button>
+    <article id="product" class="product-detail" aria-busy="true" hidden></article>
+    <noscript><p>Enable JavaScript to see the product.</p></noscript>
+  </main>
+  <footer>Online Store · CS 308</footer>
+</body>
+</html>

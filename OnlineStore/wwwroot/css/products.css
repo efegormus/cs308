@@ -36,3 +36,15 @@ button { cursor: pointer; color: #174a8b; }
 .out-of-stock { color: #8a351e; }
 footer { padding: 1.5rem; border-top: 1px solid #dce0e6; text-align: center; color: #505966; }
 @media (max-width: 480px) { main { padding: 2rem 1rem; } h1 { font-size: 1.8rem; } }
+
+/* Product detail page (SCRUM-45) */
+.product-detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem;
+  margin-top: 1.5rem; padding: 1.5rem; border: 1px solid #dce0e6; border-radius: .6rem; background: white; }
+.product-detail .product-image, .product-detail .image-placeholder { height: 360px; }
+.product-info h1 { margin: .25rem 0 1rem; overflow-wrap: anywhere; }
+.product-category { margin: 0; }
+.product-specs { display: grid; grid-template-columns: max-content 1fr; gap: .5rem 1.25rem; margin: 1.5rem 0 0; }
+.product-specs dt { font-weight: bold; }
+.product-specs dd { margin: 0; overflow-wrap: anywhere; }
+.product-card h3 a { color: inherit; }
+@media (max-width: 700px) { .product-detail { grid-template-columns: 1fr; } }
