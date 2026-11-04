@@ -118,6 +118,7 @@ public class SchemaModelTests
     // ---- Duplicates are rejected by the database, so a retried request is safe ----
 
     [Theory]
+    [InlineData(nameof(Order), nameof(Order.SourceCartId))]
     [InlineData(nameof(Payment), nameof(Payment.IdempotencyKey))]
     [InlineData(nameof(Refund), nameof(Refund.IdempotencyKey))]
     [InlineData(nameof(Refund), nameof(Refund.ReturnRequestId))]

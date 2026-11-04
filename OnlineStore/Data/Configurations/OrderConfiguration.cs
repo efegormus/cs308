@@ -41,6 +41,9 @@ public class OrderConfiguration : IEntityTypeConfiguration<Order>
         builder.Property(order => order.AddressSnapshot).HasColumnType("varchar(1000)").HasMaxLength(1000);
         builder.Property(order => order.RowVersion).IsRowVersion();
 
+        builder.HasIndex(order => order.SourceCartId).IsUnique();
+        builder.HasOne<Cart>().WithMany().HasForeignKey(order => order.SourceCartId)
+            .OnDelete(DeleteBehavior.Restrict);
         builder.HasIndex(order => new { order.UserId, order.CreatedAt });
         // The product manager's delivery list filters by status and orders by purchase date.
         builder.HasIndex(order => new { order.Status, order.PurchasedAt });

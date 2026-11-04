@@ -49,7 +49,6 @@ public sealed class MySqlFixture : IAsyncLifetime
         await db.Notifications.ExecuteDeleteAsync();
         await db.WishlistItems.ExecuteDeleteAsync();
         await db.CartItems.ExecuteDeleteAsync();
-        await db.Carts.ExecuteDeleteAsync();
         await db.DeliveryItems.ExecuteDeleteAsync();
         await db.Deliveries.ExecuteDeleteAsync();
         await db.Invoices.ExecuteDeleteAsync();
@@ -58,6 +57,7 @@ public sealed class MySqlFixture : IAsyncLifetime
         await db.OrderItems.ExecuteDeleteAsync();
         await db.Discounts.ExecuteDeleteAsync();
         await db.Orders.ExecuteDeleteAsync();
+        await db.Carts.ExecuteDeleteAsync();
         await db.Products.ExecuteDeleteAsync();
         await db.Categories.ExecuteDeleteAsync();
         await db.Users.ExecuteDeleteAsync();
