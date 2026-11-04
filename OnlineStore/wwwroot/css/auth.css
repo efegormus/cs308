@@ -1,0 +1,61 @@
+/* Login page and header login state. Decisions and tokens: docs/ui-design.md.
+   Every color lives in the tokens below, so changing the palette is a one-place edit.
+   This file also loads on catalog pages: only custom properties sit on :root, and every other
+   rule is scoped to #auth-link, #user-name, #logout or .auth-page. */
+:root {
+  --font-display: 'Poppins', Arial, sans-serif;
+  --font-body: 'Open Sans', Arial, sans-serif;
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --header: #1f2937;
+  --header-fg: #ffffff;
+  --header-fg-soft: #e5e7eb;
+  --header-hover: rgba(255, 255, 255, 0.12);
+  --fg: #222222;
+  --muted: #505966;
+  --line: #dce0e6;
+  --field-line: #6b7280;
+  --accent: #174a8b;
+  --accent-hover: #0f3363;
+  --accent-fg: #ffffff;
+  --link: #174a8b;
+  --focus: #b66d00;
+  --danger: #a32b12;
+  --danger-bg: #fdecea;
+  --danger-fg: #7a1f0d;
+  --ok: #1a7f37;
+  --shadow: 0 1px 3px rgba(31, 41, 55, 0.08);
+  --btn-glow: rgba(255, 255, 255, 0.28);
+  --ring-glow: rgba(23, 74, 139, 0.22);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff; --header-fg-soft: #cfd5df;
+    --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+    --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
+    --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff; --header-fg-soft: #cfd5df;
+  --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+  --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
+  --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
+}
+
+/* Header login state, on every page. Pages without the Poppins link fall back to Arial. */
+nav:has(> #auth-link) { flex-wrap: wrap; align-items: center; }
+#auth-link[hidden], #user-name[hidden], #logout[hidden] { display: none; }
+#auth-link:focus-visible, #logout:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#user-name {
+  display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  vertical-align: middle; font-family: var(--font-body); font-weight: 400; color: var(--header-fg-soft);
+}
+#logout {
+  height: 36px; padding: 0 16px; border: 1px solid var(--header-fg); border-radius: 6px; background: transparent;
+  color: var(--header-fg); font-family: var(--font-display); font-size: 14px; font-weight: 500; cursor: pointer;
+}
+#logout:hover { background: var(--header-hover); }
+#logout:disabled { opacity: 0.7; cursor: progress; }
