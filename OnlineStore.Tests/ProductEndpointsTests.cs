@@ -136,6 +136,101 @@ public class ProductEndpointsTests
         Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
     }
 
+    private static Category[] DetailCatalog() => new[]
+    {
+        new Category
+        {
+            Id = 1, Name = "Phones",
+            Products = new List<Product>
+            {
+                new() { Id = 20, Sku = "PIXEL-9", Name = "Google Pixel 9",
+                    Description = "A smartphone", Price = 43000.50m, StockQuantity = 12, Cost = 20000 },
+                new() { Id = 21, Sku = "SOLD-OUT", Name = "Sold Out Phone", Price = 10, StockQuantity = 0 },
+                new() { Id = 22, Sku = "HIDDEN", Name = "Hidden Phone", Price = 10, StockQuantity = 5, IsActive = false }
+            }
+        }
+    };
+
+    [Fact]
+    public async Task ProductDetail_ReturnsTheCustomerFields()
+    {
+        using var factory = new ProductApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(DetailCatalog());
+
+        var product = await client.GetFromJsonAsync<ProductDetailDto>("/api/products/20");
+
+        Assert.NotNull(product);
+        Assert.Equal("Google Pixel 9", product.Name);
+        Assert.Equal("Fixture model", product.Model);
+        Assert.Equal("A smartphone", product.Description);
+        Assert.Equal(43000.50m, product.Price);
+        Assert.Equal(12, product.StockQuantity);
+        Assert.True(product.InStock);
+        Assert.Equal(1, product.CategoryId);
+        Assert.Equal("Phones", product.CategoryName);
+        Assert.Equal("Test warranty", product.WarrantyStatus);
+        Assert.Equal("Test distributor", product.DistributorInformation);
+    }
+
+    [Fact]
+    public async Task ProductDetail_DoesNotExposeInternalFields()
+    {
+        using var factory = new ProductApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(DetailCatalog());
+
+        var json = await client.GetStringAsync("/api/products/20");
+
+        Assert.DoesNotContain("serialNumber", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("FIXTURE-PIXEL-9", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("sku", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("cost", json, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("isActive", json, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task ProductDetail_OutOfStockProduct_IsStillReturned()
+    {
+        using var factory = new ProductApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(DetailCatalog());
+
+        var product = await client.GetFromJsonAsync<ProductDetailDto>("/api/products/21");
+
+        Assert.NotNull(product);
+        Assert.Equal(0, product.StockQuantity);
+        Assert.False(product.InStock);
+    }
+
+    [Theory]
+    [InlineData("/api/products/22")]    // inactive product
+    [InlineData("/api/products/999")]   // unknown id
+    public async Task ProductDetail_UnknownOrInactiveProduct_Returns404(string path)
+    {
+        using var factory = new ProductApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(DetailCatalog());
+
+        var response = await client.GetAsync(path);
+
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task ProductDetail_UnreachableDatabase_ReturnsSafeError()
+    {
+        using var factory = new ProductApplication(useDatabase: true);
+        using var client = factory.CreateClient();
+
+        var response = await client.GetAsync("/api/products/1");
+
+        Assert.Equal(HttpStatusCode.ServiceUnavailable, response.StatusCode);
+        var body = await response.Content.ReadAsStringAsync();
+        Assert.DoesNotContain("Password", body, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("MySql", body, StringComparison.OrdinalIgnoreCase);
+    }
+
     // Starts the real app in memory. Without useDatabase, MySQL is replaced by an
     // in-memory database; with it, the app talks to a closed port to test the error path.
     private sealed class ProductApplication(bool useDatabase = false) : WebApplicationFactory<Program>

@@ -39,6 +39,33 @@ public static class ProductEndpoints
             }
         }).AllowAnonymous();
 
+        // Public: one product for the detail page (SCRUM-45, section 5.1 of the API contract).
+        // Unknown or inactive product -> 404. Out-of-stock products are returned (inStock = false).
+        // A non-integer id does not match the {id:int} route, so the framework answers 404.
+        app.MapGet("/api/products/{id:int}", async (
+            int id, StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+        {
+            try
+            {
+                var product = await db.Products
+                    .AsNoTracking()
+                    .Where(product => product.Id == id && product.IsActive)
+                    .Select(ProductDetailDto.FromProduct)
+                    .FirstOrDefaultAsync(cancellationToken);
+
+                return product is null
+                    ? Results.Problem(
+                        statusCode: StatusCodes.Status404NotFound,
+                        title: "Product not found.",
+                        detail: "No active product has this id.")
+                    : Results.Ok(product);
+            }
+            catch (Exception exception) when (IsDatabaseFailure(exception))
+            {
+                return Unavailable(loggerFactory, "product");
+            }
+        }).AllowAnonymous();
+
         // Public: lists all categories so the site can group products.
         app.MapGet("/api/categories", async (
             StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>

@@ -32,7 +32,7 @@ SCRUM-50 (search), SCRUM-51 (sorting), SCRUM-54 (front end integration).
 | `GET /api/catalog` | Implemented (SCRUM-44) | Compatible grouped view of categories and active products. |
 | `GET /api/products` | Implemented (SCRUM-43/54) | Flat active products, optional category filter; used by products.html. |
 | `GET /api/categories` | Implemented (SCRUM-43/54) | Categories used for grouping and homepage links. |
-| `GET /api/products/{id}` | **Planned** (SCRUM-45) | One product for the detail page. Not on `main` yet. |
+| `GET /api/products/{id}` | Implemented (SCRUM-45) | One active product for the detail page (`product.html`). 404 if unknown or inactive. |
 | `GET /api/products?search=` | **Planned** (SCRUM-50) | Search by name or description. |
 | `GET /api/products?sort=&order=` | **Planned** (SCRUM-51) | Sort by price or popularity. |
 
@@ -244,17 +244,17 @@ field is visible today.
 | `id` | INT, auto increment | Yes | `/api/catalog`, `/api/products` |
 | `sku` | VARCHAR(64), unique | Yes | No (internal; the seed key is used as SKU) |
 | `name` | VARCHAR(200) | Yes | `/api/catalog`, `/api/products` |
-| `model` | VARCHAR(100) | Yes | No (Planned in the detail endpoint) |
+| `model` | VARCHAR(100) | Yes | `/api/products/{id}` |
 | `serialNumber` | VARCHAR(100) | Yes | No (see open question in section 5) |
 | `description` | TEXT | Required when active; nullable for drafts | `/api/catalog`, `/api/products` |
 | `stockQuantity` (quantity in stock) | INT, `>= 0`, default 0 | Yes | `/api/catalog`, `/api/products` |
 | `price` | DECIMAL(18,2), `>= 0` | Yes | `/api/catalog`, `/api/products` |
-| `warrantyStatus` | VARCHAR(100) | Yes | No (Planned in the detail endpoint) |
-| `distributorInformation` | VARCHAR(500) | Yes | No (Planned in the detail endpoint) |
+| `warrantyStatus` | VARCHAR(100) | Yes | `/api/products/{id}` |
+| `distributorInformation` | VARCHAR(500) | Yes | `/api/products/{id}` |
 | `imageUrl` | VARCHAR(2048) | No | `/api/catalog`, `/api/products` |
 | `isActive` | TINYINT(1), default true | Yes | No (used as a filter: inactive products are hidden) |
 | `cost` | DECIMAL(18,2), `>= 0`, nullable | No | **Never public.** Used for profit and loss only. When empty, the effective cost is 50% of the price (`Product.EffectiveCost`, not stored). |
-| `categoryId` | INT, foreign key to `Categories.Id` | Yes | `/api/products` |
+| `categoryId` | INT, foreign key to `Categories.Id` | Yes | `/api/products`, `/api/products/{id}` |
 
 Category (`Categories` table): `id` (INT), `name` (VARCHAR(100), unique, required),
 `description` (TEXT, optional).
@@ -269,13 +269,15 @@ Everything in this section is a **proposal** for the owners of SCRUM-45, SCRUM-5
 SCRUM-51 to accept or change. Do not call these from the front end until the items
 are merged.
 
-### 5.1 `GET /api/products/{id}` (SCRUM-45)
+### 5.1 `GET /api/products/{id}` (SCRUM-45, implemented)
+
+This endpoint is now in the code and used by `product.html`; the behavior below is what it does.
 
 - `{id}` must be an integer. Unknown or inactive product: `404`. Database failure: `503`.
-- Proposed response fields: `id`, `name`, `model`, `description`, `price`,
+- Response fields: `id`, `name`, `model`, `description`, `price`,
   `stockQuantity`, `inStock`, `imageUrl`, `categoryId`, `categoryName`,
   `warrantyStatus`, `distributorInformation`. Cost and SKU are not returned.
-- Proposed decision: the serial number is **not** returned to customers. It identifies
+- Decision: the serial number is **not** returned to customers. It identifies
   one physical unit and is only needed by the product manager.
 
 ### 5.2 Search: `search` (SCRUM-50)
