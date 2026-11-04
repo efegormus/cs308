@@ -239,3 +239,11 @@ constraints, MySQL collation or migration compatibility.
 - [EF Core properties](https://learn.microsoft.com/en-us/ef/core/modeling/entity-properties)
 - [EF Core indexes and checks](https://learn.microsoft.com/en-us/ef/core/modeling/indexes)
 - [MySQL check constraints](https://dev.mysql.com/doc/refman/8.4/en/create-table-check-constraints.html)
+
+## Checkout source-cart link
+
+`LinkCheckoutToSourceCart` adds nullable `Orders.SourceCartId`, a unique index and
+a restrictive FK to Carts. Legacy orders remain null. A purchased cart is retained
+as CheckedOut and its purchased lines are removed in the same transaction as the
+order, payment, delivery and stock decrement. Different retry keys cannot buy the
+same cart twice. See [purchasing.md](purchasing.md) for the service/locking contract.

@@ -187,3 +187,5 @@ live MySQL/browser check and controlled loading/error/retry scenarios.
 
 - Work is tracked in Jira (project SCRUM) in two-week sprints.
 - Commit messages are short and describe the change, for example `Add product list API`.
+
+Checkout and ProductManager delivery integration: [docs/purchasing.md](docs/purchasing.md).
