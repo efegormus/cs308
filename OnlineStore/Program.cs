@@ -5,6 +5,7 @@ using OnlineStore.Catalog;
 using OnlineStore.Seeding;
 using OnlineStore.Accounts;
 using OnlineStore.Purchasing;
+using OnlineStore.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -48,6 +49,9 @@ builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<DeliveryService>();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+
 var app = builder.Build();
 
 if (args.Contains(RoleCommand.Flag))
@@ -63,6 +67,7 @@ if (args.Contains(SeedCommand.Flag))
     return;
 }
 
+app.UseExceptionHandler();
 // Serve the plain HTML/CSS/JS front end from the wwwroot folder.
 app.UseDefaultFiles();
 app.UseStaticFiles();
