@@ -63,6 +63,46 @@ public class AccountTests
         Assert.NotEmpty(user.SecurityStamp);
     }
 
+
+    [Fact]
+    public async Task Registration_DoesNotSignInUntilLogin()
+    {
+        using var app = new AccountApplication();
+        using var client = app.CreateClient();
+
+        // 1. Yeni bir kullanıcı kaydediyoruz.
+        var registration = await PostAsync(
+            client, "/api/auth/register", Registration);
+
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+
+        // 2. Kayıt başarılı olsa bile kullanıcı henüz giriş yapmış olmamalı.
+        var beforeLogin = await client.GetAsync("/api/auth/me");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, beforeLogin.StatusCode);
+
+        // 3. Şimdi doğru bilgilerle giriş yapıyoruz.
+        var login = await PostAsync(
+            client,
+            "/api/auth/login",
+            new LoginRequest(Registration.Email, Password));
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        // 4. Girişten sonra oturumun aktif olduğunu doğruluyoruz.
+        var afterLogin = await client.GetAsync("/api/auth/me");
+
+        Assert.Equal(HttpStatusCode.OK, afterLogin.StatusCode);
+
+        var account = await afterLogin.Content.ReadFromJsonAsync<AccountDto>();
+
+        Assert.NotNull(account);
+        Assert.Equal(Registration.Email, account.Email);
+    }
+
+
+
+
     [Fact]
     public async Task Registration_RejectsCaseInsensitiveDuplicateEmail()
     {
@@ -256,6 +296,77 @@ public class AccountTests
         foreach (var path in new[] { "/api/health", "/api/catalog", "/api/products", "/api/categories" })
             Assert.Equal(HttpStatusCode.OK, (await client.GetAsync(path)).StatusCode);
     }
+
+    [Fact]
+    public async Task CsrfToken_MustBeRefreshedAfterLogin()
+    {
+        using var app = new AccountApplication();
+        using var client = app.CreateClient();
+
+        // Yeni müşteri oluştur.
+        var registration = await PostAsync(
+            client, "/api/auth/register", Registration);
+
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+
+        // Kullanıcı henüz misafirken token al.
+        var tokens = await client.GetFromJsonAsync<JsonElement>(
+            "/api/auth/csrf");
+        var oldToken = tokens.GetProperty("token").GetString();
+
+        Assert.False(string.IsNullOrWhiteSpace(oldToken));
+
+        // Eski (misafir) token ile giriş yap.
+        using var loginRequest = new HttpRequestMessage(
+            HttpMethod.Post, "/api/auth/login")
+        {
+            Content = JsonContent.Create(
+                new LoginRequest(Registration.Email, Password))
+        };
+
+        loginRequest.Headers.Add("X-CSRF-TOKEN", oldToken);
+
+        using var login = await client.SendAsync(loginRequest);
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        // Giriş sonrasında eski token ile logout engellenmeli.
+        using var oldLogoutRequest = new HttpRequestMessage(
+            HttpMethod.Post, "/api/auth/logout")
+        {
+            Content = JsonContent.Create(new { })
+        };
+
+        oldLogoutRequest.Headers.Add("X-CSRF-TOKEN", oldToken);
+
+        using var rejected = await client.SendAsync(oldLogoutRequest);
+        Assert.Equal(HttpStatusCode.BadRequest, rejected.StatusCode);
+
+        // Hatalı logout denemesi oturumu kapatmamalı.
+        var stillLoggedIn = await client.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.OK, stillLoggedIn.StatusCode);
+
+        // Giriş yapmış kullanıcı için yeni token al.
+        var freshTokens = await client.GetFromJsonAsync<JsonElement>(
+            "/api/auth/csrf");
+        var freshToken = freshTokens.GetProperty("token").GetString();
+
+        // Yeni token ile çıkış başarılı olmalı.
+        using var logoutRequest = new HttpRequestMessage(
+            HttpMethod.Post, "/api/auth/logout")
+        {
+            Content = JsonContent.Create(new { })
+        };
+
+        logoutRequest.Headers.Add("X-CSRF-TOKEN", freshToken);
+
+        using var logout = await client.SendAsync(logoutRequest);
+        Assert.Equal(HttpStatusCode.NoContent, logout.StatusCode);
+
+        // Çıkıştan sonra oturum artık aktif olmamalı.
+        var afterLogout = await client.GetAsync("/api/auth/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, afterLogout.StatusCode);
+    }
+
 
     private static async Task<HttpResponseMessage> PostAsync(HttpClient client, string path, object body)
     {
