@@ -63,6 +63,46 @@ public class AccountTests
         Assert.NotEmpty(user.SecurityStamp);
     }
 
+
+    [Fact]
+    public async Task Registration_DoesNotSignInUntilLogin()
+    {
+        using var app = new AccountApplication();
+        using var client = app.CreateClient();
+
+        // 1. Yeni bir kullanıcı kaydediyoruz.
+        var registration = await PostAsync(
+            client, "/api/auth/register", Registration);
+
+        Assert.Equal(HttpStatusCode.Created, registration.StatusCode);
+
+        // 2. Kayıt başarılı olsa bile kullanıcı henüz giriş yapmış olmamalı.
+        var beforeLogin = await client.GetAsync("/api/auth/me");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, beforeLogin.StatusCode);
+
+        // 3. Şimdi doğru bilgilerle giriş yapıyoruz.
+        var login = await PostAsync(
+            client,
+            "/api/auth/login",
+            new LoginRequest(Registration.Email, Password));
+
+        Assert.Equal(HttpStatusCode.OK, login.StatusCode);
+
+        // 4. Girişten sonra oturumun aktif olduğunu doğruluyoruz.
+        var afterLogin = await client.GetAsync("/api/auth/me");
+
+        Assert.Equal(HttpStatusCode.OK, afterLogin.StatusCode);
+
+        var account = await afterLogin.Content.ReadFromJsonAsync<AccountDto>();
+
+        Assert.NotNull(account);
+        Assert.Equal(Registration.Email, account.Email);
+    }
+
+
+
+
     [Fact]
     public async Task Registration_RejectsCaseInsensitiveDuplicateEmail()
     {
