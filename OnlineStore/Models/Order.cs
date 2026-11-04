@@ -4,6 +4,8 @@ public class Order
 {
     public int Id { get; set; }
     public int UserId { get; set; }
+    // A cart can produce at most one purchase, even with different retry keys.
+    public int? SourceCartId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public OrderStatus Status { get; private set; } = OrderStatus.Processing;
     public PaymentStatus PaymentStatus { get; private set; } = PaymentStatus.Pending;

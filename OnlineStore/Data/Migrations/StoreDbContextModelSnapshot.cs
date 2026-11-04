@@ -592,6 +592,9 @@ namespace OnlineStore.Data.Migrations
                         .ValueGeneratedOnAddOrUpdate()
                         .HasColumnType("datetime(6)");
 
+                    b.Property<int?>("SourceCartId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
@@ -608,6 +611,9 @@ namespace OnlineStore.Data.Migrations
                         .HasColumnType("int");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("SourceCartId")
+                        .IsUnique();
 
                     b.HasIndex("Status", "PurchasedAt");
 
@@ -1226,6 +1232,11 @@ namespace OnlineStore.Data.Migrations
 
             modelBuilder.Entity("OnlineStore.Models.Order", b =>
                 {
+                    b.HasOne("OnlineStore.Models.Cart", null)
+                        .WithMany()
+                        .HasForeignKey("SourceCartId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("OnlineStore.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")

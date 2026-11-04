@@ -38,7 +38,9 @@ is compatible with an already delivered order, not an in-transit shipment.
 
 All operation timestamps must be UTC. These methods are domain guards; they do
 not call a bank, change inventory, create invoices or implement delivery endpoints.
-SCRUM-72/73/79 persist the operations with the required transactions and permissions.
+SCRUM-72/79 now persist checkout and delivery operations with transactions and
+permissions; see [purchasing.md](purchasing.md) for API/locking/retry contracts.
+The mock payment adapter is replaceable by SCRUM-73.
 Checkout must conditionally decrement stock in the same finalization transaction,
 reject price/owner tampering and deduplicate requests. A failed payment/transaction
 must leave no permanent stock decrement or confirmed purchase.

@@ -64,6 +64,9 @@ function renderHeader() {
     name.title = signedIn ? account.name : "";
   }
   if (logoutButton) logoutButton.hidden = !signedIn;
+  document.querySelectorAll("[data-store-role]").forEach(link => {
+    link.hidden = account?.role !== link.dataset.storeRole;
+  });
 }
 
 async function checkSession() {

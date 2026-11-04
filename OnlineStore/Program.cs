@@ -4,6 +4,7 @@ using OnlineStore.Data;
 using OnlineStore.Catalog;
 using OnlineStore.Seeding;
 using OnlineStore.Accounts;
+using OnlineStore.Purchasing;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -42,6 +43,10 @@ if (string.IsNullOrWhiteSpace(connectionOptions.Database))
 builder.Services.AddDbContext<StoreDbContext>(options =>
     options.UseMySql(connectionOptions.ConnectionString, new MySqlServerVersion(serverVersion)));
 builder.AddStoreAccounts();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
+builder.Services.AddScoped<CheckoutService>();
+builder.Services.AddScoped<DeliveryService>();
 
 var app = builder.Build();
 
@@ -70,6 +75,7 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "ok" })).AllowAnonymou
 app.MapCatalogEndpoints();
 app.MapProductEndpoints();
 app.MapAccountEndpoints();
+app.MapPurchaseEndpoints();
 
 app.Run();
 

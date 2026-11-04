@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order confirmation | Online Store</title>
+  <link rel="stylesheet" href="/css/products.css">
+  <link rel="stylesheet" href="/css/purchases.css">
+  <script type="module" src="/js/order-confirmation.js"></script>
+</head>
+<body>
+  <a class="skip-link" href="#main-content">Skip to content</a>
+  <header class="site-header">
+    <a class="logo" href="/">Online Store</a>
+    <nav aria-label="Main navigation">
+      <a href="/products.html">Products</a>
+      <a href="/checkout.html">Checkout</a>
+      <a href="/deliveries.html" data-store-role="ProductManager" hidden>Deliveries</a>
+      <a id="auth-link" href="/login.html">Login</a>
+      <span id="user-name" hidden></span>
+      <button id="logout" type="button" hidden>Logout</button>
+    </nav>
+  </header>
+  <main id="main-content" class="purchase-layout">
+    <noscript><p>Enable JavaScript to use this page.</p></noscript>
+    <h1 id="order-heading">Order confirmation</h1>
+    <div id="message" class="purchase-message" role="status">Loading order…</div>
+    <section id="receipt" class="purchase-card" aria-label="Purchase receipt" hidden>
+      <p id="order-status"></p><p id="order-address" class="snapshot-address"></p>
+      <ul id="lines" class="purchase-lines"></ul>
+      <p class="purchase-total">Total: <span id="total"></span></p>
+      <a id="invoice" hidden>Download invoice PDF</a>
+      <p id="invoice-pending">Your invoice is being prepared. Reload to check its availability.</p>
+    </section>
+    <button id="retry" type="button" hidden>Refresh order</button>
+  </main>
+  <footer>&copy; 2026 Online Store &middot; CS 308 Team</footer>
+</body>
+</html>

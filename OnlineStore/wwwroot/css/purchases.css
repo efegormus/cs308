@@ -1,0 +1,18 @@
+.purchase-layout { max-width: 920px; }
+.purchase-card { margin: 1.25rem 0; padding: clamp(1rem, 3vw, 2rem); background: white; border: 1px solid #dce0e6; border-radius: .6rem; overflow-wrap: anywhere; }
+.purchase-lines { padding: 0; list-style: none; }
+.purchase-lines li { padding: .8rem 0; border-bottom: 1px solid #e3e7eb; }
+.purchase-line { display: flex; gap: 1rem; justify-content: space-between; flex-wrap: wrap; }
+.purchase-total { font-size: 1.2rem; font-weight: bold; }
+.snapshot-address { white-space: pre-wrap; }
+.purchase-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.purchase-fields .wide { grid-column: 1 / -1; }
+.purchase-fields label { display: block; margin-bottom: .5rem; font-weight: bold; }
+.purchase-fields input { width: 100%; padding: .75rem; font: inherit; border: 1px solid #9ba9b9; border-radius: .3rem; }
+.purchase-fields input:focus-visible { outline: 3px solid #b66d00; outline-offset: 2px; }
+.purchase-submit { margin-top: 1.5rem; color: white; background: #174a8b; }
+button:disabled { opacity: .6; cursor: wait; }
+.purchase-message { padding: 1rem; background: #e8f0fa; border-radius: .4rem; margin: 1rem 0; }
+.purchase-message.error { background: #ffebea; color: #7c231d; }
+.site-header nav { flex-wrap: wrap; align-items: center; }
+@media (max-width: 480px) { .purchase-fields { grid-template-columns: 1fr; } }
