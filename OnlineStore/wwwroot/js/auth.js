@@ -29,11 +29,12 @@ function csrfToken() {
 }
 
 // The token is bound to the current identity, so it changes after login and logout.
-export function invalidateCsrf() {
+function invalidateCsrf() {
   tokenRequest = null;
 }
 
-async function refreshCsrf() {
+// Never rejects.
+export async function refreshCsrf() {
   invalidateCsrf();
   try {
     await csrfToken();

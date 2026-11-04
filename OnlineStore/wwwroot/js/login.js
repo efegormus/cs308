@@ -1,5 +1,5 @@
 // Login page behaviour. The API contract is in docs/authentication.md, the motion rules in docs/ui-design.md.
-import { authReady, completeLogin, invalidateCsrf } from "./auth.js";
+import { authReady, completeLogin, refreshCsrf } from "./auth.js";
 import {
   NETWORK_ERROR, loginErrorMessage, parseAccount, parseRetryAfter, registerHref,
   safeReturnUrl, validateEmail, validatePassword
@@ -116,7 +116,7 @@ function fail(status, retryAfter) {
     password.focus();
     return;
   }
-  if (status === 400) invalidateCsrf();
+  if (status === 400) refreshCsrf();
   submit.focus();
 }
 
