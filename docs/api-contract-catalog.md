@@ -33,8 +33,8 @@ SCRUM-50 (search), SCRUM-51 (sorting), SCRUM-54 (front end integration).
 | `GET /api/products` | Implemented (SCRUM-43/54) | Flat active products, optional category filter; used by products.html. |
 | `GET /api/categories` | Implemented (SCRUM-43/54) | Categories used for grouping and homepage links. |
 | `GET /api/products/{id}` | **Planned** (SCRUM-45) | One product for the detail page. Not on `main` yet. |
-| `GET /api/products?search=` | **Planned** (SCRUM-50) | Search by name or description. |
-| `GET /api/products?sort=&order=` | **Planned** (SCRUM-51) | Sort by price or popularity. |
+| `GET /api/products?search=` | Implemented (SCRUM-50) | Search by name or description. |
+| `GET /api/products?sort=&order=` | Implemented (SCRUM-51) | Sort by price or popularity. |
 
 All implemented endpoints only return **active** products (`IsActive = true`).
 Products that are out of stock are **included** on purpose (course requirement 7):
@@ -131,9 +131,11 @@ Returns a flat list of active products.
 | Query parameter | Type | Required | Behavior |
 | --- | --- | --- | --- |
 | `categoryId` | integer | No | Only products of this category. An id that does not exist (or is negative) returns `200` with `[]`. A value that is not a valid integer returns `400`. |
+| `search` | string | No | Case-insensitive text match on name or description, see section 5.2. |
+| `sort` | `price` or `popularity` | No | See section 5.3. |
+| `order` | `asc` or `desc` | No | See section 5.3. |
 
-Any other query parameter is **ignored** and the full list is returned (for example
-`?search=pixel` currently has no effect, see section 5).
+Any other query parameter is **ignored** and the full list is returned.
 
 Response `200`: array of products.
 
@@ -278,12 +280,12 @@ are merged.
 - Proposed decision: the serial number is **not** returned to customers. It identifies
   one physical unit and is only needed by the product manager.
 
-### 5.2 Search: `search` (SCRUM-50)
+### 5.2 Search: `search` (SCRUM-50, implemented)
 
 | Item | Proposed behavior |
 | --- | --- |
 | Request | `GET /api/products?search=pixel` |
-| Matching | Case-insensitive text match on product `name` or `description`. |
+| Matching | Case-insensitive text match on product `name` or `description`. `%` and `_` are matched as plain characters, not wildcards. |
 | Empty value | `search=` (empty or only spaces) is treated as no search. |
 | Length | At most 100 characters; a longer value returns `400`. |
 | Combination | Can be combined with `categoryId`, `sort` and `order`. |
@@ -294,14 +296,14 @@ are merged.
 The server must also reject adding an out-of-stock product to the cart (SCRUM-49);
 hiding a button in the page is not enough.
 
-### 5.3 Sorting: `sort` and `order` (SCRUM-51)
+### 5.3 Sorting: `sort` and `order` (SCRUM-51, implemented)
 
 | Parameter | Allowed values | Default |
 | --- | --- | --- |
 | `sort` | `price`, `popularity` | Not sent: current order (name, then id). |
 | `order` | `asc`, `desc` | `asc` for `price`, `desc` for `popularity`. |
 
-- An unknown `sort` or `order` value returns `400`.
+- An unknown `sort` or `order` value returns `400` (`application/problem+json`). `sort` and `order` are not case-sensitive.
 - Ties are broken by `name`, then `id`, so the order is stable.
 - Proposed meaning of "popularity": the total `Quantity` sold in `OrderItems` whose
   order has `PaymentStatus = Confirmed` and is not cancelled, highest first.
