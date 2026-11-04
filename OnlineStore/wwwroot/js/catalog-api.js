@@ -32,3 +32,17 @@ export async function fetchCatalog(signal) {
   }
   return [...grouped.values()];
 }
+
+// One product for the detail page. Returns null when the product does not exist (404).
+export async function fetchProduct(id, signal) {
+  const response = await fetch(`/api/products/${encodeURIComponent(id)}`,
+    { signal, headers: { Accept: "application/json" } });
+  if (response.status === 404) return null;
+  if (!response.ok) throw new Error("Product request failed.");
+  const product = await response.json();
+  if (!Number.isInteger(product.id) || typeof product.name !== "string"
+      || !Number.isFinite(product.price) || product.price < 0
+      || !Number.isInteger(product.stockQuantity) || product.stockQuantity < 0)
+    throw new Error("Invalid product response.");
+  return product;
+}
