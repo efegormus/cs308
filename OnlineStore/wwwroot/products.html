@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Products by category | Online Store</title>
   <link rel="stylesheet" href="/css/products.css">
+  <link rel="stylesheet" href="/css/auth.css">
   <script type="module" src="/js/products.js"></script>
+  <script type="module" src="/js/auth.js"></script>
 </head>
 <body>
   <a class="skip-link" href="#main">Skip to products</a>
@@ -14,6 +16,9 @@
     <nav aria-label="Main navigation">
       <a href="/">Home</a>
       <a href="/products.html" aria-current="page">Products</a>
+      <a id="auth-link" href="/login.html">Login</a>
+      <span id="user-name" hidden></span>
+      <button id="logout" type="button" hidden>Logout</button>
     </nav>
   </header>
   <main id="main">
