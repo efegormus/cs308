@@ -6,6 +6,8 @@
 # dotenv files
 .env
 .local/
+# Generated invoice PDFs (SCRUM-74)
+App_Data/
 __pycache__/
 
 # User-specific files
