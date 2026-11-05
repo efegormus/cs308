@@ -122,6 +122,20 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
     }
 
     [MySqlFact]
+    public async Task MySql_Checkout_InvalidPaymentLeavesStockAndCartUntouched()
+    {
+        var g = await SeedAsync();
+        await using (var db = fixture.Create())
+        {
+            var quote = await Service(db).QuoteAsync(g.Buyer.Id, default);
+            var error = await Assert.ThrowsAsync<PurchaseException>(() => Service(db).CompleteAsync(g.Buyer.Id,
+                Request(quote, card: Card("4242424242424241")), default));
+            Assert.Equal(400, error.Status);
+            Assert.Equal("Enter valid mock payment details.", error.Message);
+        }
+        await AssertUnchangedAsync(5);
+    }
+    [MySqlFact]
     public async Task MySql_Checkout_SaveFailureRollsBackStockOrderPaymentAndCart()
     {
         var g = await SeedAsync();
