@@ -1,0 +1,11 @@
+/* The page frame. The values are the ones `.auth-page .page` uses in auth.css. */
+
+/* A wrapper cannot reach body, so this rule has to stay global. Every old page already sets margin 0. */
+body { margin: 0; }
+
+.app-shell { min-height: 100vh; display: flex; flex-direction: column; }
+.route-page { flex: 1; }
+
+/* `.auth-page main` centers the card with flex: 1, which needs a flex column as its parent.
+   The other pages have to stay block: in a flex column, `main { margin: auto }` shrinks to its content. */
+.route-page.auth-page { display: flex; flex-direction: column; }
