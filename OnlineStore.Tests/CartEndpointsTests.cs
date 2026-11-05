@@ -14,7 +14,7 @@ using OnlineStore.Shopping;
 
 namespace OnlineStore.Tests;
 
-public class CartEndpointsTests
+public partial class CartEndpointsTests
 {
     private const string Password = "A long test passphrase!";
 
