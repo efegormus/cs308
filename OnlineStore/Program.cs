@@ -4,10 +4,16 @@ using OnlineStore.Data;
 using OnlineStore.Catalog;
 using OnlineStore.Seeding;
 using OnlineStore.Accounts;
+using OnlineStore.Invoicing;
 using OnlineStore.Purchasing;
 using OnlineStore.Shopping;
+using OnlineStore.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// The middleware logs full exceptions; ApiExceptionHandler provides sanitized diagnostics.
+builder.Logging.AddFilter(
+    "Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
@@ -48,6 +54,14 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<DeliveryService>();
+// Invoice PDFs live outside wwwroot (SCRUM-74).
+var invoiceRoot = builder.Configuration["Invoices:StoragePath"];
+builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsNullOrWhiteSpace(invoiceRoot)
+    ? Path.Combine(builder.Environment.ContentRootPath, "App_Data", "invoices") : invoiceRoot));
+builder.Services.AddScoped<InvoiceService>();
+
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
 
 var app = builder.Build();
 
@@ -64,6 +78,7 @@ if (args.Contains(SeedCommand.Flag))
     return;
 }
 
+app.UseExceptionHandler();
 // Serve the plain HTML/CSS/JS front end from the wwwroot folder.
 app.UseDefaultFiles();
 app.UseStaticFiles();
@@ -78,6 +93,7 @@ app.MapProductEndpoints();
 app.MapAccountEndpoints();
 app.MapPurchaseEndpoints();
 app.MapCartEndpoints();
+app.MapInvoiceEndpoints();
 
 app.Run();
 
