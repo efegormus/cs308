@@ -5,6 +5,7 @@ using OnlineStore.Catalog;
 using OnlineStore.Seeding;
 using OnlineStore.Accounts;
 using OnlineStore.Purchasing;
+using OnlineStore.Shopping;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -76,6 +77,7 @@ app.MapCatalogEndpoints();
 app.MapProductEndpoints();
 app.MapAccountEndpoints();
 app.MapPurchaseEndpoints();
+app.MapCartEndpoints();
 
 app.Run();
 
