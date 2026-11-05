@@ -188,6 +188,19 @@ jobs:
         with:
           node-version: 22
 
+      # SCRUM-112: the React app in frontend/ (SCRUM-107). npm ci installs exactly what package-lock.json lists.
+      - name: Install React dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: React unit tests
+        working-directory: frontend
+        run: npm test
+
+      - name: Build React app
+        working-directory: frontend
+        run: npm run build
+
       - name: Set up Python
         uses: actions/setup-python@v7
         with:
