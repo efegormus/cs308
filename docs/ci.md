@@ -15,7 +15,10 @@ cancels the older run of the same branch; runs on `main` are never cancelled.
 
 ## Jobs
 
-All jobs run in parallel on a fresh `ubuntu-latest` runner.
+All jobs run in parallel on a fresh `ubuntu-24.04` runner. The image is pinned on purpose:
+when GitHub moved `ubuntu-latest` to Ubuntu 26.04, `playwright install --with-deps chromium`
+(Playwright 1.60) stopped working there and `Browser end-to-end` failed before any test ran.
+Move to a newer image only together with a Playwright version that supports it.
 
 | Job (check name) | What it proves | Fails when | Blocking |
 | --- | --- | --- | --- |
