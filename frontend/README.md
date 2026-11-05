@@ -28,11 +28,27 @@ test runner.
 | Path | What it holds |
 | --- | --- |
 | `src/App.jsx` | The routes |
-| `src/components/` | `Layout`, `Header` and `Footer` |
+| `src/components/` | `Layout`, `Header` and `Footer`, and the product list parts `ProductCard`, `CategorySection` and `CategoryNav` |
 | `src/auth/AuthProvider.jsx` | `AuthProvider` and the `useAuth()` hook |
+| `src/hooks/useCatalog.js` | `useCatalog()`, which loads the categories and products and takes the search and sort values |
 | `src/lib/auth-utils.js` | Pure helpers such as `safeReturnUrl` and `loginHref` |
+| `src/lib/catalog-api.js` | The catalog API client: `fetchCatalog`, `fetchProducts`, `fetchCategories` and `fetchProduct` |
+| `src/lib/product-display.js`, `src/lib/category-display.js` | Pure helpers for prices, image URLs, stock text, category ids and count labels |
 | `src/pages/` | One component per route |
 | `src/styles/` | The CSS |
+
+## The product list
+
+`/products` shows the products grouped by category. A link such as `/products#category-3` scrolls to that
+category. The page calls `useCatalog()`, and the catalog loads again whenever the values it receives change:
+
+```js
+useCatalog({ search: "pixel", sort: "price", order: "desc", categoryId: 2 });
+```
+
+`sort` is `price` or `popularity` and `order` is `asc` or `desc`, as in `GET /api/products`. The search bar and the
+sort dropdown (SCRUM-67) go where `ProductsPage` marks them. The API client throws a `CatalogError` with the HTTP
+status when a request fails. Out-of-stock products stay in the list with an Out of stock label.
 
 ## Styles
 
