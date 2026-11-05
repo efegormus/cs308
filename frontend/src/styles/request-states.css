@@ -1,0 +1,30 @@
+.request-state {
+  box-sizing: border-box;
+  margin-block: 1rem;
+  padding: .875rem 1rem;
+  border: 1px solid var(--line, #dce0e6);
+  border-radius: .4rem;
+  background: var(--surface, #fff);
+  color: var(--fg, #222);
+  font-family: var(--font-body, Arial, sans-serif);
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+.request-state.request-state--error {
+  border-color: var(--danger, #a32b12);
+  background: var(--danger-bg, #fdecea);
+  color: var(--danger-fg, #7a1f0d);
+}
+.request-state p { margin: 0; }
+.request-state button {
+  margin-top: .75rem;
+  padding: .5rem .875rem;
+  border: 1px solid currentColor;
+  border-radius: .3rem;
+  background: var(--surface, #fff);
+  color: var(--link, #174a8b);
+  font: inherit;
+  cursor: pointer;
+}
+.request-state button:focus-visible { outline: 3px solid var(--focus, #b66d00); outline-offset: 3px; }
+.request-state button:disabled { opacity: .7; cursor: default; }
