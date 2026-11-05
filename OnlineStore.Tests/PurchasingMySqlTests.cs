@@ -217,10 +217,14 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
             await Service(db).CompleteAsync(g.Buyer.Id, Request(quote), default);
             await db.Users.Where(user => user.Id == g.Buyer.Id).ExecuteUpdateAsync(update => update.SetProperty(user => user.HomeAddress, "Later address"));
         }
+        // Force sub-microsecond precision so API/database timestamp equality is deterministic.
+        var deliveryTime = DateTimeOffset.UtcNow.AddMinutes(1);
+        deliveryTime = deliveryTime.AddTicks(7 - deliveryTime.Ticks % 10);
+        var deliveryClock = new FixedDeliveryClock(deliveryTime);
         async Task<DeliveryView> Change(int id, string target, string version)
         {
             await using var db = fixture.Create();
-            return await new DeliveryService(db, TimeProvider.System).TransitionAsync(id, new(target, version), default);
+            return await new DeliveryService(db, deliveryClock).TransitionAsync(id, new(target, version), default);
         }
         DeliveryView delivery;
         await using (var db = fixture.Create()) delivery = (await new DeliveryService(db, TimeProvider.System).ListAsync(0, default)).Items.Single();
@@ -242,6 +246,7 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         var order = await check.Orders.Include(o => o.OrderItems).SingleAsync();
         Assert.Equal("Delivered", PurchaseViews.Receipt(order).Status);
         Assert.Equal(delivered.DeliveredAt, order.DeliveredAt);
+        Assert.Equal(delivered.DeliveredAt, (await check.Deliveries.SingleAsync()).DeliveredAt);
     }
 
     [MySqlFact]
@@ -331,6 +336,11 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
             });
         }
     }
+    private sealed class FixedDeliveryClock(DateTimeOffset now) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => now;
+    }
+
     private sealed class FailSave : SaveChangesInterceptor
     {
         public override ValueTask<InterceptionResult<int>> SavingChangesAsync(DbContextEventData data,
