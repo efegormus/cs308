@@ -9,6 +9,10 @@ using OnlineStore.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
 
+// The middleware logs full exceptions; ApiExceptionHandler provides sanitized diagnostics.
+builder.Logging.AddFilter(
+    "Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
+
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
 {
