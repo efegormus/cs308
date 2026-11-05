@@ -125,6 +125,103 @@ public static class CartEndpoints
 
             return Results.Ok(await LoadAsync(db, current.Id, cancellationToken));
         }).AllowAnonymous().AddEndpointFilter<CsrfFilter>();
+
+        // POST /api/cart/merge -> moves the guest cart (found through the cookie) into the customer's cart.
+        // A hook runs it right after login (docs/authentication.md), and the redirect can cut it off, so
+        // repeating it is safe: without a guest cart it only returns the current cart.
+        cart.MapPost("/merge", async (HttpContext context, StoreDbContext db, CancellationToken cancellationToken) =>
+        {
+            if (!MayUseCart(context)) return NotForStaff();
+            var userId = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+
+            // Lock order matches checkout: customer row, then the customer's cart, then the guest cart.
+            await using var transaction = await BeginAsync(context, db, cancellationToken);
+            var customerCarts = await db.Carts.AsNoTracking()
+                .Where(c => c.State == CartState.Open && c.UserId == userId)
+                .Take(2).ToListAsync(cancellationToken);
+            if (customerCarts.Count > 1) return MergeRequired();
+            var customerFound = customerCarts.SingleOrDefault();
+
+            var token = context.Request.Cookies[GuestCookie];
+            Cart? guestFound = null;
+            if (IsValidToken(token))
+            {
+                var hash = HashToken(token!);
+                guestFound = await db.Carts.AsNoTracking().FirstOrDefaultAsync(
+                    c => c.State == CartState.Open && c.UserId == null && c.GuestTokenHash == hash, cancellationToken);
+            }
+
+            if (guestFound is null)
+            {
+                // Nothing to move. A cookie that points to no open guest cart is stale, so it is dropped.
+                if (token is not null) DeleteGuestCookie(context);
+                return Results.Ok(new CartMergeDto(
+                    customerFound is null ? CartDto.Empty : await LoadAsync(db, customerFound.Id, cancellationToken),
+                    false, Array.Empty<CartMergeConflictDto>()));
+            }
+
+            var customer = customerFound is null ? null : await LockCartAsync(db, customerFound.Id, cancellationToken);
+            var guest = await LockCartAsync(db, guestFound.Id, cancellationToken);
+            if (guest is null || (customerFound is not null && customer is null)) return CartChanged();
+
+            var guestItems = await db.CartItems.Include(item => item.Product)
+                .Where(item => item.CartId == guest.Id).OrderBy(item => item.Id).ToListAsync(cancellationToken);
+            var conflicts = new List<CartMergeConflictDto>();
+            var now = DateTime.UtcNow;
+
+            if (customer is null)
+            {
+                // The account has no open cart: the guest cart simply becomes the account cart.
+                guest.UserId = userId;
+                guest.GuestTokenHash = null;
+                guest.UpdatedAt = now;
+                foreach (var item in guestItems)
+                    if (CheckLine(item.Product, item.Quantity) is { } conflict) conflicts.Add(conflict);
+                await db.SaveChangesAsync(cancellationToken);
+                if (transaction is not null) await transaction.CommitAsync(cancellationToken);
+                DeleteGuestCookie(context);
+                return Results.Ok(new CartMergeDto(await LoadAsync(db, guest.Id, cancellationToken), true, conflicts));
+            }
+
+            var customerItems = await db.CartItems.Where(item => item.CartId == customer.Id).ToListAsync(cancellationToken);
+            var leftOver = false;
+            foreach (var item in guestItems)
+            {
+                var existing = customerItems.FirstOrDefault(line => line.ProductId == item.ProductId);
+                int quantity;
+                if (existing is not null)
+                {
+                    // Same product: add the quantities. More than the stock is kept and reported, not cut.
+                    existing.Quantity += item.Quantity;
+                    quantity = existing.Quantity;
+                }
+                else if (customerItems.Count >= MaxLines)
+                {
+                    leftOver = true;
+                    conflicts.Add(new CartMergeConflictDto(
+                        item.ProductId, item.Product.Name, "CartFull", item.Quantity, item.Product.StockQuantity));
+                    continue;
+                }
+                else
+                {
+                    var moved = new CartItem { CartId = customer.Id, ProductId = item.ProductId, Quantity = item.Quantity };
+                    db.CartItems.Add(moved);
+                    customerItems.Add(moved);
+                    quantity = item.Quantity;
+                }
+                db.CartItems.Remove(item);
+                if (CheckLine(item.Product, quantity) is { } conflict) conflicts.Add(conflict);
+            }
+
+            customer.UpdatedAt = now;
+            guest.UpdatedAt = now;
+            // A guest cart keeps its token hash (every cart needs an owner), but an Abandoned cart is never found again.
+            if (!leftOver) guest.State = CartState.Abandoned;
+            await db.SaveChangesAsync(cancellationToken);
+            if (transaction is not null) await transaction.CommitAsync(cancellationToken);
+            if (!leftOver) DeleteGuestCookie(context);
+            return Results.Ok(new CartMergeDto(await LoadAsync(db, customer.Id, cancellationToken), true, conflicts));
+        }).RequireAuthorization().AddEndpointFilter<CsrfFilter>();
     }
 
     // Guests and customers may use a cart; staff accounts are not shoppers.
@@ -211,6 +308,19 @@ public static class CartEndpoints
         });
         return cart;
     }
+
+    // Tells the customer about a line the cart cannot sell as it is. The checkout checks the stock again.
+    private static CartMergeConflictDto? CheckLine(Product product, int quantity)
+    {
+        if (!product.IsActive)
+            return new CartMergeConflictDto(product.Id, product.Name, "Unavailable", quantity, product.StockQuantity);
+        return quantity > product.StockQuantity
+            ? new CartMergeConflictDto(product.Id, product.Name, "NotEnoughStock", quantity, product.StockQuantity)
+            : null;
+    }
+
+    private static void DeleteGuestCookie(HttpContext context) =>
+        context.Response.Cookies.Delete(GuestCookie, new CookieOptions { Path = "/" });
 
     private static bool IsValidToken(string? token) =>
         token is { Length: 64 } && token.All(Uri.IsHexDigit);
