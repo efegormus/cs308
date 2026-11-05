@@ -1,0 +1,27 @@
+import { BrowserRouter, Route, Routes } from "react-router";
+import Layout from "./components/Layout.jsx";
+import CheckoutPage from "./pages/CheckoutPage.jsx";
+import DeliveriesPage from "./pages/DeliveriesPage.jsx";
+import HomePage from "./pages/HomePage.jsx";
+import LoginPage from "./pages/LoginPage.jsx";
+import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
+import ProductPage from "./pages/ProductPage.jsx";
+import ProductsPage from "./pages/ProductsPage.jsx";
+
+export default function App() {
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route element={<Layout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/products" element={<ProductsPage />} />
+          <Route path="/product" element={<ProductPage />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/checkout" element={<CheckoutPage />} />
+          <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
+          <Route path="/deliveries" element={<DeliveriesPage />} />
+        </Route>
+      </Routes>
+    </BrowserRouter>
+  );
+}
