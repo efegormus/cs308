@@ -25,7 +25,7 @@ Checkout input:
 ```json
 {
   "cartId": 123,
-  "idempotencyKey": "d08ab885-cc17-44ca-9766-08b2b2411177",
+  "idempotencyKey": "00000000-0000-0000-0000-000000000000",
   "quoteToken": "<64-character token from the latest checkout GET>",
   "payment": {
     "number": "4242424242424242",

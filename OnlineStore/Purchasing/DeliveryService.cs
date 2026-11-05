@@ -51,6 +51,7 @@ public sealed class DeliveryService(StoreDbContext db, TimeProvider clock)
         if (!Consistent(delivery) || order.PaymentStatus != PaymentStatus.Confirmed)
             throw new PurchaseException(409, "This delivery needs reconciliation before fulfillment.");
         var now = clock.GetUtcNow().UtcDateTime;
+        now = now.AddTicks(-(now.Ticks % 10)); // Match MySQL datetime(6) before persisting and returning it.
         if (!order.TransitionTo(target, now))
             throw new PurchaseException(409, "That fulfillment transition is not allowed.");
         delivery.Status = target;
