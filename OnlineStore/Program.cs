@@ -7,8 +7,13 @@ using OnlineStore.Accounts;
 using OnlineStore.Invoicing;
 using OnlineStore.Purchasing;
 using OnlineStore.Shopping;
+using OnlineStore.Errors;
 
 var builder = WebApplication.CreateBuilder(args);
+
+// The middleware logs full exceptions; ApiExceptionHandler provides sanitized diagnostics.
+builder.Logging.AddFilter(
+    "Microsoft.AspNetCore.Diagnostics.ExceptionHandlerMiddleware", LogLevel.None);
 
 var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (string.IsNullOrWhiteSpace(connectionString))
@@ -55,6 +60,9 @@ builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsN
     ? Path.Combine(builder.Environment.ContentRootPath, "App_Data", "invoices") : invoiceRoot));
 builder.Services.AddScoped<InvoiceService>();
 
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+
 var app = builder.Build();
 
 if (args.Contains(RoleCommand.Flag))
@@ -70,6 +78,7 @@ if (args.Contains(SeedCommand.Flag))
     return;
 }
 
+app.UseExceptionHandler();
 // Serve the plain HTML/CSS/JS front end from the wwwroot folder.
 app.UseDefaultFiles();
 app.UseStaticFiles();
