@@ -2,6 +2,7 @@ using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using OnlineStore.Accounts;
 using OnlineStore.Data;
+using OnlineStore.Invoicing;
 
 namespace OnlineStore.Purchasing;
 
@@ -13,10 +14,12 @@ public static class PurchaseEndpoints
         customer.MapGet("/checkout", async (ClaimsPrincipal user, CheckoutService service, CancellationToken ct) =>
             Results.Ok(await service.QuoteAsync(Owner(user), ct)));
         customer.MapPost("/checkout", async (ClaimsPrincipal user, CheckoutRequest input,
-            CheckoutService service, CancellationToken ct) =>
+            CheckoutService service, InvoiceService invoices, ILogger<InvoiceService> log, CancellationToken ct) =>
         {
             var result = await service.CompleteAsync(Owner(user), input, ct);
-            return Results.Json(result.Receipt, statusCode: result.Replayed ? 200 : 201);
+            // The purchase is already committed. An invoice failure leaves it "Pending" and a later read retries.
+            var receipt = await WithInvoiceAsync(result.Receipt, invoices, log, ct);
+            return Results.Json(receipt, statusCode: result.Replayed ? 200 : 201);
         }).AddEndpointFilter<CsrfFilter>();
         customer.MapGet("/checkout/attempts/{key:guid}", async (Guid key, ClaimsPrincipal user, StoreDbContext db, CancellationToken ct) =>
         {
@@ -36,13 +39,32 @@ public static class PurchaseEndpoints
             DeliveryService service, CancellationToken ct) => Results.Ok(await service.TransitionAsync(id, input, ct)))
             .AddEndpointFilter<CsrfFilter>();
         // The confirmation screen and SCRUM-76 share this owner-only snapshot response.
-        customer.MapGet("/orders/{id:int}", async (int id, ClaimsPrincipal user, StoreDbContext db, CancellationToken ct) =>
+        customer.MapGet("/orders/{id:int}", async (int id, ClaimsPrincipal user, StoreDbContext db,
+            InvoiceService invoices, ILogger<InvoiceService> log, CancellationToken ct) =>
         {
             var owner = Owner(user);
             var order = await db.Orders.AsNoTracking().Include(order => order.OrderItems).Include(order => order.Invoice)
                 .SingleOrDefaultAsync(order => order.Id == id && order.UserId == owner, ct);
-            return order is null ? Results.NotFound() : Results.Ok(PurchaseViews.Receipt(order));
+            return order is null ? Results.NotFound()
+                : Results.Ok(await WithInvoiceAsync(PurchaseViews.Receipt(order), invoices, log, ct));
         });
+    }
+
+    // Issues the invoice of a paid order if it is still missing (SCRUM-74). Never fails the purchase response.
+    private static async Task<PurchaseReceipt> WithInvoiceAsync(PurchaseReceipt receipt, InvoiceService invoices,
+        ILogger log, CancellationToken ct)
+    {
+        if (receipt.InvoiceStatus == "Ready" || receipt.PaymentStatus != "Confirmed") return receipt;
+        try
+        {
+            if (!await invoices.EnsureAsync(receipt.OrderId, ct)) return receipt;
+            return receipt with { InvoiceStatus = "Ready", InvoiceUrl = $"/api/customer/orders/{receipt.OrderId}/invoice" };
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            log.LogWarning(exception, "Invoice for order {OrderId} is still pending.", receipt.OrderId);
+            return receipt;
+        }
     }
 
     private static int Owner(ClaimsPrincipal user) => int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
