@@ -114,12 +114,13 @@ show the same order status immediately after the manager changes it.
   merge-required conflict rather than silently discarding one.
 - **SCRUM-73:** reuse/replace the gateway seam and mock form; never supply a
   browser-controlled paid flag or introduce a second order finalization path.
-- **SCRUM-74/75:** PDF generation/email are separate pending tasks. Checkout commits
-  a purchase without fabricating an invoice. Confirmation shows `invoiceStatus:
-  Pending` until a protected document exists, then links the agreed owner-only
-  `GET /api/customer/orders/{id}/invoice` route to be implemented by SCRUM-74.
-  It never returns the protected storage key. Generation/email retries must not
-  re-run checkout or decrement stock again.
+- **SCRUM-74:** invoice PDFs are implemented, see [invoices](invoices.md). Checkout
+  commits the purchase first and then issues the invoice; a failed generation leaves
+  `invoiceStatus: Pending` and the next order read or download retries it. The
+  response never returns the protected storage key. Generation retries never re-run
+  checkout or decrement stock again.
+- **SCRUM-75:** emailing the PDF is still pending. Use `InvoiceService.GetPdfAsync`
+  for the document instead of rendering a second copy.
 - **SCRUM-76:** reuse the owner-only order-detail response and shared confirmation
   components for history; avoid registering the same detail route twice. List
   history is still SCRUM-76.
