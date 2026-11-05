@@ -27,7 +27,7 @@ jobs:
   backend:
     # This name is a required status check in branch protection. Do not rename it.
     name: Backend build and test
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
 
     steps:
@@ -51,7 +51,7 @@ jobs:
 
   mysql-tests:
     name: MySQL integration tests
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
 
     steps:
@@ -95,7 +95,7 @@ jobs:
 
   browser-e2e:
     name: Browser end-to-end
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
       ASPNETCORE_ENVIRONMENT: Development
@@ -176,7 +176,7 @@ jobs:
 
   frontend:
     name: Frontend and script checks
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 10
 
     steps:
@@ -241,7 +241,7 @@ jobs:
 
   security:
     name: Security hygiene
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     # Report only for now: findings show up in the log without blocking merges (see docs/ci.md).
     continue-on-error: true
