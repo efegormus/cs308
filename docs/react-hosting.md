@@ -20,8 +20,8 @@ python3 scripts/dev.py frontend
 # Open http://localhost:5173 (API and legacy login assets are proxied to 5200)
 
 # Self-contained web content in a normal framework-dependent .NET publication
-dotnet publish OnlineStore -c Release -o <output>
-# Configure the normal database/email environment, then run from <output>:
+dotnet publish OnlineStore -c Release -o .local/publish
+# Configure the normal database/email environment, then run from .local/publish:
 dotnet OnlineStore.dll
 ```
 

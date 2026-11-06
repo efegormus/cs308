@@ -131,8 +131,8 @@ For a demo with one server, run `python3 scripts/dev.py frontend-build` then
 `python3 scripts/dev.py run` and use port 5200. Rebuild/restart after changing
 frontend source. The frontend helper commands do not read or pass database secrets.
 
-`dotnet publish OnlineStore -c Release -o <output>` runs the locked npm build and
-packages it under `wwwroot/spa`. Start `dotnet OnlineStore.dll` from the output
+`dotnet publish OnlineStore -c Release -o .local/publish` runs the locked npm build and
+packages it under `wwwroot/spa`. Start `dotnet OnlineStore.dll` from the `.local/publish` output
 directory with your normal environment configuration. Node is needed at build
 time, not on the runtime host. CI can reuse an already built frontend with
 `/p:SkipFrontendBuild=true`; missing `dist/index.html` then fails publishing.
