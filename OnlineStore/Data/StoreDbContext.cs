@@ -22,6 +22,7 @@ public class StoreDbContext : DbContext
     public DbSet<Cart> Carts => Set<Cart>();
     public DbSet<CartItem> CartItems => Set<CartItem>();
     public DbSet<WishlistItem> WishlistItems => Set<WishlistItem>();
+    public DbSet<InvoiceEmailDelivery> InvoiceEmailDeliveries => Set<InvoiceEmailDelivery>();
     public DbSet<Invoice> Invoices => Set<Invoice>();
     public DbSet<Delivery> Deliveries => Set<Delivery>();
     public DbSet<DeliveryItem> DeliveryItems => Set<DeliveryItem>();
@@ -74,6 +75,7 @@ public class StoreDbContext : DbContext
         modelBuilder.ApplyConfiguration(new CartItemConfiguration());
         modelBuilder.ApplyConfiguration(new WishlistItemConfiguration());
         modelBuilder.ApplyConfiguration(new InvoiceConfiguration());
+        modelBuilder.ApplyConfiguration(new InvoiceEmailDeliveryConfiguration());
         modelBuilder.ApplyConfiguration(new DeliveryConfiguration());
         modelBuilder.ApplyConfiguration(new DeliveryItemConfiguration());
         modelBuilder.ApplyConfiguration(new RatingConfiguration());
