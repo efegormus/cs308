@@ -65,8 +65,8 @@ that way. Pages without the Google Fonts link show the header text in Arial.
 | `--ring-glow` | Button hover ring | `rgba(23, 74, 139, 0.22)` | `rgba(77, 132, 224, 0.35)` |
 
 Dark values follow the visitor's system setting. Only pages with
-`<body class="auth-page">` use the dark background; `index.html` and `products.html`
-have no dark theme yet.
+`<body class="auth-page">` and the React home page use the dark background;
+`index.html` and `products.html` have no dark theme yet.
 
 ## Layout and spacing
 
@@ -109,3 +109,243 @@ Motion is CSS plus small JS helpers (`js/login.js`). Keyframes are prefixed `aut
 and the fill, and the final state is shown immediately. The masks must also come off in
 that mode: with no animation there is no `animationend`, so `.done` is never added and
 the mask would clip the focus ring.
+
+## Shared rules
+
+What the React pages have in common today, as written in `frontend/src/styles/`. Every
+page has a wrapper class, and its CSS file starts every selector with it, because all CSS
+files load at once. The login, register, home and cart pages and the request states use
+the color tokens above. `products.css` and `purchases.css` came from the old pages and
+still write their colors directly.
+
+### Type scale
+
+| Use | Font | Size | Weight |
+| --- | --- | --- | --- |
+| Logo | Poppins | 23px | 600 |
+| Header links | Poppins | 16px | 500 |
+| Login and register heading | Poppins | 28px | 600 |
+| Home heading | Poppins | `clamp(24px, 3vw, 30px)` | 600 |
+| Home category title | Poppins | 32px | 600 |
+| Home small row heading | Poppins | 18px | 600 |
+| Coverflow product name | Poppins | 16px | 600 |
+| Coverflow price | Poppins | 18px | 500 |
+| Login and register text | Open Sans | 16px | 400 |
+| Home text | Open Sans | 15px, line height 1.5 | 400 |
+| Form label, error banner | Open Sans | 14px | 600 |
+| Field error | Open Sans | 13px | 600 |
+| Coverflow stock | Open Sans | 12px | 600 |
+
+Catalog and purchase pages still use Arial: product name 1.1rem, price 1.2rem bold,
+product count 0.9rem.
+
+### Spacing
+
+| Where | Value |
+| --- | --- |
+| Login and register card padding | 36px 32px (28px 20px up to 480px wide) |
+| Login form: between fields, label to input | 18px, 6px |
+| Home `main` | max-width 1280px, 36px top, 56px bottom, at least 16px at the sides |
+| Home: between rows, row padding, bar side padding | 32px, 18px top and 16px bottom, 20px |
+| Catalog `main` | max-width 1200px, 2.5rem 1.5rem (2rem 1rem up to 480px wide) |
+| Product grid gap, product card padding | 1.25rem, 1.25rem |
+| Purchase card padding | `clamp(1rem, 3vw, 2rem)` |
+| Cart: between lines, line padding | 0.75rem, 0.75rem 1rem |
+
+### Buttons, cards and forms
+
+| Pattern | Rule |
+| --- | --- |
+| Primary button (login, register) | Height 48px, full width, radius 6px, `--accent`, Poppins 16px 500 |
+| Plain button (catalog) | Padding 0.75rem 1rem, radius 0.4rem, white background, 1px `#b9c4d2` border, text `#174a8b` |
+| Checkout button (cart) | Padding 0.625rem 1.25rem, radius 0.4rem, `--accent`, weight 600 |
+| Coverflow arrow | 44px circle, `--surface`, 1px `--line` border, fills with `--accent` on hover |
+| Login card | Max-width 420px, radius 10px, 1px `--line` border, `--shadow` |
+| Product card | Radius 0.6rem, 1px `#dce0e6` border, white |
+| Purchase card | Radius 0.6rem, 1px `#dce0e6` border, white |
+| Cart line | Radius 0.5rem, 1px `--line` border, `--surface` |
+| Coverflow row, card | Radius 12px with `--shadow`, radius 10px with `--card-shadow` at the front |
+| Login input | Height 44px, radius 6px, 1px `--field-line` border, 16px text |
+| Purchase input | Padding 0.75rem, radius 0.3rem, 1px `#9ba9b9` border |
+| Home sort dropdown | Height 40px, min-width 190px, radius 8px, 1px `--field-line` border, 14px text |
+| Focus ring | 3px outline, `--focus` (`#b66d00` on catalog and purchase pages). Offset 2px on login and purchase inputs, 3px on home, cart and request states, 4px on catalog links and buttons |
+
+### Loading, empty and error states
+
+`components/RequestStates.js` and `styles/request-states.css` hold the shared parts.
+
+| State | Rule |
+| --- | --- |
+| Loading | `LoadingState`: `role="status"`, a short label such as "Loading your cart…". The product list has its own status line, "Loading products…" |
+| Error | `ErrorState`: `role="alert"`, a safe message from `normalizeRequestError`, and a "Try again" button when the page passes `onRetry`. It uses `--danger`, `--danger-bg` and `--danger-fg` |
+| Empty | Plain text. "Your cart is empty." with a link to the products, "No deliveries yet.", "No products available in this category yet." on the product list, "No products in this category yet." on a home row, "No products available yet. Please check back soon." when the catalog has nothing |
+
+## Home page coverflow
+
+The home page (SCRUM-56) stacks one row per category, and each row sorts on its own. The
+approved source for its behavior and motion is the
+[prototype](design/home-coverflow-prototype.html), a single file to open in a browser. The
+code is `components/CategoryCoverflow.jsx`, `components/ViewCursor.jsx`, `lib/coverflow.js`
+and `styles/home.css`.
+
+### Layout
+
+- "Shop by category" and one line of text, then the rows.
+- A row is a bar (small heading, sort dropdown), the track with the arrows on top of it,
+  and a count line such as "2 / 5 · iPhone 15".
+- At rest the first card sits beside the category panel: icon, name, product count and a
+  "Browse tablets" link to `/products#category-<id>`. Moving forward, the cards slide over
+  the panel, the front card reaches the center at the second product, and the small heading
+  appears in the bar.
+- When the track is narrower than 700px there is no panel, so no Browse link either; the
+  header's Products link stays. The small heading is always shown.
+
+### Sorting
+
+| Choice | Request | Order |
+| --- | --- | --- |
+| Best sellers (default) | `?categoryId=<id>&sort=popularity` | Units sold, highest first, then name |
+| Price: low to high | `?categoryId=<id>&sort=price&order=asc` | Then name |
+| Price: high to low | `?categoryId=<id>&sort=price&order=desc` | Then name |
+
+The server sorts, because popularity only exists there. A new sort cancels the row's
+previous request. The cards stay in place until the new order arrives, then slide to it one
+after another and the row returns to its first product. If that request fails, the error
+state replaces the cards. A failure in one row leaves the others alone.
+
+### Interactions
+
+| Input | Result |
+| --- | --- |
+| Arrow button | Moves one product. Invisible and disabled at the end of the row |
+| Click on a side card | Brings it to the front, stays on the page |
+| Click or Enter on the front card | Opens `/product?id=<id>` |
+| Touchpad swipe, Shift + wheel | The row follows in real time, with no threshold, and settles on the nearest product. A vertical wheel scrolls the page |
+| Mouse drag, finger swipe | The row follows after the threshold, and a quick flick carries on. The click after a drag is swallowed |
+| Tab | Sort dropdown, track, Browse link while it is uncovered, front card, arrows. Only the front card of a row is a Tab stop |
+| Left, Right, Home, End on the track or a card | Move the row. With the focus on a card, it moves to the new front card |
+
+### Following values
+
+| Value | Setting |
+| --- | --- |
+| One product of movement | Card width + 12px |
+| Touchpad settles | 140ms after the last wheel event |
+| Past either end | Moves at 0.3 of the input, raw wheel value limited to 0.6 past the end |
+| Drag threshold | 6px |
+| Flick | Position − velocity × 160ms, at most 2 products from where the drag started |
+
+### Geometry
+
+| Value | Wide | Track under 700px |
+| --- | --- | --- |
+| Card | 220 × 312px | 168 × 252px |
+| Gap to the neighbor | 12px | 12px |
+| Spacing of cards further away | 72px | 40px |
+| First card's rest position | 290px | 16px |
+| Track height | Card height + 64px | Card height + 64px |
+| Card top | 28px | 28px |
+
+`pos` is the row's position as a real number, and `d` is a card's distance from it.
+
+| Value | Formula |
+| --- | --- |
+| Anchor | `lerp(rest, center, clamp(pos, 0, 1))` |
+| Card x, `\|d\|` up to 1 | `anchor + d × (cardW + 12)` |
+| Card x, further away | `anchor + sign(d) × ((cardW + 12) + (\|d\| − 1) × spacing)` |
+| Turn | `rotateY(−sign(d) × 55° × min(\|d\|, 1)) scale(1 − 0.04 × min(\|d\|, 1))` |
+| Turning edge | Left for `d ≥ 0`, right for `d < 0` |
+| Brightness | `clamp(1 − 0.06 × min(\|d\|, 1) − 0.035 × max(\|d\| − 1, 0), 0.76, 1)` |
+| Z-index | `1000 − round(\|d\| × 20)` |
+| Panel | Opacity `1 − cover × 1.6`, moves `−28px × cover`, where `cover = clamp(pos, 0, 1)` |
+| Small heading | Opacity `(cover − 0.25) × 2`, comes in from −10px |
+| Halo, floor | Halo 2.2 × card width, centered on the anchor. Floor card width − 20px, 6px under the card |
+
+### Motion
+
+`ease-out` is `cubic-bezier(0.22, 1, 0.36, 1)`. Keyframes start with `home-`, because they
+cannot be scoped to `.home-page`. No animation library is used.
+
+| Effect | Duration | Delay | Curve |
+| --- | --- | --- | --- |
+| Heading and text `home-reveal-up` | 0.85s | 120ms + i × 110ms | ease-out |
+| Row `home-row-in` | 0.7s | 260ms + row × 160ms | ease-out |
+| Card `home-card-in`, i in id order | 0.8s | 420ms + row × 160ms + i × 80ms | ease-out |
+| Card `left`, `transform` | 0.55s | After a new sort, position × 45ms | ease-out |
+| Card `filter` | 0.55s | After a new sort, position × 45ms | ease |
+| Halo `left`, `width`; floor `left` | 0.55s | 0 | ease-out |
+| Panel `opacity`, `transform` | 0.35s, 0.55s | 0 | ease, ease-out |
+| Small heading `opacity`, `transform` | 0.32s, 0.45s | 0 | ease, ease-out |
+| Card face `box-shadow`, `border-color` | 0.5s, 0.3s | 0 | ease |
+| Count line `home-count-in` | 0.4s | 0 | ease-out |
+| Arrow colors, `opacity`, `transform` | 0.18s, 0.2s, 0.18s | 0 | ease, ease, ease-out |
+
+While a finger or touchpad moves the row (`.dragging`), cards, halo, floor, panel and small
+heading have no transition and follow directly. Card entrances start when the row's
+products arrive, so a slow answer delays them.
+
+The front card's border turns `--accent` on hover. The `translateY(-4px)` rule beside it
+has no visible effect, in the prototype as well: the entrance animation fills forwards, and
+its `transform: none` wins over the hover rule.
+
+### VIEW cursor
+
+One 76px circle per page. It only runs on `(hover: hover) and (pointer: fine)` devices,
+replaces the normal pointer on a row's front card, and is hidden during a drag. The login
+page's button spotlight is not used here.
+
+| Part | Grows | Shrinks |
+| --- | --- | --- |
+| Circle `transform` | 0.42s `cubic-bezier(0.34, 1.45, 0.5, 1)` | 0.26s `cubic-bezier(0.4, 0, 1, 1)` |
+| Word `opacity` | 0.2s ease, after 0.14s | 0.12s ease |
+| Word `transform` | 0.32s ease-out, after 0.12s | 0.2s ease |
+
+It follows the pointer with a lerp of 0.28 per frame. It looks for the front card every
+frame, so it also reacts when a card slides under a still pointer.
+
+### Reduced motion
+
+`prefers-reduced-motion: reduce` turns off every animation and transition on the page. Side
+cards scale with `scale(1 − 0.08 × min(|d|, 1))` instead of turning, and the VIEW circle
+sits on the pointer (lerp 1).
+
+### Home tokens
+
+They sit on `.home-page` in `home.css`. `--home-ok` is separate from `--ok` because `--ok`
+is a button fill. On a dark card, `#238636` is too dim for 12px text.
+
+| Token | Purpose | Light | Dark |
+| --- | --- | --- | --- |
+| `--home-ok` | In-stock text | `#1a7f37` | `#3fb950` |
+| `--card-shadow` | Front card shadow | `0 22px 44px rgba(31, 41, 55, 0.18)` | `0 22px 44px rgba(0, 0, 0, 0.55)` |
+| `--placeholder` | Image area, icon background | `#eef0f3` | `#222c3a` |
+| `--placeholder-fg` | Placeholder icon and text | `#7b8594` | `#8794a6` |
+| `--halo` | Light behind the front card | `rgba(23, 74, 139, 0.13)` | `rgba(77, 132, 224, 0.22)` |
+| `--floor` | Shadow under the front card | `rgba(31, 41, 55, 0.22)` | `rgba(0, 0, 0, 0.45)` |
+| `--view-bg` | VIEW circle | `#111418` | `#f3f5f8` |
+| `--view-fg` | VIEW word | `#ffffff` | `#111418` |
+
+### Rules for changing the code
+
+- **No renders while moving.** The position is a real number outside React state, and
+  styles are written directly in `requestAnimationFrame`. A wheel gesture or drag causes 0
+  renders while it moves and 1 when the row settles on another product.
+- **Only real changes reach React.** A `setState` with the same value stays queued and
+  causes an empty extra commit at the next update, so the row checks first.
+- **Cards keep their DOM order.** They render in id order, and only their positions follow
+  the sort. Moving a node in the DOM cancels its transition and replays its entrance.
+- **Every card is always a link.** Changing the element when a card comes to the front
+  would recreate the node, and it would jump instead of sliding.
+
+### Differences from the prototype
+
+- The panel link says "Browse tablets", not "See all tablets", because
+  `scripts/verify_catalog_browser.py` follows that link.
+- The prototype's `press` animation is gone: in the store the front card opens the product.
+- Added because the prototype has no such cases: real product images (`object-fit: contain`,
+  and the placeholder when one is missing or fails), a neutral icon for other categories,
+  and loading, error and empty rows that keep the row's height.
+- Keyboard and pointer fixes with no visual change: Tab skips a covered Browse link, a
+  disabled arrow hands its focus to the track, Alt + arrow stays the browser's shortcut, and
+  a mouse button released outside the row ends the drag.
+- The store's real header and footer replace the prototype's copies.
