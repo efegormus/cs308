@@ -2,14 +2,14 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
-import { fetchCart, removeCartItem } from "../lib/cart-api.js";
+import { fetchCart, MAX_LINE_QUANTITY, removeCartItem, setCartItemQuantity } from "../lib/cart-api.js";
 import { loginHref } from "../lib/auth-utils.js";
 import { formatPrice, safeImageUrl } from "../lib/product-display.js";
 import { useRequest } from "../lib/useRequest.js";
 import "../styles/request-states.css";
 import "../styles/cart.css";
 
-function CartLine({ line, removing, onRemove }) {
+function CartLine({ line, busy, onRemove, onQuantity }) {
   const image = safeImageUrl(line.imageUrl);
   return (
     <li className="cart-line">
@@ -18,7 +18,14 @@ function CartLine({ line, removing, onRemove }) {
       </div>
       <div className="cart-line-info">
         <Link to={`/product?id=${line.productId}`}>{line.name}</Link>
-        <p>{formatPrice(line.unitPrice)} &times; {line.quantity}</p>
+        <p>{formatPrice(line.unitPrice)} each</p>
+        <div className="cart-quantity" role="group" aria-label={`Quantity of ${line.name}`}>
+          <button type="button" disabled={busy || line.quantity <= 1} aria-label={`Decrease quantity of ${line.name}`}
+            onClick={() => onQuantity(line, line.quantity - 1)}>&minus;</button>
+          <output aria-live="polite">{line.quantity}</output>
+          <button type="button" disabled={busy || line.quantity >= Math.min(line.stockQuantity, MAX_LINE_QUANTITY)}
+            aria-label={`Increase quantity of ${line.name}`} onClick={() => onQuantity(line, line.quantity + 1)}>+</button>
+        </div>
         {!line.available && (
           <p className="cart-line-warning" role="status">
             This item is no longer available in the quantity you chose. Remove it before checkout.
@@ -26,7 +33,7 @@ function CartLine({ line, removing, onRemove }) {
         )}
       </div>
       <p className="cart-line-total">{formatPrice(line.lineTotal)}</p>
-      <button type="button" disabled={removing} onClick={() => onRemove(line)}
+      <button type="button" className="cart-remove" disabled={busy} onClick={() => onRemove(line)}
         aria-label={`Remove ${line.name} from the cart`}>
         Remove
       </button>
@@ -53,26 +60,31 @@ export default function CartPage() {
     if (status === "success") setCart(data);
   }, [status, data]);
 
-  async function handleRemove(line) {
+  // Runs one change of a line. A token from before a login or logout is refused with 400: get a new one, try once more.
+  async function change(line, send) {
     setRemovingId(line.productId);
     setRemoveError(null);
     try {
       let result;
       try {
-        result = await removeCartItem(line.productId, await csrfToken());
+        result = await send(await csrfToken());
       } catch (failure) {
         if (failure?.status !== 400) throw failure;
-        // A token from before a login or logout is refused with 400: get a new one and try once more.
         await refreshCsrf();
-        result = await removeCartItem(line.productId, await csrfToken());
+        result = await send(await csrfToken());
       }
       setCart(result);
     } catch (failure) {
       setRemoveError(failure);
+      // The stock or the cart changed under us: show what the server has now.
+      if (failure?.status === 404 || failure?.status === 409) void load();
     } finally {
       setRemovingId(null);
     }
   }
+
+  const handleRemove = line => change(line, token => removeCartItem(line.productId, token));
+  const handleQuantity = (line, quantity) => change(line, token => setCartItemQuantity(line.productId, quantity, token));
 
   const empty = cart !== null && cart.items.length === 0;
   const blocked = cart !== null && cart.items.some(line => !line.available);
@@ -95,8 +107,8 @@ export default function CartPage() {
             <>
               <ul className="cart-lines">
                 {cart.items.map(line => (
-                  <CartLine key={line.productId} line={line} removing={removingId === line.productId}
-                    onRemove={handleRemove} />
+                  <CartLine key={line.productId} line={line} busy={removingId === line.productId}
+                    onRemove={handleRemove} onQuantity={handleQuantity} />
                 ))}
               </ul>
               <p className="cart-total">
