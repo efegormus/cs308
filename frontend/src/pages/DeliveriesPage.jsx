@@ -1,7 +1,9 @@
+import { Link, useLocation } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
+import { loginHref } from "../lib/auth-utils.js";
 import { fetchDeliveries, transitionDelivery } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
 import { useRequest } from "../lib/useRequest.js";
@@ -28,6 +30,7 @@ function DeliveryCard({ delivery, busy, onTransition }) {
 }
 function Deliveries() {
   const { csrfToken } = useAuth();
+  const location = useLocation();
   const read = useRequest();
   const mutation = useRequest();
   const [items, setItems] = useState([]);
@@ -47,6 +50,8 @@ function Deliveries() {
         : [...new Map([...previous, ...result.data.items].map(item => [item.id, item])).values()]);
       setCursor(result.data.nextAfterId);
       setLoaded(true);
+    } else if (result.status === "error" && [401, 403].includes(result.error.status)) {
+      setItems([]); setLoaded(false);
     }
     busy.current = false;
   }, [read.run, mutation.reset]);
@@ -61,6 +66,8 @@ function Deliveries() {
     if (result.status === "success") {
       setItems(previous => previous.map(item => item.id === delivery.id ? result.data : item));
       setNotice(`Delivery #${delivery.id} updated.`);
+    } else if (result.status === "error" && [401, 403].includes(result.error.status)) {
+      setItems([]); setLoaded(false);
     }
     // Lost responses/stale versions require a GET refresh. Never retry a transition automatically.
     busy.current = false;
@@ -70,10 +77,11 @@ function Deliveries() {
     {read.status === "loading" && <LoadingState label="Loading deliveries…" />}
     <ErrorState error={read.error} onRetry={() => load(lastCursor.current)} />
     <ErrorState error={mutation.error} />
+    {(read.error?.status === 401 || mutation.error?.status === 401) && <p><Link to={loginHref(location)}>Log in again</Link></p>}
     {notice && <p role="status">{notice}</p>}
     <button id="retry" type="button" disabled={disabled} onClick={() => load()}>Refresh deliveries</button>
     {loaded && items.length === 0 && <p role="status">No deliveries yet.</p>}
-    <div id="deliveries">{items.map(item => <DeliveryCard key={item.id} delivery={item} busy={disabled} onTransition={transition} />)}</div>
+    <div id="deliveries">{items.map(item => <DeliveryCard key={item.id} delivery={item} busy={disabled || read.status === "error" || mutation.status === "error"} onTransition={transition} />)}</div>
     {cursor !== null && <button id="more" type="button" disabled={disabled} onClick={() => load(cursor)}>Load more deliveries</button>}
   </>;
 }

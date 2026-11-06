@@ -1,9 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router";
+import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import PurchaseLines from "../components/PurchaseLines.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
+import { loginHref } from "../lib/auth-utils.js";
 import { browserAttemptStore } from "../lib/checkout-attempt.js";
 import { fetchQuote, recoverPurchase, submitCheckout } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
@@ -13,6 +14,7 @@ import "../styles/request-states.css";
 function Checkout({ account }) {
   const { csrfToken, cartMergeConflicts } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
   const [attempts] = useState(() => browserAttemptStore(account.id));
   const read = useRequest();
   const payment = useRequest();
@@ -63,7 +65,8 @@ function Checkout({ account }) {
         const definite = [400, 402, 409].includes(result.error.status);
         if (definite) attempts.clear();
         setUncertain(!definite);
-        if (result.error.status === 409) setNeedsReview(true);
+        if ([401, 403].includes(result.error.status)) read.reset();
+        if ([401, 403, 409].includes(result.error.status)) setNeedsReview(true);
       }
       // A cancelled request (navigation/unmount) keeps its submitted key for recovery on the next visit.
     } finally {
@@ -79,6 +82,7 @@ function Checkout({ account }) {
     {(read.status === "idle" || read.status === "loading") && <LoadingState label="Loading checkout…" />}
     <ErrorState error={read.error} onRetry={load} />
     <ErrorState error={payment.error} />
+    {(read.error?.status === 401 || payment.error?.status === 401) && <p><Link to={loginHref(location)}>Log in again</Link></p>}
     {(uncertain || needsReview) && <p>
       <button id="retry" type="button" disabled={busy || read.status === "loading"} onClick={load}>
         {uncertain ? "Check purchase status" : "Reload checkout"}

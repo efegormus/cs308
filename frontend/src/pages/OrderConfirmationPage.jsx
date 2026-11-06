@@ -1,8 +1,9 @@
 import { useCallback, useEffect } from "react";
-import { useSearchParams } from "react-router";
+import { Link, useLocation, useSearchParams } from "react-router";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import PurchaseLines from "../components/PurchaseLines.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
+import { loginHref } from "../lib/auth-utils.js";
 import { fetchReceipt } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
 import { useRequest } from "../lib/useRequest.js";
@@ -11,11 +12,13 @@ import "../styles/request-states.css";
 const date = value => value ? new Date(value).toLocaleString() : "Unknown";
 function Receipt({ orderId }) {
   const { status, data, error, run, cancel } = useRequest();
+  const location = useLocation();
   const load = useCallback(() => run(({ signal }) => fetchReceipt(orderId, { signal })), [orderId, run]);
   useEffect(() => { void load(); return cancel; }, [load, cancel]);
   return <>
     {(status === "idle" || status === "loading") && <LoadingState label="Loading order…" />}
     <ErrorState error={error} onRetry={load} />
+    {error?.status === 401 && <p><Link to={loginHref(location)}>Log in again</Link></p>}
     {data && <section id="receipt" className="purchase-card" aria-label="Purchase receipt">
       <p id="order-status">{data.status} · Payment: {data.paymentStatus} · {date(data.purchasedAt)}</p>
       <p id="order-address" className="snapshot-address">{data.name} · {data.address}</p>
