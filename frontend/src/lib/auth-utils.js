@@ -1,4 +1,4 @@
-// Pure helpers for the login page and the shared header. No DOM and no network, so Node can test them.
+// Pure helpers for the login and register pages and the shared header. No DOM and no network, so Node can test them.
 const LOGIN_PATH = "/login";
 const REGISTER_PATH = "/register";
 const MAX_RETURN_URL_LENGTH = 2048;

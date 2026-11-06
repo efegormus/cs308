@@ -92,6 +92,7 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
   }, []);
 
   const startLockout = useCallback(seconds => {
+    if (!mounted.current) return; // The visitor left while the request was running, so nothing would clear the timer.
     let left = seconds;
     setSecondsLeft(left);
     setButtonState("locked");
