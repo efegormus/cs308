@@ -59,6 +59,18 @@ var invoiceRoot = builder.Configuration["Invoices:StoragePath"];
 builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsNullOrWhiteSpace(invoiceRoot)
     ? Path.Combine(builder.Environment.ContentRootPath, "App_Data", "invoices") : invoiceRoot));
 builder.Services.AddScoped<InvoiceService>();
+builder.Services.AddScoped<InvoiceEmailOutbox>();
+builder.Services.AddScoped<InvoiceEmailDispatcher>();
+var emailTransport = builder.Configuration["Email:Transport"] ?? (builder.Environment.IsDevelopment() ? "Local" : "Smtp");
+if (emailTransport.Equals("Local", StringComparison.OrdinalIgnoreCase))
+{
+    builder.Services.AddSingleton<LocalInvoiceEmailSender>();
+    builder.Services.AddSingleton<IInvoiceEmailSender>(s => s.GetRequiredService<LocalInvoiceEmailSender>());
+}
+else if (emailTransport.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+    builder.Services.AddScoped<IInvoiceEmailSender, SmtpInvoiceEmailSender>();
+else throw new InvalidOperationException("Email:Transport must be Local or Smtp.");
+builder.Services.AddHostedService<InvoiceEmailBackgroundService>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();

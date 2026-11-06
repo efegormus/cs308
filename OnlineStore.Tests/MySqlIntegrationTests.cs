@@ -51,6 +51,7 @@ public sealed class MySqlFixture : IAsyncLifetime
         await db.CartItems.ExecuteDeleteAsync();
         await db.DeliveryItems.ExecuteDeleteAsync();
         await db.Deliveries.ExecuteDeleteAsync();
+        await db.InvoiceEmailDeliveries.ExecuteDeleteAsync();
         await db.Invoices.ExecuteDeleteAsync();
         await db.Payments.ExecuteDeleteAsync();
         await db.DiscountProducts.ExecuteDeleteAsync();

@@ -119,8 +119,12 @@ show the same order status immediately after the manager changes it.
   `invoiceStatus: Pending` and the next order read or download retries it. The
   response never returns the protected storage key. Generation retries never re-run
   checkout or decrement stock again.
-- **SCRUM-75:** emailing the PDF is still pending. Use `InvoiceService.GetPdfAsync`
-  for the document instead of rendering a second copy.
+- **SCRUM-75:** after commit, enqueue one invoice email using the purchase-time email snapshot.
+  Queue failures never fail the purchase response; the worker reconciles missing rows.
+  Durable leases and capped transient retries operate only on email delivery, never checkout/payment.
+  Permanent/configuration failures stop for manual intervention. Existing emailed invoices are skipped;
+  a poison historical record cannot block dispatch of valid pending deliveries.
+  See [invoice email configuration and lifecycle](invoices.md#invoice-email-delivery-scrum-75).
 - **SCRUM-76:** reuse the owner-only order-detail response and shared confirmation
   components for history; avoid registering the same detail route twice. List
   history is still SCRUM-76.

@@ -497,6 +497,67 @@ namespace OnlineStore.Data.Migrations
                     b.ToTable("Invoices", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineStore.Models.InvoiceEmailDelivery", b =>
+                {
+                    b.Property<int>("OrderId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("AttemptCount")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("LastAttemptAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastErrorCode")
+                        .HasMaxLength(40)
+                        .HasColumnType("varchar(40)");
+
+                    b.Property<string>("LeaseToken")
+                        .HasMaxLength(32)
+                        .HasColumnType("varchar(32)");
+
+                    b.Property<DateTime?>("LeaseUntil")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime>("NextAttemptAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RecipientSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(254)
+                        .HasColumnType("varchar(254)");
+
+                    b.Property<DateTime?>("SentAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTime?>("StoppedAt")
+                        .HasPrecision(6)
+                        .HasColumnType("datetime(6)");
+
+                    b.HasKey("OrderId");
+
+                    b.HasIndex("SentAt", "StoppedAt", "NextAttemptAt", "LeaseUntil");
+
+                    b.ToTable("InvoiceEmailDeliveries", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Attempts", "`AttemptCount` >= 0");
+
+                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Lease", "(`LeaseUntil` IS NULL) = (`LeaseToken` IS NULL)");
+
+                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Recipient", "CHAR_LENGTH(`RecipientSnapshot`) > 0");
+
+                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Stopped", "`StoppedAt` IS NULL OR (`SentAt` IS NULL AND `LeaseUntil` IS NULL AND `LastErrorCode` IS NOT NULL)");
+                        });
+                });
+
             modelBuilder.Entity("OnlineStore.Models.Notification", b =>
                 {
                     b.Property<int>("Id")
@@ -1212,6 +1273,15 @@ namespace OnlineStore.Data.Migrations
                         .IsRequired();
 
                     b.Navigation("Order");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.InvoiceEmailDelivery", b =>
+                {
+                    b.HasOne("OnlineStore.Models.Order", null)
+                        .WithOne()
+                        .HasForeignKey("OnlineStore.Models.InvoiceEmailDelivery", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Notification", b =>
