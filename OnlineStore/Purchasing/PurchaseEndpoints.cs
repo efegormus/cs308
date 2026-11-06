@@ -14,9 +14,12 @@ public static class PurchaseEndpoints
         customer.MapGet("/checkout", async (ClaimsPrincipal user, CheckoutService service, CancellationToken ct) =>
             Results.Ok(await service.QuoteAsync(Owner(user), ct)));
         customer.MapPost("/checkout", async (ClaimsPrincipal user, CheckoutRequest input,
-            CheckoutService service, InvoiceService invoices, ILogger<InvoiceService> log, CancellationToken ct) =>
+            CheckoutService service, InvoiceService invoices, InvoiceEmailOutbox outbox, ILogger<InvoiceService> log, CancellationToken ct) =>
         {
             var result = await service.CompleteAsync(Owner(user), input, ct);
+            // Separate from checkout/payment: reconciliation repairs any post-commit enqueue failure.
+            try { await outbox.EnqueueAsync(result.Receipt.OrderId, CancellationToken.None); }
+            catch (Exception) { log.LogWarning("Invoice email enqueue deferred for order {OrderId}.", result.Receipt.OrderId); }
             // The purchase is already committed. An invoice failure leaves it "Pending" and a later read retries.
             var receipt = await WithInvoiceAsync(result.Receipt, invoices, log, ct);
             return Results.Json(receipt, statusCode: result.Replayed ? 200 : 201);
@@ -62,7 +65,7 @@ public static class PurchaseEndpoints
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            log.LogWarning(exception, "Invoice for order {OrderId} is still pending.", receipt.OrderId);
+            log.LogWarning("Invoice for order {OrderId} is still pending.", receipt.OrderId);
             return receipt;
         }
     }
