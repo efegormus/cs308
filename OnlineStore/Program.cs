@@ -8,6 +8,7 @@ using OnlineStore.Invoicing;
 using OnlineStore.Purchasing;
 using OnlineStore.Shopping;
 using OnlineStore.Errors;
+using OnlineStore.Hosting;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -74,6 +75,7 @@ builder.Services.AddHostedService<InvoiceEmailBackgroundService>();
 
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<ApiExceptionHandler>();
+builder.Services.AddReactHosting();
 
 var app = builder.Build();
 
@@ -91,9 +93,7 @@ if (args.Contains(SeedCommand.Flag))
 }
 
 app.UseExceptionHandler();
-// Serve the plain HTML/CSS/JS front end from the wwwroot folder.
-app.UseDefaultFiles();
-app.UseStaticFiles();
+app.UseReactHosting();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();

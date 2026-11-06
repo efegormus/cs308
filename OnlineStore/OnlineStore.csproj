@@ -19,4 +19,18 @@
     <PackageReference Include="QuestPDF" Version="2026.8.0" />
   </ItemGroup>
 
+  <!-- Backend builds/tests stay independent of Node. Publish builds and packages the locked React app. -->
+  <Target Name="PublishReact" BeforeTargets="ComputeFilesToPublish" Condition="'$(DesignTimeBuild)' != 'true'">
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)/../frontend" Command="npm ci" Condition="'$(SkipFrontendBuild)' != 'true'" />
+    <Exec WorkingDirectory="$(MSBuildProjectDirectory)/../frontend" Command="npm run build" Condition="'$(SkipFrontendBuild)' != 'true'" />
+    <Error Condition="!Exists('$(MSBuildProjectDirectory)/../frontend/dist/index.html')" Text="React dist/index.html is missing. Build frontend before using SkipFrontendBuild." />
+    <ItemGroup>
+      <_ReactDist Include="$(MSBuildProjectDirectory)/../frontend/dist/**/*" />
+      <ResolvedFileToPublish Include="@(_ReactDist)">
+        <RelativePath>wwwroot/spa/%(RecursiveDir)%(Filename)%(Extension)</RelativePath>
+        <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        <ExcludeFromSingleFile>true</ExcludeFromSingleFile>
+      </ResolvedFileToPublish>
+    </ItemGroup>
+  </Target>
 </Project>
