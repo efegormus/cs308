@@ -1,5 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router";
 import Layout from "./components/Layout.jsx";
+import CartPage from "./pages/CartPage.jsx";
 import CheckoutPage from "./pages/CheckoutPage.jsx";
 import DeliveriesPage from "./pages/DeliveriesPage.jsx";
 import HomePage from "./pages/HomePage.jsx";
@@ -16,6 +17,7 @@ export default function App() {
           <Route path="/" element={<HomePage />} />
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/product" element={<ProductPage />} />
+          <Route path="/cart" element={<CartPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmationPage />} />

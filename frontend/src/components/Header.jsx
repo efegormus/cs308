@@ -42,7 +42,7 @@ export default function Header() {
           <nav className="nav" aria-label="Main navigation">
             <NavLink to="/" end>Home</NavLink>
             <NavLink to="/products" end>Products</NavLink>
-            <a href="#">Cart</a>
+            <NavLink to="/cart" end>Cart</NavLink>
             <NavLink to="/checkout" end>Checkout</NavLink>
             {account?.role === "ProductManager" && <NavLink to="/deliveries" end>Deliveries</NavLink>}
             {account ? (
