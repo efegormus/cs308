@@ -1,4 +1,4 @@
-// Pure helpers for the login page and the shared header. No DOM and no network, so Node can test them.
+// Pure helpers for the login and register pages and the shared header. No DOM and no network, so Node can test them.
 const LOGIN_PATH = "/login";
 const REGISTER_PATH = "/register";
 const MAX_RETURN_URL_LENGTH = 2048;
@@ -53,6 +53,79 @@ export function validateEmail(value) {
 // The password policy is not enforced or revealed here. Only an empty value is an error.
 export function validatePassword(value) {
   return value ? "" : "Enter your password.";
+}
+
+// The register form, top to bottom. confirmPassword is only checked here and is never sent to the API.
+export const REGISTER_FIELDS = ["name", "email", "password", "confirmPassword", "taxId", "homeAddress"];
+const REGISTER_API_FIELDS = ["name", "email", "password", "taxId", "homeAddress"];
+
+// The limits are the ones in OnlineStore/Accounts/CustomerProfile.cs and PasswordService.cs. The backend trims a
+// value before it counts the length, except the password.
+export function validateName(value) {
+  const name = String(value ?? "").trim();
+  if (!name) return "Enter your full name.";
+  return name.length > 100 ? "Use at most 100 characters." : "";
+}
+
+// The backend's check is stricter than validateEmail. Its 400 answer is shown under the field.
+export function validateRegisterEmail(value) {
+  const message = validateEmail(value);
+  if (message) return message;
+  return String(value).trim().length > 254 ? "Use at most 254 characters." : "";
+}
+
+export function validateNewPassword(value) {
+  const length = String(value ?? "").length;
+  return length >= 12 && length <= 128 ? "" : "Use a password between 12 and 128 characters.";
+}
+
+export function validateConfirmPassword(password, confirmPassword) {
+  if (!confirmPassword) return "Confirm your password.";
+  return password === confirmPassword ? "" : "Passwords do not match.";
+}
+
+// TC kimlik number: 11 digits, the first is not 0, and the last two are check digits. The backend only requires a
+// value of at most 64 characters for now.
+export function validateTaxId(value) {
+  const taxId = String(value ?? "").trim();
+  if (!taxId) return "Enter your tax ID.";
+  const invalid = "Enter a valid 11-digit TC kimlik number.";
+  if (!/^[1-9][0-9]{10}$/.test(taxId)) return invalid;
+  const digits = [...taxId].map(Number);
+  const odd = digits[0] + digits[2] + digits[4] + digits[6] + digits[8];
+  const even = digits[1] + digits[3] + digits[5] + digits[7];
+  // odd * 7 - even can be negative, and % keeps the sign in JavaScript.
+  const tenth = (((odd * 7 - even) % 10) + 10) % 10;
+  const eleventh = (odd + even + digits[9]) % 10;
+  return digits[9] === tenth && digits[10] === eleventh ? "" : invalid;
+}
+
+export function validateHomeAddress(value) {
+  const address = String(value ?? "").trim();
+  if (!address) return "Enter your home address.";
+  return address.length > 1000 ? "Use at most 1000 characters." : "";
+}
+
+// Returns one message per field. An empty message means the field is valid.
+export function validateRegistration(values) {
+  return {
+    name: validateName(values.name),
+    email: validateRegisterEmail(values.email),
+    password: validateNewPassword(values.password),
+    confirmPassword: validateConfirmPassword(values.password, values.confirmPassword),
+    taxId: validateTaxId(values.taxId),
+    homeAddress: validateHomeAddress(values.homeAddress)
+  };
+}
+
+// Reads the field messages from a 400 answer of POST /api/auth/register. A CSRF failure has none, so it gives {}.
+export function registerFieldErrors(problem) {
+  const errors = {};
+  for (const field of REGISTER_API_FIELDS) {
+    const messages = problem?.errors?.[field];
+    if (Array.isArray(messages) && typeof messages[0] === "string" && messages[0]) errors[field] = messages[0];
+  }
+  return errors;
 }
 
 export const NETWORK_ERROR = "Could not reach the server. Check your connection and try again.";

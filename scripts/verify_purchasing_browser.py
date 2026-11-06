@@ -55,7 +55,7 @@ def verify(url, assembly, executable=None, report=None):
             page.on("request", lambda request: checkout_posts.append(1)
                     if request.method == "POST" and request.url.split("?")[0].endswith("/api/customer/checkout") else None)
             page.goto(url + "/checkout")
-            expect(page).to_have_url(re.compile(r"/login.html\?returnUrl="))
+            expect(page).to_have_url(re.compile(r"/login\?returnUrl="))
             expect(page.locator("#login-form")).to_be_visible()
             page.locator("#email").fill(f"buyer-{suffix}@example.com")
             page.locator("#password").fill(password)

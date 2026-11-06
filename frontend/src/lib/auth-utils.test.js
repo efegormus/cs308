@@ -1,8 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  NETWORK_ERROR, isLoginPath, loginErrorMessage, loginHref, parseAccount, parseRetryAfter,
-  registerHref, runHooks, safeReturnUrl, validateEmail, validatePassword
+  NETWORK_ERROR, REGISTER_FIELDS, isLoginPath, loginErrorMessage, loginHref, parseAccount, parseRetryAfter,
+  registerFieldErrors, registerHref, runHooks, safeReturnUrl, validateConfirmPassword, validateEmail,
+  validateHomeAddress, validateName, validateNewPassword, validatePassword, validateRegisterEmail,
+  validateRegistration, validateTaxId
 } from "./auth-utils.js";
 
 test("safeReturnUrl keeps same-site paths exactly as given", () => {
@@ -107,6 +109,120 @@ test("validatePassword only rejects an empty value and does not reveal the polic
   assert.equal(validatePassword(null), "Enter your password.");
   assert.equal(validatePassword("x"), "");
   assert.equal(validatePassword("   "), "");
+});
+
+test("validateName is required and limited to 100 characters after trimming", () => {
+  for (const value of ["", "   ", null, undefined]) assert.equal(validateName(value), "Enter your full name.");
+  assert.equal(validateName("Ada Lovelace"), "");
+  assert.equal(validateName("a".repeat(100)), "");
+  assert.equal(validateName(`  ${"a".repeat(100)}  `), "");
+  assert.equal(validateName("a".repeat(101)), "Use at most 100 characters.");
+});
+
+test("validateRegisterEmail adds the 254 character limit to validateEmail", () => {
+  assert.equal(validateRegisterEmail(""), "Enter your email address.");
+  assert.equal(validateRegisterEmail(null), "Enter your email address.");
+  assert.equal(validateRegisterEmail("nope"), "Enter a valid email address.");
+  assert.equal(validateRegisterEmail("user@localhost"), "");
+  const longest = `${"a".repeat(242)}@example.com`;
+  assert.equal(longest.length, 254);
+  assert.equal(validateRegisterEmail(longest), "");
+  assert.equal(validateRegisterEmail(`  ${longest}  `), "");
+  assert.equal(validateRegisterEmail(`a${longest}`), "Use at most 254 characters.");
+});
+
+test("validateNewPassword uses the backend's 12 to 128 rule and does not trim", () => {
+  const message = "Use a password between 12 and 128 characters.";
+  for (const value of ["", null, undefined, "a".repeat(11), "a".repeat(129)]) {
+    assert.equal(validateNewPassword(value), message, String(value));
+  }
+  assert.equal(validateNewPassword("a".repeat(12)), "");
+  assert.equal(validateNewPassword("a".repeat(128)), "");
+  assert.equal(validateNewPassword(" ".repeat(12)), "");
+});
+
+test("validateConfirmPassword needs an exact match", () => {
+  assert.equal(validateConfirmPassword("a-long-password", ""), "Confirm your password.");
+  assert.equal(validateConfirmPassword("a-long-password", null), "Confirm your password.");
+  assert.equal(validateConfirmPassword("a-long-password", "A-long-password"), "Passwords do not match.");
+  assert.equal(validateConfirmPassword("a-long-password", "a-long-password "), "Passwords do not match.");
+  assert.equal(validateConfirmPassword("a-long-password", "a-long-password"), "");
+});
+
+test("validateTaxId accepts numbers with correct check digits", () => {
+  for (const value of ["10000000146", "  10000000146  "]) assert.equal(validateTaxId(value), "", value);
+});
+
+test("validateTaxId handles a tenth digit formula with a negative result", () => {
+  // odd = 1 and even = 36, so odd * 7 - even is -29. The tenth digit is 1, not -9.
+  assert.equal(validateTaxId("19090909018"), "");
+});
+
+test("validateTaxId rejects anything else", () => {
+  for (const value of ["", "   ", null, undefined]) assert.equal(validateTaxId(value), "Enter your tax ID.");
+  const invalid = "Enter a valid 11-digit TC kimlik number.";
+  for (const value of [
+    "1000000014", "100000001460", "1000000014a", "1000 0000146", "TAX-123",
+    "00000000000", // The first digit is 0.
+    "01000000146",
+    "10000000147", // Only the eleventh digit is wrong.
+    "10000000157", // Only the tenth digit is wrong: the eleventh is correct for this tenth digit.
+    "١٠٠٠٠٠٠٠١٤٦" // The right digits in another script.
+  ]) {
+    assert.equal(validateTaxId(value), invalid, value);
+  }
+});
+
+test("validateHomeAddress is required and limited to 1000 characters after trimming", () => {
+  for (const value of ["", "  \n ", null, undefined]) assert.equal(validateHomeAddress(value), "Enter your home address.");
+  assert.equal(validateHomeAddress("10 Example Street\nIstanbul"), "");
+  assert.equal(validateHomeAddress("a".repeat(1000)), "");
+  assert.equal(validateHomeAddress(` ${"a".repeat(1000)} `), "");
+  assert.equal(validateHomeAddress("a".repeat(1001)), "Use at most 1000 characters.");
+});
+
+test("validateRegistration gives one message per form field", () => {
+  const valid = {
+    name: "Ada", email: "ada@example.com", password: "a-long-password", confirmPassword: "a-long-password",
+    taxId: "10000000146", homeAddress: "10 Example Street"
+  };
+  const clean = validateRegistration(valid);
+  assert.deepEqual(Object.keys(clean), REGISTER_FIELDS);
+  assert.ok(Object.values(clean).every(message => message === ""));
+
+  assert.deepEqual(validateRegistration({ ...valid, password: "short", confirmPassword: "other" }), {
+    ...clean,
+    password: "Use a password between 12 and 128 characters.",
+    confirmPassword: "Passwords do not match."
+  });
+  const empty = validateRegistration({});
+  assert.ok(Object.values(empty).every(message => message !== ""));
+});
+
+test("registerFieldErrors reads the first message of each known field", () => {
+  assert.deepEqual(registerFieldErrors({
+    errors: {
+      name: ["This field is required."],
+      email: ["Enter a valid email address without a display name.", "Second message."],
+      taxId: ["Use at most 64 characters."],
+      homeAddress: ["This field is required."],
+      password: ["Use a password between 12 and 128 characters."],
+      role: ["A field the form does not have."]
+    }
+  }), {
+    name: "This field is required.",
+    email: "Enter a valid email address without a display name.",
+    taxId: "Use at most 64 characters.",
+    homeAddress: "This field is required.",
+    password: "Use a password between 12 and 128 characters."
+  });
+});
+
+test("registerFieldErrors gives nothing for a CSRF failure or a bad shape", () => {
+  for (const value of [null, undefined, "x", {}, { title: "A valid anti-forgery token is required." },
+    { errors: null }, { errors: { email: "not an array" } }, { errors: { email: [] } }, { errors: { email: [42] } }]) {
+    assert.deepEqual(registerFieldErrors(value), {});
+  }
 });
 
 test("loginErrorMessage maps each status to its message", () => {
