@@ -44,12 +44,12 @@ public class SchemaModelTests
     }
 
     [Fact]
-    public void TheSchemaHasTheTwentyTwoExpectedTables()
+    public void TheSchemaHasTheExpectedTables()
     {
         var expected = new[]
         {
             "Users", "Categories", "Products", "Orders", "OrderItems", "Discounts", "DiscountProducts", "Payments",
-            "Carts", "CartItems", "WishlistItems", "Invoices", "Deliveries", "DeliveryItems", "Ratings", "Comments",
+            "Carts", "CartItems", "WishlistItems", "Invoices", "InvoiceEmailDeliveries", "Deliveries", "DeliveryItems", "Ratings", "Comments",
             "ReturnRequests", "Refunds", "Notifications", "Conversations", "ChatMessages", "ChatAttachments"
         };
 
