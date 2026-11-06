@@ -15,6 +15,9 @@ namespace OnlineStore.Shopping;
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record AddCartItemRequest(int ProductId, int Quantity);
 
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record SetCartItemQuantityRequest(int Quantity);
+
 // Shopping cart API (SCRUM-49). Guests and customers use the same routes:
 // a customer's cart belongs to the account, a guest's cart is found through a random token
 // kept in an HttpOnly cookie (only its SHA-256 hash is stored in the database).
@@ -102,6 +105,49 @@ public static class CartEndpoints
 
         // DELETE /api/cart/items/{productId} -> removes the whole line. Removing a product that is
         // not in the cart is not an error, so a double click does nothing harmful.
+        // PUT /api/cart/items/{productId} -> sets the quantity of a line that is already in the cart (the cart
+        // page's minus and plus buttons). The stock is checked again here; a line is emptied with DELETE.
+        cart.MapPut("/items/{productId:int}", async (
+            int productId, SetCartItemQuantityRequest input, HttpContext context, StoreDbContext db,
+            CancellationToken cancellationToken) =>
+        {
+            if (!MayUseCart(context)) return NotForStaff();
+            if (input.Quantity < 1 || input.Quantity > MaxQuantityPerRequest)
+                return Results.ValidationProblem(new Dictionary<string, string[]>
+                {
+                    ["quantity"] = [$"quantity must be between 1 and {MaxQuantityPerRequest}. Remove the line to empty it."]
+                });
+
+            // Lock order matches checkout: customer row first, then the cart row.
+            await using var transaction = await BeginAsync(context, db, cancellationToken);
+            var (found, mergeRequired) = await FindCartAsync(context, db, cancellationToken);
+            if (mergeRequired) return MergeRequired();
+            var current = found is null ? null : await LockCartAsync(db, found.Id, cancellationToken);
+            if (found is not null && current is null) return CartChanged();
+
+            var line = current is null ? null
+                : await db.CartItems.Include(item => item.Product).FirstOrDefaultAsync(
+                    item => item.CartId == current.Id && item.ProductId == productId, cancellationToken);
+            if (line is null)
+                return Results.Problem(statusCode: StatusCodes.Status404NotFound,
+                    title: "This product is not in the cart.");
+
+            if (!line.Product.IsActive)
+                return Results.Problem(statusCode: StatusCodes.Status409Conflict,
+                    title: "This product is no longer available.", detail: "Remove it from the cart.");
+            if (input.Quantity > line.Product.StockQuantity)
+                return Results.Problem(statusCode: StatusCodes.Status409Conflict,
+                    title: "Not enough stock.",
+                    detail: $"Only {line.Product.StockQuantity} unit(s) are available.");
+
+            line.Quantity = input.Quantity;
+            current!.UpdatedAt = DateTime.UtcNow;
+            await db.SaveChangesAsync(cancellationToken);
+            if (transaction is not null) await transaction.CommitAsync(cancellationToken);
+
+            return Results.Ok(await LoadAsync(db, current.Id, cancellationToken));
+        }).AllowAnonymous().AddEndpointFilter<CsrfFilter>();
+
         cart.MapDelete("/items/{productId:int}", async (
             int productId, HttpContext context, StoreDbContext db, CancellationToken cancellationToken) =>
         {
