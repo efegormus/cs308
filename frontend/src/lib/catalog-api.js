@@ -40,7 +40,7 @@ async function fetchList(path, signal) {
   return rows;
 }
 
-function isValidProduct(product) {
+export function isValidProduct(product) {
   return Number.isInteger(product?.id) && typeof product.name === "string"
     && Number.isFinite(product.price) && product.price >= 0
     && Number.isInteger(product.stockQuantity) && product.stockQuantity >= 0;
