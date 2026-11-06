@@ -3,6 +3,7 @@ const normalized = new WeakSet();
 const messages = {
   400: "The request is not valid. Check your details and try again.",
   401: "Your session ended. Log in again before continuing.",
+  402: "The mock payment was declined. Your cart was kept.",
   403: "Your account does not have access to this action.",
   404: "The requested resource could not be found.",
   409: "The request conflicts with the current state. Reload before trying again.",
