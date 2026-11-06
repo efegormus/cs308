@@ -156,3 +156,11 @@ dotnet run --project OnlineStore --no-launch-profile -- --set-role person@exampl
 Allowed exact values: Customer, SalesManager, ProductManager, SupportAgent.
 Do not expose the command through a web process or let registration accept roles.
 No demo staff passwords or real account credentials are seeded or committed.
+
+## React purchasing migration (SCRUM-108)
+
+`AuthProvider` restores the signed-in Customer's guest cart using the fresh
+identity's CSRF token before allowing checkout. It exposes merge errors, conflicts
+and an explicit retry; the React cart refreshes when the merge completes.
+`/login` currently redirects to the retained working `/login.html` form with the
+validated React return URL. See [React hosting](react-hosting.md).

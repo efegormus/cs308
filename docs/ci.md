@@ -24,8 +24,8 @@ Move to a newer image only together with a Playwright version that supports it.
 | --- | --- | --- | --- |
 | `Backend build and test` | The solution compiles and the xUnit suite passes (EF Core in-memory database). | compile error or failing test | Yes |
 | `MySQL integration tests` | Migrations, constraints, foreign keys, seed loader and the schema tests work on a real MySQL 8.4.13. | failing test, **or any MySQL test skipped**, or no test ran | Yes |
-| `Browser end-to-end` | A migrated and seeded database, the running app and a real Chromium agree: runs `scripts/verify_catalog_browser.py --expect-seeded`. | migration/seed/start-up error, API check or any browser assertion fails | Yes |
-| `Frontend and script checks` | `node --check` on every `wwwroot/**/*.js`, `html-validate` on every `wwwroot/**/*.html`, `*.test.js` unit tests (Node test runner), `scripts/test_*.py`, and `actionlint` on the workflows. | syntax error, invalid HTML, failing test, bad workflow file | Yes |
+| `Browser end-to-end` | The published ASP.NET app serves the built React catalog and purchasing pages against seeded MySQL in Chromium, including protected PDF and lost-response recovery. | migration/seed/start-up error, API check or any browser assertion fails | Yes |
+| `Frontend and script checks` | React unit tests/build, `node --check` on every `wwwroot/**/*.js`, `html-validate` on every `wwwroot/**/*.html`, `*.test.js` unit tests (Node test runner), `scripts/test_*.py`, and `actionlint` on the workflows. | syntax error, invalid HTML, failing test, bad workflow file | Yes |
 | `Security hygiene` | `gitleaks` scan of the git history and a report of vulnerable NuGet packages. | a secret or vulnerable package is found | No (report only, `continue-on-error`) |
 
 On a pull request the checks are listed as `CI / <job name>`.
@@ -74,6 +74,8 @@ dotnet test cs308.sln --filter FullyQualifiedName~MySql
 # Browser end-to-end, with the app running and seeded (docs/local-development.md)
 python3 -m pip install -r scripts/requirements-browser.txt
 python3 scripts/verify_catalog_browser.py --expect-seeded
+# Disposable local DB only: needs the server connection environment for the trusted fixture role command
+python3 scripts/verify_purchasing_browser.py --operator-assembly <published-app>/OnlineStore.dll
 
 # Frontend and scripts
 shopt -s globstar; for f in OnlineStore/wwwroot/**/*.js; do node --check "$f"; done

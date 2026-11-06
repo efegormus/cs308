@@ -1,8 +1,9 @@
 # Reproducible local development (SCRUM-53)
 
 Prerequisites: Git, the .NET 8 SDK, Python 3.9+, and either **Docker with Compose
-v2 and a running engine**, or an existing local MySQL 8.0.16+ server. No Node build
-is needed: ASP.NET Core serves wwwroot and the API from the same origin.
+v2 and a running engine**, or an existing local MySQL 8.0.16+ server.
+Install Node.js 22.22+ and npm for React. ASP.NET Core serves the built React app
+and the API from the same origin. See [React hosting](react-hosting.md).
 
 ## Docker route: fresh clone
 
@@ -14,10 +15,11 @@ python3 scripts/dev.py database
 dotnet restore cs308.sln
 python3 scripts/dev.py migrate
 python3 scripts/dev.py seed
+python3 scripts/dev.py frontend-build
 python3 scripts/dev.py run
 ```
 
-Open http://localhost:5200/products.html. In another terminal:
+Open http://localhost:5200/products. React routes such as `/checkout` can be refreshed directly. In another terminal:
 
 ```sh
 python3 scripts/dev.py check
@@ -68,6 +70,8 @@ dotnet tool restore
 dotnet restore cs308.sln
 dotnet ef database update --project OnlineStore -- --environment Development
 dotnet run --project OnlineStore --launch-profile http -- --seed
+npm --prefix frontend ci
+npm --prefix frontend run build
 dotnet run --project OnlineStore --launch-profile http
 python3 scripts/dev.py check
 ```
@@ -115,3 +119,24 @@ the variable is absent, so a normal unit run cannot be mistaken for MySQL proof.
 
 For schema design, auth contracts and future work see the other documents linked
 from the README. Never copy actual `.local` secrets into issues or commits.
+
+## React development and publishing (SCRUM-108)
+
+For hot reload, keep the backend on port 5200 in one terminal and run
+`python3 scripts/dev.py frontend` in a second after installing frontend dependencies.
+Open http://localhost:5173. Vite proxies `/api` and the temporary legacy login
+assets to ASP.NET, preserving same-origin session/CSRF cookies.
+
+For a demo with one server, run `python3 scripts/dev.py frontend-build` then
+`python3 scripts/dev.py run` and use port 5200. Rebuild/restart after changing
+frontend source. The frontend helper commands do not read or pass database secrets.
+
+`dotnet publish OnlineStore -c Release -o <output>` runs the locked npm build and
+packages it under `wwwroot/spa`. Start `dotnet OnlineStore.dll` from the output
+directory with your normal environment configuration. Node is needed at build
+time, not on the runtime host. CI can reuse an already built frontend with
+`/p:SkipFrontendBuild=true`; missing `dist/index.html` then fails publishing.
+
+Legacy HTML files remain accessible during migration, including the working
+login form used by `/login`. They are no longer the default home page. Without
+a React build, API endpoints still work and storefront routes return a safe 503.

@@ -64,3 +64,16 @@ motion are described in [UI design](../docs/ui-design.md).
 
 Until the old pages are removed, `OnlineStore/wwwroot/css/auth.css` is a second copy of
 `auth.css`. A change to a color has to go in both.
+
+## ASP.NET hosting and purchasing
+
+`npm run build` creates `dist/`; ASP.NET serves it on port 5200, with deep-link
+fallback for React routes. `dotnet publish` packages it automatically. See
+[React hosting](../docs/react-hosting.md) for the complete setup and publishing flow.
+
+`/checkout`, `/order-confirmation?orderId=...` and `/deliveries` are functional
+React pages, using the existing purchase APIs and shared role/session/CSRF code.
+Retry metadata is isolated per customer and never contains card input. Login
+currently bridges to the retained legacy form; Vite proxies its assets as well
+as `/api`. Auth bootstrap transfers guest selections through the idempotent merge
+endpoint and reports conflicts before checkout.

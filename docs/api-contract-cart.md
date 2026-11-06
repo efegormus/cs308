@@ -52,7 +52,7 @@ Adding to the cart never reduces stock; stock is checked again at checkout (SCRU
 
 ### Merging the guest cart at login (SCRUM-100)
 
-The login page calls `POST /api/cart/merge` from its `onLogin` hook (`docs/authentication.md`), after the
+The React auth provider calls `POST /api/cart/merge` after login/bootstrap (`docs/react-hosting.md`), after the
 session and the new CSRF token exist. The redirect can cut the request off, so it is safe to repeat: with no
 guest cart it only returns the account cart (`merged: false`).
 

@@ -1,7 +1,7 @@
 # Checkout and delivery integration (SCRUM-72 / SCRUM-79)
 
-The checkout, confirmation and ProductManager delivery pages are `/checkout.html`,
-`/order-confirmation.html?orderId=123` and `/deliveries.html`. They use the existing
+The checkout, confirmation and ProductManager delivery pages are `/checkout`,
+`/order-confirmation?orderId=123` and `/deliveries`. They use the existing
 same-origin cookie session, role policies, CSRF header and storefront styling.
 Money is TRY. Apply the normal migration chain before running the application.
 
@@ -145,3 +145,5 @@ accounts/cart/product: login return URL, mobile checkout/confirmation, literal
 HTML-like snapshot text, decline without stock loss, successful purchase, manager
 shipping/delivery reflected in the owner receipt, and recovery after deliberately
 losing the successful POST response. Temporary fixture rows were removed afterwards.
+
+The React pages and ASP.NET hosting are documented in [react-hosting.md](react-hosting.md).

@@ -5,7 +5,7 @@ Online store for phones and tablets, built for the Sabancı University CS 308 co
 ## Tech stack
 
 - Backend: C# with ASP.NET Core (.NET 8)
-- Front end: plain HTML, CSS and JavaScript served from `wwwroot`
+- Front end: React and Vite; the production build is served by ASP.NET Core
 - Database: MySQL (Entity Framework Core)
 - Version control: Git and GitHub; planning in Jira (Scrum)
 
@@ -16,7 +16,8 @@ OnlineStore/          ASP.NET Core project
   Program.cs          application entry point
   Models/             SCRUM-39 entities
   Data/               StoreDbContext, entity mappings, and migrations
-  wwwroot/            static front end files
+  wwwroot/            legacy pages retained during the React migration
+frontend/             React routes, components, tests and Vite build
 .config/              repository-local EF Core CLI tool
 docs/                 database schema documentation
 ```
@@ -30,11 +31,11 @@ The [order/payment rules](docs/order-lifecycle.md) and
 ## Getting started
 
 For a fresh clone, follow the [reproducible local setup](docs/local-development.md)
-using `python3 scripts/dev.py init`, `database`, `migrate`, `seed`, and `run`.
+using `python3 scripts/dev.py init`, `database`, `migrate`, `seed`, `frontend-build`, and `run`.
 It creates private random credentials and starts the pinned MySQL Compose service.
 The manual setup below remains available for an existing local MySQL installation.
 
-1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0).
+1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and Node.js 22.22 or later.
 2. Set up a MySQL development database and local credentials as described below.
 3. From the repository root, restore dependencies and tools:
 
@@ -50,13 +51,15 @@ The manual setup below remains available for an existing local MySQL installatio
    dotnet ef database update --project OnlineStore --context StoreDbContext -- --environment Development
    ```
 
-5. Run the backend:
+5. Build React and run the backend:
 
    ```sh
+   npm --prefix frontend ci
+   npm --prefix frontend run build
    dotnet run --project OnlineStore --launch-profile http
    ```
 
-6. Open `http://localhost:5200`. The home page is served from `wwwroot`, and
+6. Open `http://localhost:5200`. The React home page is served by ASP.NET Core, and
    `/api/health` returns `{"status":"ok"}`. This endpoint reports application
    liveness; it does not query the database.
 
@@ -189,3 +192,5 @@ live MySQL/browser check and controlled loading/error/retry scenarios.
 - Commit messages are short and describe the change, for example `Add product list API`.
 
 Checkout and ProductManager delivery integration: [docs/purchasing.md](docs/purchasing.md).
+
+React hosting, publishing and the purchasing routes: [docs/react-hosting.md](docs/react-hosting.md).
