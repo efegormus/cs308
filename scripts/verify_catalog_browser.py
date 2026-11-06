@@ -24,14 +24,14 @@ def verify(base_url, executable=None, expect_seeded=False):
         if categories:
             tablets = next((category for category in categories if category["name"] == "Tablets"), categories[0])
             if tablets["name"] == "Tablets":
-                expect(page.get_by_role("link", name="Browse tablets")).to_have_attribute("href", f'/products.html#category-{tablets["id"]}')
+                expect(page.get_by_role("link", name="Browse tablets")).to_have_attribute("href", f'/products#category-{tablets["id"]}')
                 with page.expect_response("**/api/products") as response:
                     page.get_by_role("link", name="Browse tablets").click()
                 assert response.value.ok
             else:
-                page.goto(base_url + "/products.html")
+                page.goto(base_url + "/products")
         else:
-            page.goto(base_url + "/products.html")
+            page.goto(base_url + "/products")
         expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
         expect(page.locator(".product-card")).to_have_count(len(products))
         for category in categories:
@@ -63,7 +63,7 @@ def verify(base_url, executable=None, expect_seeded=False):
             page.route("**/api/products", lambda route: route.fulfill(json=products_body))
 
         mock(fixture_categories, fixture_products)
-        page.goto(base_url + "/products.html?verification=render#category-99")
+        page.goto(base_url + "/products?verification=render#category-99")
         expect(page.locator("#catalog-status")).to_have_text("3 products in 2 categories.")
         expect(page.locator("#category-99")).to_contain_text("No products available in this category yet.")
         expect(page.locator(".product-card h3").first).to_have_text(fixture_products[0]["name"])
@@ -105,10 +105,9 @@ def verify(base_url, executable=None, expect_seeded=False):
         pending = []
         page.route("**/api/categories", lambda route: pending.append((route, fixture_categories)))
         page.route("**/api/products", lambda route: pending.append((route, fixture_products)))
-        page.goto(base_url + "/products.html", wait_until="domcontentloaded")
+        page.goto(base_url + "/products", wait_until="domcontentloaded")
         expect(page.locator("#catalog-status")).to_have_text("Loading products…")
         expect(page.locator("#catalog")).to_have_attribute("aria-busy", "true")
-        page.wait_for_function("performance.getEntriesByType('resource').some(entry => entry.name.includes('catalog-api.js'))")
         # Route callbacks run while the Playwright event loop is pumped by locator checks.
         expect(page.locator("#retry")).to_be_hidden()
         assert len(pending) == 2

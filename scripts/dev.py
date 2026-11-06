@@ -69,7 +69,7 @@ def main(argv=None):
     commands = parser.add_subparsers(dest="command", required=True)
     init = commands.add_parser("init", help="create local configuration once")
     init.add_argument("--port", type=int, default=3306)
-    for command in ("database", "migrate", "seed", "run", "stop"):
+    for command in ("database", "migrate", "seed", "run", "stop", "frontend", "frontend-build"):
         commands.add_parser(command)
     check = commands.add_parser("check", help="check the real API-to-database connection")
     check.add_argument("--url", default="http://127.0.0.1:5200")
@@ -87,6 +87,15 @@ def main(argv=None):
             if not isinstance(rows, list):
                 raise ValueError("Unexpected API response.")
             print(f"Database-backed {resource} API: OK ({len(rows)} rows)")
+        return
+    if args.command in ("frontend", "frontend-build"):
+        # The browser build/dev server needs no database credentials.
+        env = os.environ.copy()
+        if args.command == "frontend-build":
+            run(["npm", "--prefix", "frontend", "ci"], env)
+            run(["npm", "--prefix", "frontend", "run", "build"], env)
+        else:
+            run(["npm", "--prefix", "frontend", "run", "dev"], env)
         return
     env = development_environment()
     if args.command == "database":

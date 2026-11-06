@@ -4,7 +4,7 @@ import { categoryAnchorId } from "../lib/category-display.js";
 export default function CategoryNav({ categories }) {
   if (categories.length === 0) return null;
   return (
-    <nav className="category-nav" aria-label="Product categories">
+    <nav id="category-nav" className="category-nav" aria-label="Product categories">
       {categories.map(category => (
         <a key={category.id} href={`#${categoryAnchorId(category.id)}`}>{category.name}</a>
       ))}

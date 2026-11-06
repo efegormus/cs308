@@ -100,6 +100,7 @@ jobs:
     env:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://127.0.0.1:5200
+      Email__Transport: Local
 
     steps:
       - name: Check out repository
@@ -114,6 +115,17 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: "3.12"
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 22
+
+      - name: Build the hosted React app
+        working-directory: frontend
+        run: |
+          npm ci
+          npm run build
 
       - name: Start MySQL
         uses: ./.github/actions/start-mysql
@@ -138,11 +150,15 @@ jobs:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
         run: dotnet run --project OnlineStore --no-build --no-launch-profile -- --seed
 
+      - name: Publish the complete application
+        run: dotnet publish OnlineStore --no-restore -c Release -o "$RUNNER_TEMP/published-app" /p:SkipFrontendBuild=true
+
       - name: Start the application
         env:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
         run: |
-          nohup dotnet run --project OnlineStore --no-build --no-launch-profile > "$RUNNER_TEMP/app.log" 2>&1 &
+          cd "$RUNNER_TEMP/published-app"
+          nohup dotnet OnlineStore.dll > "$RUNNER_TEMP/app.log" 2>&1 &
           for attempt in $(seq 1 40); do
             if curl --silent --fail http://127.0.0.1:5200/api/health >/dev/null; then
               echo "Application is healthy after ${attempt} attempt(s)."
@@ -164,6 +180,11 @@ jobs:
 
       - name: Run the browser check
         run: python3 scripts/verify_catalog_browser.py --url http://127.0.0.1:5200 --expect-seeded
+
+      - name: Verify React purchasing and protected invoices
+        env:
+          ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
+        run: python3 scripts/verify_purchasing_browser.py --url http://127.0.0.1:5200 --operator-assembly "$RUNNER_TEMP/published-app/OnlineStore.dll"
 
       - name: Upload application log on failure
         if: failure()

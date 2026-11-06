@@ -1,6 +1,7 @@
 // The React version of window.StoreAuth from wwwroot/js/auth.js. The API contract is in docs/authentication.md.
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { parseAccount, runHooks } from "../lib/auth-utils.js";
+import { mergeGuestCart } from "../lib/purchase-api.js";
 
 const REQUEST_TIMEOUT_MS = 10000;
 const LOGIN_HOOK_LIMIT_MS = 5000;
@@ -45,6 +46,11 @@ export function AuthProvider({ children }) {
   const tokenRequest = useRef(null);
   const loginHooks = useRef([]);
   const sessionChecked = useRef(false);
+  const merging = useRef(null);
+  const [cartMergeError, setCartMergeError] = useState(null);
+  const [cartMergeConflicts, setCartMergeConflicts] = useState([]);
+  const [cartMergeVersion, setCartMergeVersion] = useState(0);
+  const [cartMergeBusy, setCartMergeBusy] = useState(false);
 
   // The token is bound to the current identity, so it changes after login and logout.
   const csrfToken = useCallback(() => {
@@ -65,12 +71,33 @@ export function AuthProvider({ children }) {
     }
   }, [csrfToken]);
 
+  // Guest ownership stays in the HttpOnly cookie. Transfers are idempotent and use the fresh identity's CSRF token.
+  const restoreGuestCart = useCallback(() => {
+    if (merging.current) return merging.current;
+    setCartMergeBusy(true);
+    setCartMergeError(null);
+    merging.current = (async () => {
+      try {
+        const result = await mergeGuestCart(await csrfToken());
+        setCartMergeConflicts(result.conflicts);
+        setCartMergeVersion(version => version + 1);
+      } catch (error) {
+        setCartMergeError(error);
+      } finally {
+        merging.current = null;
+        setCartMergeBusy(false);
+      }
+    })();
+    return merging.current;
+  }, [csrfToken]);
+
   // For the login page, after a 200 from POST /api/auth/login. Never rejects.
   const completeLogin = useCallback(async signedInAccount => {
     await refreshCsrf(); // Before the hooks, because they may POST with the new token.
+    if (signedInAccount?.role === "Customer") await restoreGuestCart();
     setAccount(signedInAccount);
     await runHooks(loginHooks.current, signedInAccount, LOGIN_HOOK_LIMIT_MS);
-  }, [refreshCsrf]);
+  }, [refreshCsrf, restoreGuestCart]);
 
   // Rejects if the visitor could not be signed out.
   const logout = useCallback(async () => {
@@ -84,6 +111,8 @@ export function AuthProvider({ children }) {
     if (status !== 204 && status !== 401) throw new Error("Logout failed.");
     await refreshCsrf();
     setAccount(null);
+    setCartMergeError(null);
+    setCartMergeConflicts([]);
   }, [csrfToken, refreshCsrf]);
 
   // Returns a function that removes the hook, so a component can use it as an effect cleanup:
@@ -100,15 +129,16 @@ export function AuthProvider({ children }) {
     // StrictMode runs effects twice in development. As on the old pages, there is one check per page load.
     if (sessionChecked.current) return;
     sessionChecked.current = true;
-    fetchAccount().then(found => {
+    fetchAccount().then(async found => {
+      if (found?.role === "Customer") await restoreGuestCart();
       setAccount(found);
       setAuthReady(true);
     });
-  }, []);
+  }, [restoreGuestCart]);
 
   const value = useMemo(
-    () => ({ account, authReady, csrfToken, refreshCsrf, completeLogin, logout, onLogin }),
-    [account, authReady, csrfToken, refreshCsrf, completeLogin, logout, onLogin]
+    () => ({ account, authReady, csrfToken, refreshCsrf, completeLogin, logout, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy }),
+    [account, authReady, csrfToken, refreshCsrf, completeLogin, logout, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

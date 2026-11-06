@@ -43,7 +43,7 @@ function CartLine({ line, busy, onRemove, onQuantity }) {
 
 // The cart page (SCRUM-69). It shows GET /api/cart and removes a whole line with DELETE /api/cart/items/{id}.
 export default function CartPage() {
-  const { account, authReady, csrfToken, refreshCsrf } = useAuth();
+  const { account, authReady, csrfToken, refreshCsrf, cartMergeVersion, cartMergeConflicts, cartMergeError, restoreGuestCart, cartMergeBusy } = useAuth();
   const { status, data, error, run, cancel } = useRequest();
   const [cart, setCart] = useState(null); // The newest cart, from the first load or from a removal.
   const [removingId, setRemovingId] = useState(null);
@@ -52,9 +52,10 @@ export default function CartPage() {
   const load = useCallback(() => run(({ signal }) => fetchCart({ signal })), [run]);
 
   useEffect(() => {
-    void load();
+    setCart(null);
+    if (authReady) void load();
     return cancel;
-  }, [load, cancel]);
+  }, [load, cancel, authReady, account?.id, cartMergeVersion]);
 
   useEffect(() => {
     if (status === "success") setCart(data);
@@ -98,6 +99,15 @@ export default function CartPage() {
           {status === "loading" && cart === null && <LoadingState label="Loading your cart…" />}
           {status === "error" && cart === null && <ErrorState error={error} onRetry={load} />}
           {removeError && <ErrorState error={removeError} />}
+          <ErrorState error={cartMergeError} onRetry={restoreGuestCart} retrying={cartMergeBusy} />
+          {cartMergeConflicts.length > 0 && <section aria-label="Guest cart conflicts">
+            <h2>Review your guest selections</h2>
+            <ul>{cartMergeConflicts.map(conflict => <li key={conflict.productId}>
+              {conflict.name} · Quantity {conflict.quantity} · {conflict.reason === "CartFull"
+                ? "Your account cart is full; this selection is still in your guest cart."
+                : "This selection is unavailable in the requested quantity."}
+            </li>)}</ul>
+          </section>}
           {empty && (
             <p role="status">
               Your cart is empty. <Link to="/products">Browse products</Link>
