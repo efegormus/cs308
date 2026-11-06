@@ -34,9 +34,9 @@ export default function ProductsPage() {
         <p className="intro">Explore our phones and tablets. Prices are in Turkish lira.</p>
         {/* SCRUM-67 puts the search bar and the sort dropdown here. */}
         <CategoryNav categories={categories} />
-        <p role="status" aria-live="polite">{message}</p>
+        <p id="catalog-status" role="status" aria-live="polite">{message}</p>
         {status === "error" && <button type="button" onClick={retry}>Try again</button>}
-        <div aria-busy={status === "loading"}>
+        <div id="catalog" aria-busy={status === "loading"}>
           {categories.map(category => <CategorySection key={category.id} category={category} />)}
         </div>
       </main>

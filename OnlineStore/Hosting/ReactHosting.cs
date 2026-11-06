@@ -29,7 +29,9 @@ public static class ReactHosting
                         ? "no-cache" : "public,max-age=3600";
                 }
             };
-            app.UseStaticFiles(options);
+            // Keep the explicit legacy /index.html URL; only navigation fallback uses React's index.
+            app.UseWhen(context => !context.Request.Path.Equals("/index.html", StringComparison.OrdinalIgnoreCase),
+                branch => branch.UseStaticFiles(options));
             app.MapFallbackToFile("/{*path:nonfile:spa}", "index.html", options).AllowAnonymous();
         }
         else

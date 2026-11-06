@@ -90,7 +90,7 @@ public class CatalogTests
     }
 
     [Theory]
-    [InlineData("/", "Browse products by category")]
+    [InlineData("/index.html", "Browse products by category")]
     [InlineData("/products.html", "Shop by category")]
     [InlineData("/js/products.js", "fetchCatalog")]
     [InlineData("/js/catalog-api.js", "/api/products")]
