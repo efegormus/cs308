@@ -214,6 +214,25 @@ public partial class CartEndpointsTests
     }
 
     [Fact]
+    public async Task Merge_CannotTakeOverAnotherVisitorsGuestCart()
+    {
+        using var factory = new CartApplication();
+        await factory.SeedAsync(Catalog());
+        using var visitor = factory.CreateClient();      // The guest cart and its cookie belong to this client.
+        using var customer = factory.CreateClient();     // This client never had that cookie.
+        await PostAsync(visitor, "/api/cart/items", new { productId = 10, quantity = 2 });
+        await LoginNewCustomerAsync(customer);
+
+        var result = await MergeAsync(customer);
+
+        Assert.False(result.Merged);
+        Assert.Empty(result.Cart.Items);
+        var guestCart = Assert.Single(await factory.QueryAsync(db => db.Carts.Where(c => c.UserId == null).ToListAsync()));
+        Assert.Equal(CartState.Open, guestCart.State);
+        Assert.Equal(2, (await visitor.GetFromJsonAsync<CartDto>("/api/cart"))!.ItemCount);
+    }
+
+    [Fact]
     public async Task Merge_Guest_Returns401()
     {
         using var factory = new CartApplication();
