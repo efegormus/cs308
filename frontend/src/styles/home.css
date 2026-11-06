@@ -1,14 +1,198 @@
-/* From the inline <style> in wwwroot/index.html. Only the selectors changed: everything is scoped to .home-page, so it cannot reach the login page. */
-.home-page { margin: 0; font-family: Arial, sans-serif; color: #222; }
-.home-page header { display: flex; justify-content: space-between; align-items: center;
-         padding: 16px 32px; background: #1f2937; color: white; }
-.home-page header a { color: white; text-decoration: none; margin-left: 20px; }
-.home-page .logo { font-size: 22px; font-weight: bold; }
-.home-page .hero { padding: 60px 32px; background: #f3f4f6; text-align: center; }
-.home-page .categories { display: flex; gap: 24px; padding: 40px 32px; justify-content: center; }
-.home-page .category { border: 1px solid #ddd; border-radius: 8px; padding: 24px; width: 220px; text-align: center; }
-.home-page footer { padding: 16px 32px; text-align: center; color: #666; border-top: 1px solid #eee; }
-.home-page header, .home-page header nav, .home-page .categories { flex-wrap: wrap; }
-.home-page header { gap: 16px; }
-.home-page header nav { display: flex; gap: 16px; }
-.home-page header nav a { margin-left: 0; }
+/* The home page: one sortable 3D coverflow per category. Decisions and values: docs/ui-design.md.
+   The approved source is docs/design/home-coverflow-prototype.html. Every rule is scoped to .home-page.
+   Keyframes cannot be scoped, so their names start with home-. */
+.home-page {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --home-ok: #1a7f37;
+  --card-shadow: 0 22px 44px rgba(31, 41, 55, 0.18);
+  --placeholder: #eef0f3;
+  --placeholder-fg: #7b8594;
+  --halo: rgba(23, 74, 139, 0.13);
+  --floor: rgba(31, 41, 55, 0.22);
+  --view-bg: #111418;
+  --view-fg: #ffffff;
+  background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .home-page {
+    --home-ok: #3fb950;
+    --card-shadow: 0 22px 44px rgba(0, 0, 0, 0.55);
+    --placeholder: #222c3a;
+    --placeholder-fg: #8794a6;
+    --halo: rgba(77, 132, 224, 0.22);
+    --floor: rgba(0, 0, 0, 0.45);
+    --view-bg: #f3f5f8;
+    --view-fg: #111418;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] .home-page {
+  --home-ok: #3fb950;
+  --card-shadow: 0 22px 44px rgba(0, 0, 0, 0.55);
+  --placeholder: #222c3a;
+  --placeholder-fg: #8794a6;
+  --halo: rgba(77, 132, 224, 0.22);
+  --floor: rgba(0, 0, 0, 0.45);
+  --view-bg: #f3f5f8;
+  --view-fg: #111418;
+  color-scheme: dark;
+}
+
+.home-page a { color: var(--link); }
+.home-page a:hover { color: var(--accent-hover); }
+.home-page :focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+.home-page main {
+  max-width: 1280px; margin: 0 auto; box-sizing: border-box; padding-block: 36px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.home-page .intro { display: flex; flex-direction: column; gap: 4px; margin-bottom: 28px; }
+.home-page .intro h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(24px, 3vw, 30px); text-wrap: balance; }
+.home-page .intro p { margin: 0; color: var(--muted); }
+
+/* Masked reveal-up, the login page's entrance (0.85s, 120ms + i x 110ms). */
+.home-page .r { display: block; overflow: hidden; padding-bottom: 2px; }
+.home-page .ri { display: block; animation: home-reveal-up 0.85s var(--ease-out) both; animation-delay: calc(120ms + var(--i, 0) * 110ms); }
+@keyframes home-reveal-up { from { transform: translateY(110%); opacity: 0; filter: blur(4px); } to { transform: none; opacity: 1; filter: none; } }
+
+.home-page .rows { display: flex; flex-direction: column; gap: 32px; }
+
+/* One category row. */
+.home-page .cf-row {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+  padding-block: 18px 16px; min-width: 0;
+  animation: home-row-in 0.7s var(--ease-out) both; animation-delay: calc(260ms + var(--row, 0) * 160ms);
+}
+@keyframes home-row-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.home-page .cf-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-inline: 20px; min-height: 44px; flex-wrap: wrap; }
+.home-page .cf-sub { display: flex; align-items: center; gap: 10px; margin: 0; font: inherit; transition: opacity 0.32s ease, transform 0.45s var(--ease-out); }
+.home-page .cf-sub .icon { width: 32px; height: 32px; border-radius: 8px; }
+.home-page .cf-sub .name { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.home-page .icon { display: inline-flex; align-items: center; justify-content: center; background: var(--placeholder); color: var(--accent); flex-shrink: 0; }
+.home-page .icon svg { display: block; }
+
+.home-page .cf-sort { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.home-page .cf-sort select {
+  height: 40px; min-width: 190px; padding: 0 12px; border: 1px solid var(--field-line); border-radius: 8px;
+  background: var(--surface); color: var(--fg); font: 14px var(--font-body); cursor: pointer;
+  transition: border-color 0.2s ease;
+}
+.home-page .cf-sort select:hover { border-color: var(--accent); }
+
+.home-page .cf-stage { position: relative; margin-top: 4px; }
+.home-page .cf-track {
+  position: relative; overflow: hidden; perspective: 1400px; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  height: var(--track-h, 380px); outline-offset: -3px; border-radius: 8px; cursor: grab;
+}
+.home-page .cf-row.dragging .cf-track { cursor: grabbing; }
+
+/* Soft light and floor shadow under the front position. */
+.home-page .cf-halo {
+  position: absolute; top: 0; bottom: 0; pointer-events: none;
+  background: radial-gradient(closest-side, var(--halo), transparent);
+  transition: left 0.55s var(--ease-out), width 0.55s var(--ease-out);
+}
+.home-page .cf-floor {
+  position: absolute; height: 26px; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--floor), transparent);
+  transition: left 0.55s var(--ease-out);
+}
+
+/* The category panel at rest. The cards slide over it. */
+.home-page .cf-panel {
+  position: absolute; top: 0; bottom: 0; left: 24px; display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  transition: opacity 0.35s ease, transform 0.55s var(--ease-out);
+}
+.home-page .cf-row.is-narrow .cf-panel { display: none; }
+.home-page .cf-panel h2 { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.home-page .cf-panel .icon { width: 64px; height: 64px; border-radius: 16px; }
+.home-page .cf-panel .title { font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1.15; }
+.home-page .cf-panel p { margin: 0; font-size: 14px; color: var(--muted); }
+.home-page .cf-panel a { font-family: var(--font-display); font-weight: 500; font-size: 14px; }
+
+/* Cards: the outer element is placed and turned, the inner face carries the entrance. */
+.home-page a.cf-card, .home-page a.cf-card:hover { color: var(--fg); text-decoration: none; }
+.home-page .cf-card {
+  position: absolute; top: 28px; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font: inherit; border-radius: 10px;
+  transition: left 0.55s var(--ease-out), transform 0.55s var(--ease-out), filter 0.55s ease;
+  transition-delay: var(--delay, 0ms);
+  will-change: left, transform;
+}
+@media (hover: hover) and (pointer: fine) {
+  .home-page .cf-card.is-front { cursor: none; }
+  .home-page .cf-row.dragging .cf-card.is-front { cursor: grabbing; }
+}
+.home-page .cf-face {
+  position: relative; width: 100%; height: 100%; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  transition: box-shadow 0.5s ease, transform 0.3s var(--ease-out), border-color 0.3s ease;
+  animation: home-card-in 0.8s var(--ease-out) both; animation-delay: var(--enter, 0ms);
+}
+@keyframes home-card-in { from { opacity: 0; transform: translateX(90px); } to { opacity: 1; transform: none; } }
+.home-page .cf-card.is-front .cf-face { box-shadow: var(--card-shadow); }
+.home-page .cf-row:not(.dragging) .cf-card.is-front:hover .cf-face { transform: translateY(-4px); border-color: var(--accent); }
+.home-page .cf-img {
+  flex: 0 0 auto; height: 62%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: var(--placeholder); color: var(--placeholder-fg); font-size: 12px;
+}
+.home-page .cf-img img { display: block; width: 100%; height: 100%; object-fit: contain; }
+.home-page .cf-info { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.home-page .cf-name { font-family: var(--font-display); font-weight: 600; font-size: 16px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home-page .cf-price { font-family: var(--font-display); font-weight: 500; font-size: 18px; font-variant-numeric: tabular-nums; }
+.home-page .cf-stock { font-size: 12px; font-weight: 600; color: var(--home-ok); }
+.home-page .cf-stock.out { color: var(--danger); }
+
+/* While a finger or touchpad is moving the row, everything follows it directly. */
+.home-page .cf-row.dragging .cf-card, .home-page .cf-row.dragging .cf-halo, .home-page .cf-row.dragging .cf-floor,
+.home-page .cf-row.dragging .cf-panel, .home-page .cf-row.dragging .cf-sub { transition: none; }
+
+.home-page .cf-arrow {
+  position: absolute; top: 50%; margin-top: -22px; width: 44px; height: 44px; z-index: 2000;
+  display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--fg); box-shadow: var(--shadow); cursor: pointer;
+  transition: background-color 0.18s ease, color 0.18s ease, border-color 0.18s ease, opacity 0.2s ease, transform 0.18s var(--ease-out);
+}
+.home-page .cf-arrow.prev { left: 8px; }
+.home-page .cf-arrow.next { right: 8px; }
+.home-page .cf-arrow:hover:not(:disabled) { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.home-page .cf-arrow:active:not(:disabled) { transform: scale(0.92); }
+.home-page .cf-arrow:disabled { opacity: 0; pointer-events: none; }
+
+.home-page .cf-count { margin: 6px 0 0; text-align: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 20px; }
+.home-page .cf-count span { display: inline-block; animation: home-count-in 0.4s var(--ease-out); }
+@keyframes home-count-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* Loading, error and empty rows keep the height of a row with cards, so the page does not jump. */
+.home-page .cf-status { display: flex; align-items: center; justify-content: center; box-sizing: border-box; min-height: 406px; padding-inline: 20px; }
+.home-page .cf-status .request-state { width: 100%; max-width: 480px; margin-block: 0; text-align: center; }
+.home-page .cf-empty { margin: 0; color: var(--muted); text-align: center; }
+@media (max-width: 733px) {
+  .home-page .cf-status { min-height: 346px; }
+}
+
+/* VIEW cursor: grows out of the pointer on the front card, shrinks back when it leaves. */
+.home-page .view-cursor {
+  position: fixed; left: 0; top: 0; width: 76px; height: 76px; margin: -38px 0 0 -38px; z-index: 5000;
+  pointer-events: none; will-change: transform;
+}
+.home-page .view-cursor .dot {
+  width: 100%; height: 100%; border-radius: 50%; background: var(--view-bg); color: var(--view-fg);
+  display: flex; align-items: center; justify-content: center; transform: scale(0);
+  transition: transform 0.26s cubic-bezier(0.4, 0, 1, 1);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.18);
+}
+.home-page .view-cursor .label {
+  font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: 0.14em; padding-left: 0.14em;
+  opacity: 0; transform: scale(0.6); transition: opacity 0.12s ease, transform 0.2s ease;
+}
+.home-page .view-cursor.on .dot { transform: scale(1); transition: transform 0.42s cubic-bezier(0.34, 1.45, 0.5, 1); }
+.home-page .view-cursor.on .label { opacity: 1; transform: none; transition: opacity 0.2s ease 0.14s, transform 0.32s var(--ease-out) 0.12s; }
+
+.home-page .no-anim, .home-page .no-anim * { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .home-page .ri, .home-page .cf-row, .home-page .cf-face, .home-page .cf-count span { animation: none !important; }
+  .home-page .cf-card, .home-page .cf-face, .home-page .cf-halo, .home-page .cf-floor, .home-page .cf-panel, .home-page .cf-sub,
+  .home-page .cf-arrow, .home-page .view-cursor .dot, .home-page .view-cursor .label { transition: none !important; }
+}

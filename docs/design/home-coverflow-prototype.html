@@ -1,0 +1,559 @@
+<title>Category Coverflow</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Poppins:wght@500;600&display=swap">
+<style>
+/* Layout: the store's header, then one sortable coverflow per category, stacked.
+   Tokens and motion curves are the store's own (frontend/src/styles/auth.css). */
+:root {
+  --font-display: 'Poppins', Arial, sans-serif;
+  --font-body: 'Open Sans', Arial, sans-serif;
+  --bg: #f6f7f9; --surface: #ffffff; --header: #1f2937; --header-fg: #ffffff; --header-hover: rgba(255,255,255,.12);
+  --fg: #222222; --muted: #505966; --line: #dce0e6; --field-line: #6b7280;
+  --accent: #174a8b; --accent-hover: #0f3363; --accent-fg: #ffffff; --link: #174a8b; --focus: #b66d00;
+  --danger: #a32b12; --ok: #1a7f37;
+  --shadow: 0 1px 3px rgba(31,41,55,.08);
+  --card-shadow: 0 22px 44px rgba(31,41,55,.18);
+  --placeholder: #eef0f3; --placeholder-fg: #7b8594;
+  --halo: rgba(23,74,139,.13); --floor: rgba(31,41,55,.22);
+  --view-bg: #111418; --view-fg: #ffffff;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff;
+    --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+    --accent: #2d6bcf; --accent-hover: #4a84e0; --link: #8db9ff; --focus: #f0a64a;
+    --danger: #ff8a73; --ok: #3fb950;
+    --shadow: 0 1px 3px rgba(0,0,0,.4); --card-shadow: 0 22px 44px rgba(0,0,0,.55);
+    --placeholder: #222c3a; --placeholder-fg: #8794a6;
+    --halo: rgba(77,132,224,.22); --floor: rgba(0,0,0,.45);
+    --view-bg: #f3f5f8; --view-fg: #111418;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff;
+  --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+  --accent: #2d6bcf; --accent-hover: #4a84e0; --link: #8db9ff; --focus: #f0a64a;
+  --danger: #ff8a73; --ok: #3fb950;
+  --shadow: 0 1px 3px rgba(0,0,0,.4); --card-shadow: 0 22px 44px rgba(0,0,0,.55);
+  --placeholder: #222c3a; --placeholder-fg: #8794a6;
+  --halo: rgba(77,132,224,.22); --floor: rgba(0,0,0,.45);
+  --view-bg: #f3f5f8; --view-fg: #111418;
+  color-scheme: dark;
+}
+html, body { background: var(--bg); }
+body { color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; }
+a { color: var(--link); } a:hover { color: var(--accent-hover); }
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+
+/* Header, as on every store page */
+.site-header { background: var(--header); color: var(--header-fg); }
+.site-header .inner {
+  max-width: 1280px; margin: 0 auto; box-sizing: border-box; display: flex; align-items: center;
+  justify-content: space-between; gap: 12px 16px; flex-wrap: wrap; padding-block: 14px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.logo { font-family: var(--font-display); font-weight: 600; font-size: 22px; color: var(--header-fg); text-decoration: none; }
+.logo:hover { color: var(--header-fg); }
+.nav { display: flex; gap: 4px; flex-wrap: wrap; font-family: var(--font-display); font-weight: 500; font-size: 15px; }
+.nav a { color: var(--header-fg); text-decoration: none; padding: 8px 10px; border-radius: 6px; transition: background-color .2s ease; }
+.nav a:hover { background: var(--header-hover); color: var(--header-fg); }
+.nav a[aria-current="page"] { text-decoration: underline; text-underline-offset: 6px; }
+
+main {
+  max-width: 1280px; margin: 0 auto; box-sizing: border-box; padding-block: 36px 56px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.intro { display: flex; flex-direction: column; gap: 4px; margin-bottom: 28px; }
+.intro h1 { margin: 0; font-family: var(--font-display); font-weight: 600; font-size: clamp(24px, 3vw, 30px); text-wrap: balance; }
+.intro p { margin: 0; color: var(--muted); }
+
+/* Masked reveal-up, the login page's entrance (0.85s, 120ms + i × 110ms) */
+.r { display: block; overflow: hidden; padding-bottom: 2px; }
+.ri { display: block; animation: reveal-up .85s var(--ease-out) both; animation-delay: calc(120ms + var(--i, 0) * 110ms); }
+@keyframes reveal-up { from { transform: translateY(110%); opacity: 0; filter: blur(4px); } to { transform: none; opacity: 1; filter: none; } }
+
+.rows { display: flex; flex-direction: column; gap: 32px; }
+
+/* One category row */
+.cf-row {
+  background: var(--surface); border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow);
+  padding-block: 18px 16px; min-width: 0;
+  animation: row-in .7s var(--ease-out) both; animation-delay: calc(260ms + var(--row, 0) * 160ms);
+}
+@keyframes row-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: none; } }
+.cf-bar { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding-inline: 20px; min-height: 44px; flex-wrap: wrap; }
+.cf-sub { display: flex; align-items: center; gap: 10px; transition: opacity .32s ease, transform .45s var(--ease-out); }
+.cf-sub .icon { width: 32px; height: 32px; border-radius: 8px; }
+.cf-sub .name { font-family: var(--font-display); font-weight: 600; font-size: 18px; }
+.icon { display: inline-flex; align-items: center; justify-content: center; background: var(--placeholder); color: var(--accent); flex-shrink: 0; }
+.icon svg { display: block; }
+
+.cf-sort { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--muted); }
+.cf-sort select {
+  height: 40px; min-width: 190px; padding: 0 12px; border: 1px solid var(--field-line); border-radius: 8px;
+  background: var(--surface); color: var(--fg); font: 14px var(--font-body); cursor: pointer;
+  transition: border-color .2s ease;
+}
+.cf-sort select:hover { border-color: var(--accent); }
+
+.cf-stage { position: relative; margin-top: 4px; }
+.cf-track {
+  position: relative; overflow: hidden; perspective: 1400px; touch-action: pan-y; user-select: none; -webkit-user-select: none;
+  height: var(--track-h, 380px); outline-offset: -3px; border-radius: 8px; cursor: grab;
+}
+.cf-row.dragging .cf-track { cursor: grabbing; }
+/* Soft light and floor shadow under the front position */
+.cf-halo {
+  position: absolute; top: 0; bottom: 0; pointer-events: none;
+  background: radial-gradient(closest-side, var(--halo), transparent);
+  transition: left .55s var(--ease-out), width .55s var(--ease-out);
+}
+.cf-floor {
+  position: absolute; height: 26px; pointer-events: none; border-radius: 50%;
+  background: radial-gradient(closest-side, var(--floor), transparent);
+  transition: left .55s var(--ease-out);
+}
+
+/* Category panel at rest; the cards slide over it */
+.cf-panel {
+  position: absolute; top: 0; bottom: 0; left: 24px; display: flex; flex-direction: column; justify-content: center; gap: 14px;
+  transition: opacity .35s ease, transform .55s var(--ease-out);
+}
+.cf-row.is-narrow .cf-panel { display: none; }
+.cf-panel h2 { margin: 0; display: flex; flex-direction: column; gap: 14px; }
+.cf-panel .icon { width: 64px; height: 64px; border-radius: 16px; }
+.cf-panel .title { font-family: var(--font-display); font-weight: 600; font-size: 32px; line-height: 1.15; }
+.cf-panel p { margin: 0; font-size: 14px; color: var(--muted); }
+.cf-panel a { font-family: var(--font-display); font-weight: 500; font-size: 14px; }
+
+/* Cards: the outer element is placed and turned, the inner face carries the entrance */
+.cf-card {
+  position: absolute; top: 28px; padding: 0; border: 0; background: none; cursor: pointer; text-align: left;
+  font: inherit; color: var(--fg); border-radius: 10px;
+  transition: left .55s var(--ease-out), transform .55s var(--ease-out), filter .55s ease;
+  transition-delay: var(--delay, 0ms);
+  will-change: left, transform;
+}
+.cf-card.is-front { cursor: none; }
+.cf-face {
+  position: relative; width: 100%; height: 100%; box-sizing: border-box; overflow: hidden; display: flex; flex-direction: column;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 10px;
+  transition: box-shadow .5s ease, transform .3s var(--ease-out), border-color .3s ease;
+  animation: card-in .8s var(--ease-out) both; animation-delay: var(--enter, 0ms);
+}
+@keyframes card-in { from { opacity: 0; transform: translateX(90px); } to { opacity: 1; transform: none; } }
+.cf-card.is-front .cf-face { box-shadow: var(--card-shadow); }
+.cf-row:not(.dragging) .cf-card.is-front:hover .cf-face { transform: translateY(-4px); border-color: var(--accent); }
+.cf-card.is-pressed .cf-face { animation: press .32s var(--ease-out); }
+@keyframes press { 40% { transform: scale(.97); } }
+.cf-img {
+  flex: 0 0 auto; height: 62%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px;
+  background: var(--placeholder); color: var(--placeholder-fg); font-size: 12px;
+}
+.cf-info { padding: 12px 14px; display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.cf-name { font-family: var(--font-display); font-weight: 600; font-size: 16px; line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cf-price { font-family: var(--font-display); font-weight: 500; font-size: 18px; font-variant-numeric: tabular-nums; }
+.cf-stock { font-size: 12px; font-weight: 600; color: var(--ok); }
+.cf-stock.out { color: var(--danger); }
+
+/* While a finger or touchpad is moving the row, everything follows it directly */
+.cf-row.dragging .cf-card, .cf-row.dragging .cf-halo, .cf-row.dragging .cf-floor,
+.cf-row.dragging .cf-panel, .cf-row.dragging .cf-sub { transition: none; }
+
+.cf-arrow {
+  position: absolute; top: 50%; margin-top: -22px; width: 44px; height: 44px; z-index: 2000;
+  display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); border-radius: 999px;
+  background: var(--surface); color: var(--fg); box-shadow: var(--shadow); cursor: pointer;
+  transition: background-color .18s ease, color .18s ease, border-color .18s ease, opacity .2s ease, transform .18s var(--ease-out);
+}
+.cf-arrow.prev { left: 8px; } .cf-arrow.next { right: 8px; }
+.cf-arrow:hover:not(:disabled) { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.cf-arrow:active:not(:disabled) { transform: scale(.92); }
+.cf-arrow:disabled { opacity: 0; pointer-events: none; }
+
+.cf-count { margin: 6px 0 0; text-align: center; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; min-height: 20px; }
+.cf-count span { display: inline-block; animation: count-in .4s var(--ease-out); }
+@keyframes count-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+/* VIEW cursor: grows out of the pointer on the front card, shrinks back when it leaves */
+.view-cursor {
+  position: fixed; left: 0; top: 0; width: 76px; height: 76px; margin: -38px 0 0 -38px; z-index: 5000;
+  pointer-events: none; will-change: transform;
+}
+.view-cursor .dot {
+  width: 100%; height: 100%; border-radius: 50%; background: var(--view-bg); color: var(--view-fg);
+  display: flex; align-items: center; justify-content: center; transform: scale(0);
+  transition: transform .26s cubic-bezier(0.4, 0, 1, 1);
+  box-shadow: 0 8px 22px rgba(0,0,0,.18);
+}
+.view-cursor .label {
+  font-family: var(--font-display); font-weight: 500; font-size: 13px; letter-spacing: .14em; padding-left: .14em;
+  opacity: 0; transform: scale(.6); transition: opacity .12s ease, transform .2s ease;
+}
+.view-cursor.on .dot { transform: scale(1); transition: transform .42s cubic-bezier(0.34, 1.45, 0.5, 1); }
+.view-cursor.on .label { opacity: 1; transform: none; transition: opacity .2s ease .14s, transform .32s var(--ease-out) .12s; }
+
+.site-footer { padding-block: 16px; text-align: center; font-size: 14px; color: var(--muted); background: var(--surface); border-top: 1px solid var(--line); }
+
+.no-anim, .no-anim * { transition: none !important; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ri, .cf-row, .cf-face, .cf-count span { animation: none !important; }
+  .cf-card, .cf-face, .cf-halo, .cf-floor, .cf-panel, .cf-sub, .cf-arrow,
+  .view-cursor .dot, .view-cursor .label { transition: none !important; }
+}
+</style>
+
+<header class="site-header">
+  <div class="inner">
+    <a class="logo" href="#">Online Store</a>
+    <nav class="nav" aria-label="Main">
+      <a href="#" aria-current="page">Home</a>
+      <a href="#">Products</a>
+      <a href="#">Cart</a>
+      <a href="#">Checkout</a>
+      <a href="#">Login</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main-content">
+  <div class="intro">
+    <h1 class="r"><span class="ri" style="--i:0">Shop by category</span></h1>
+    <p class="r"><span class="ri" style="--i:1">Find the best phones and tablets at great prices.</span></p>
+  </div>
+  <div class="rows" id="rows"></div>
+</main>
+
+<footer class="site-footer">© 2026 Online Store · CS 308 Team</footer>
+
+<div class="view-cursor" id="view-cursor" aria-hidden="true"><div class="dot"><span class="label">VIEW</span></div></div>
+
+<script>
+(() => {
+  // Seed catalog (SeedData/seed-products.json). There are no orders yet, so "Best sellers"
+  // falls back to name order, exactly as GET /api/products?sort=popularity does today.
+  const CATEGORIES = [
+    { key: "phones", name: "Phones", kind: "phone", products: [
+      { id: 1, name: "iPhone 16", price: 55000, stock: 15 },
+      { id: 2, name: "Samsung Galaxy S25", price: 48000, stock: 20 },
+      { id: 3, name: "Google Pixel 9", price: 43000, stock: 12 },
+      { id: 4, name: "Xiaomi 14", price: 32000, stock: 18 },
+      { id: 5, name: "iPhone 15", price: 45000, stock: 10 } ] },
+    { key: "tablets", name: "Tablets", kind: "tablet", products: [
+      { id: 6, name: "iPad Air", price: 29000, stock: 10 },
+      { id: 7, name: "iPad Pro", price: 57000, stock: 8 },
+      { id: 8, name: "Samsung Galaxy Tab S10", price: 34000, stock: 12 },
+      { id: 9, name: "Xiaomi Pad 7", price: 19000, stock: 16 },
+      { id: 10, name: "Lenovo Tab P12", price: 15000, stock: 0 } ] }
+  ];
+  const ICONS = {
+    phone: (s, w) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M11 18.5h2"/></svg>`,
+    tablet: (s, w) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="3" width="17" height="18" rx="2.5"/><path d="M11 18h2"/></svg>`
+  };
+  const CHEVRON = d => `<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="${d}"/></svg>`;
+  const money = new Intl.NumberFormat("tr-TR", { style: "currency", currency: "TRY" });
+  const reduceMotion = (() => { try { return matchMedia("(prefers-reduced-motion: reduce)"); } catch { return { matches: false }; } })();
+  const TILT = 55;
+  const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+  const lerp = (a, b, t) => a + (b - a) * t;
+
+  const sorters = {
+    best: (a, b) => a.name.localeCompare(b.name),
+    "price-asc": (a, b) => a.price - b.price || a.name.localeCompare(b.name),
+    "price-desc": (a, b) => b.price - a.price || a.name.localeCompare(b.name)
+  };
+
+  // ---------- VIEW cursor ----------
+  const cursor = document.getElementById("view-cursor");
+  const pointer = { x: -999, y: -999, type: "mouse", inside: false };
+  const cur = { x: -999, y: -999, on: false };
+  const finePointer = (() => { try { return matchMedia("(hover: hover) and (pointer: fine)").matches; } catch { return true; } })();
+  document.addEventListener("pointermove", e => { pointer.x = e.clientX; pointer.y = e.clientY; pointer.type = e.pointerType; pointer.inside = true; }, { passive: true });
+  document.addEventListener("pointerleave", () => { pointer.inside = false; });
+  window.addEventListener("blur", () => { pointer.inside = false; });
+
+  function cursorFrame() {
+    let want = false;
+    if (finePointer && pointer.inside && pointer.type !== "touch") {
+      const hit = document.elementFromPoint(pointer.x, pointer.y);
+      const card = hit && hit.closest(".cf-card.is-front");
+      want = !!card && !card.closest(".cf-row.dragging");
+    }
+    if (want && !cur.on) { cur.x = pointer.x; cur.y = pointer.y; }  // grow out of the pointer itself
+    if (want !== cur.on) { cur.on = want; cursor.classList.toggle("on", want); }
+    const t = reduceMotion.matches ? 1 : 0.28;
+    cur.x = lerp(cur.x, pointer.x, t);
+    cur.y = lerp(cur.y, pointer.y, t);
+    cursor.style.transform = `translate3d(${cur.x}px, ${cur.y}px, 0)`;
+    requestAnimationFrame(cursorFrame);
+  }
+  requestAnimationFrame(cursorFrame);
+
+  // ---------- One category row ----------
+  function buildRow(cat, rowIndex) {
+    const section = document.createElement("section");
+    section.className = "cf-row";
+    section.style.setProperty("--row", rowIndex);
+    section.setAttribute("aria-labelledby", `h-${cat.key}`);
+    const singular = cat.name.toLowerCase().replace(/s$/, "");
+    section.innerHTML = `
+      <div class="cf-bar">
+        <div class="cf-sub" aria-hidden="true"><span class="icon">${ICONS[cat.kind](18, 1.8)}</span><span class="name">${cat.name}</span></div>
+        <label class="cf-sort" for="sort-${cat.key}">Sort by
+          <select id="sort-${cat.key}">
+            <option value="best">Best sellers</option>
+            <option value="price-asc">Price: low to high</option>
+            <option value="price-desc">Price: high to low</option>
+          </select>
+        </label>
+      </div>
+      <div class="cf-stage">
+        <div class="cf-track" tabindex="0" role="group" aria-roledescription="carousel" aria-label="${cat.name} products. Use the left and right arrow keys.">
+          <div class="cf-halo"></div>
+          <div class="cf-floor"></div>
+          <div class="cf-panel">
+            <h2 id="h-${cat.key}"><span class="icon">${ICONS[cat.kind](34, 1.6)}</span><span class="title">${cat.name}</span></h2>
+            <p>${cat.products.length} products</p>
+            <a href="#">See all ${cat.name.toLowerCase()}</a>
+          </div>
+        </div>
+        <button class="cf-arrow prev" type="button" aria-label="Previous ${singular}">${CHEVRON("M15 6l-6 6 6 6")}</button>
+        <button class="cf-arrow next" type="button" aria-label="Next ${singular}">${CHEVRON("M9 6l6 6-6 6")}</button>
+      </div>
+      <p class="cf-count" aria-live="polite"></p>`;
+
+    const track = section.querySelector(".cf-track");
+    const halo = section.querySelector(".cf-halo");
+    const floor = section.querySelector(".cf-floor");
+    const panel = section.querySelector(".cf-panel");
+    const sub = section.querySelector(".cf-sub");
+    const count = section.querySelector(".cf-count");
+    const prev = section.querySelector(".prev");
+    const next = section.querySelector(".next");
+    const select = section.querySelector("select");
+
+    // One element per product, kept for the life of the page, so a re-sort moves the same cards.
+    const cards = new Map();
+    cat.products.forEach((p, i) => {
+      const el = document.createElement("button");
+      el.type = "button";
+      el.className = "cf-card";
+      el.innerHTML = `
+        <span class="cf-face" style="--enter:${420 + rowIndex * 160 + i * 80}ms">
+          <span class="cf-img">${ICONS[cat.kind](46, 1.3)}<span>No image available</span></span>
+          <span class="cf-info">
+            <span class="cf-name">${p.name}</span>
+            <span class="cf-price">${money.format(p.price)}</span>
+            <span class="cf-stock${p.stock > 0 ? "" : " out"}">${p.stock > 0 ? `In stock · ${p.stock} available` : "Out of stock"}</span>
+          </span>
+        </span>`;
+      track.appendChild(el);
+      cards.set(p.id, el);
+    });
+
+    // pos is a real number: 0 = first product in front, 1.5 = halfway between the second and third.
+    const state = { order: cat.products.slice().sort(sorters.best), pos: 0, front: -1 };
+    const last = () => state.order.length - 1;
+
+    function geometry() {
+      const W = track.clientWidth;
+      const narrow = W < 700;
+      const cardW = narrow ? 168 : 220;
+      const cardH = narrow ? 252 : 312;
+      return { W, narrow, cardW, cardH, side: cardW + 12, spacing: narrow ? 40 : 72, rest: narrow ? 16 : 290 };
+    }
+
+    // Where a card sits when it is d places from the front (d may be fractional while dragging).
+    function place(d, anchor, g) {
+      const a = Math.abs(d), s = Math.sign(d);
+      const x = a <= 1 ? anchor + d * g.side : anchor + s * (g.side + (a - 1) * g.spacing);
+      const k = Math.min(a, 1);
+      const flat = reduceMotion.matches;
+      const transform = flat
+        ? `scale(${1 - 0.08 * k})`
+        : `rotateY(${-s * TILT * k}deg) scale(${1 - 0.04 * k})`;
+      const light = clamp(1 - 0.06 * k - 0.035 * Math.max(a - 1, 0), 0.76, 1);
+      return { x, transform, origin: d >= 0 ? "left center" : "right center", z: 1000 - Math.round(a * 20), light };
+    }
+
+    function render() {
+      const g = geometry();
+      section.classList.toggle("is-narrow", g.narrow);
+      track.style.setProperty("--track-h", `${g.cardH + 64}px`);
+      const p = state.pos;
+      const center = Math.round((g.W - g.cardW) / 2);
+      const anchor = lerp(g.rest, center, clamp(p, 0, 1));
+
+      state.order.forEach((prod, i) => {
+        const el = cards.get(prod.id);
+        const c = place(i - p, anchor, g);
+        el.style.left = `${c.x}px`;
+        el.style.width = `${g.cardW}px`;
+        el.style.height = `${g.cardH}px`;
+        el.style.transform = c.transform;
+        el.style.transformOrigin = c.origin;
+        el.style.zIndex = c.z;
+        el.style.filter = `brightness(${c.light})`;
+      });
+
+      // The category panel fades as the cards cover it; the small heading takes its place.
+      const cover = clamp(p, 0, 1);
+      if (!g.narrow) {
+        panel.style.opacity = String(clamp(1 - cover * 1.6, 0, 1));
+        panel.style.transform = `translateX(${-28 * cover}px)`;
+        panel.style.pointerEvents = cover > 0.5 ? "none" : "";
+      }
+      const subOn = g.narrow ? 1 : clamp((cover - 0.25) * 2, 0, 1);
+      sub.style.opacity = String(subOn);
+      sub.style.transform = `translateX(${-10 * (1 - subOn)}px)`;
+
+      const haloW = g.cardW * 2.2;
+      halo.style.left = `${anchor + g.cardW / 2 - haloW / 2}px`;
+      halo.style.width = `${haloW}px`;
+      floor.style.left = `${anchor + 10}px`;
+      floor.style.width = `${g.cardW - 20}px`;
+      floor.style.top = `${28 + g.cardH + 6}px`;
+
+      const front = clamp(Math.round(p), 0, last());
+      if (front !== state.front) {
+        state.front = front;
+        state.order.forEach((prod, i) => {
+          const el = cards.get(prod.id);
+          const isFront = i === front;
+          el.classList.toggle("is-front", isFront);
+          el.tabIndex = isFront ? 0 : -1;
+          el.setAttribute("aria-current", isFront ? "true" : "false");
+          el.setAttribute("aria-label",
+            `${prod.name}, ${money.format(prod.price)}${prod.stock > 0 ? "" : ", out of stock"}, ${i + 1} of ${state.order.length}` +
+            (isFront ? ". Opens the product page" : ". Brings it to the front"));
+        });
+        prev.disabled = front === 0;
+        next.disabled = front === last();
+        count.innerHTML = `<span>${front + 1} / ${state.order.length} · ${state.order[front].name}</span>`;
+      }
+    }
+
+    function snapTo(index) {
+      section.classList.remove("dragging");
+      state.pos = clamp(index, 0, last());
+      render();
+    }
+
+    function go(index) {
+      cards.forEach(el => el.style.setProperty("--delay", "0ms"));
+      snapTo(index);
+    }
+
+    function resort(sort) {
+      state.order = cat.products.slice().sort(sorters[sort]);
+      state.front = -1;
+      // Cards travel to their new places one after another, left to right.
+      state.order.forEach((p, i) => cards.get(p.id).style.setProperty("--delay", `${i * 45}ms`));
+      snapTo(0);
+    }
+
+    // Past either end the row gives a little, then springs back.
+    const rubber = raw => raw < 0 ? raw * 0.3 : raw > last() ? last() + (raw - last()) * 0.3 : raw;
+    function startFollow() {
+      cards.forEach(el => el.style.setProperty("--delay", "0ms"));
+      section.classList.add("dragging");
+    }
+
+    // Touchpad: two-finger sideways swipe moves the row with the fingers, then settles on the nearest product.
+    let wheelRaw = 0, wheelTimer = null;
+    track.addEventListener("wheel", e => {
+      const dx = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : (e.shiftKey ? e.deltaY : 0);
+      if (!dx) return;
+      e.preventDefault();
+      if (!section.classList.contains("dragging")) { startFollow(); wheelRaw = state.pos; }
+      const unit = e.deltaMode === 1 ? 16 : 1;
+      wheelRaw = clamp(wheelRaw + (dx * unit) / geometry().side, -0.6, last() + 0.6);
+      state.pos = rubber(wheelRaw);
+      render();
+      clearTimeout(wheelTimer);
+      wheelTimer = setTimeout(() => snapTo(Math.round(state.pos)), 140);
+    }, { passive: false });
+
+    // Mouse drag and finger swipe: the row follows the pointer, a quick flick carries on to the next product.
+    let drag = null, suppressClick = false;
+    track.addEventListener("pointerdown", e => {
+      if (e.button !== 0 || e.target.closest(".cf-arrow")) return;
+      drag = { x: e.clientX, start: state.pos, moved: false, lastX: e.clientX, lastT: performance.now(), v: 0, id: e.pointerId };
+    });
+    track.addEventListener("pointermove", e => {
+      if (!drag || e.pointerId !== drag.id) return;
+      const dx = e.clientX - drag.x;
+      if (!drag.moved) {
+        if (Math.abs(dx) < 6) return;
+        drag.moved = true;
+        startFollow();
+        try { track.setPointerCapture(e.pointerId); } catch {}
+      }
+      const now = performance.now();
+      drag.v = (e.clientX - drag.lastX) / Math.max(1, now - drag.lastT);
+      drag.lastX = e.clientX; drag.lastT = now;
+      state.pos = rubber(drag.start - dx / geometry().side);
+      render();
+    });
+    const endDrag = e => {
+      if (!drag || (e && e.pointerId !== drag.id)) return;
+      if (drag.moved) {
+        suppressClick = true;
+        setTimeout(() => { suppressClick = false; }, 0);
+        const projected = state.pos - (drag.v * 160) / geometry().side;
+        snapTo(Math.round(clamp(projected, drag.start - 2, drag.start + 2)));
+      }
+      drag = null;
+    };
+    track.addEventListener("pointerup", endDrag);
+    track.addEventListener("pointercancel", endDrag);
+
+    cards.forEach((el, id) => {
+      el.addEventListener("click", e => {
+        if (suppressClick) { e.preventDefault(); return; }
+        const i = state.order.findIndex(p => p.id === id);
+        if (i !== state.front) { go(i); return; }
+        // In the store this opens /product?id=…; here the card only answers the press.
+        el.classList.remove("is-pressed"); void el.offsetWidth; el.classList.add("is-pressed");
+      });
+      el.addEventListener("animationend", e => { if (e.animationName === "press") el.classList.remove("is-pressed"); });
+    });
+
+    prev.addEventListener("click", () => go(state.front - 1));
+    next.addEventListener("click", () => go(state.front + 1));
+    select.addEventListener("change", () => resort(select.value));
+
+    track.addEventListener("keydown", e => {
+      const moves = { ArrowRight: state.front + 1, ArrowLeft: state.front - 1, Home: 0, End: last() };
+      if (!(e.key in moves)) return;
+      e.preventDefault();
+      go(moves[e.key]);
+      if (document.activeElement !== track) cards.get(state.order[state.front].id).focus({ preventScroll: true });
+    });
+
+    return { section, render };
+  }
+
+  const host = document.getElementById("rows");
+  const rows = CATEGORIES.map((cat, i) => buildRow(cat, i));
+  rows.forEach(r => host.appendChild(r.section));
+  rows.forEach(r => { r.section.classList.add("no-anim"); r.render(); });
+  requestAnimationFrame(() => requestAnimationFrame(() => rows.forEach(r => r.section.classList.remove("no-anim"))));
+
+  // Re-measure on resize without animating the jump.
+  let resizeTimer;
+  const relayout = () => {
+    rows.forEach(r => { r.section.classList.add("no-anim"); r.render(); });
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => rows.forEach(r => r.section.classList.remove("no-anim")), 60);
+  };
+  if ("ResizeObserver" in window) new ResizeObserver(relayout).observe(host);
+  else addEventListener("resize", relayout);
+  try { reduceMotion.addEventListener("change", relayout); } catch {}
+})();
+</script>
