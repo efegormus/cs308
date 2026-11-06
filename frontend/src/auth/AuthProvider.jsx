@@ -78,7 +78,8 @@ export function AuthProvider({ children }) {
     setCartMergeError(null);
     merging.current = (async () => {
       try {
-        const result = await mergeGuestCart(await csrfToken());
+        // The same limit as the login hooks: a request that hangs must not hold up the login or the page load.
+        const result = await mergeGuestCart(await csrfToken(), { signal: AbortSignal.timeout(LOGIN_HOOK_LIMIT_MS) });
         setCartMergeConflicts(result.conflicts);
         setCartMergeVersion(version => version + 1);
       } catch (error) {
