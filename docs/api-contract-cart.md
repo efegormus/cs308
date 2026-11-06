@@ -27,6 +27,7 @@ unit tests has no row locks, so the locking itself is only exercised against rea
 | --- | --- | --- |
 | `GET /api/cart` | Guest or customer | `200` cart (empty when there is none). |
 | `POST /api/cart/items` | Guest or customer + CSRF | Body `{ "productId": 10, "quantity": 2 }`. `200` updated cart. Adding a product already in the cart increases that line. |
+| `PUT /api/cart/items/{productId}` | Guest or customer + CSRF, body `{ "quantity": 1..99 }` | `200` updated cart. Sets the quantity of a line already in the cart (the cart page's minus and plus buttons). `404` if the product is not in the cart, `409` if the product is inactive or the quantity is above the stock. Empty a line with `DELETE`, not with `0`. |
 | `DELETE /api/cart/items/{productId}` | Guest or customer + CSRF | `200` updated cart. Removes the whole line; a product that is not in the cart is not an error. |
 | `POST /api/cart/merge` | Customer + CSRF, no body | `200` `{ cart, merged, conflicts }`. Moves the guest cart (found through the `OnlineStore.Cart` cookie) into the account cart. |
 
