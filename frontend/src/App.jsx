@@ -8,6 +8,7 @@ import LoginPage from "./pages/LoginPage.jsx";
 import OrderConfirmationPage from "./pages/OrderConfirmationPage.jsx";
 import ProductPage from "./pages/ProductPage.jsx";
 import ProductsPage from "./pages/ProductsPage.jsx";
+import RegisterPage from "./pages/RegisterPage.jsx";
 
 export default function App() {
   return (
@@ -19,6 +20,7 @@ export default function App() {
           <Route path="/product" element={<ProductPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />
           <Route path="/order-confirmation" element={<OrderConfirmationPage />} />
           <Route path="/deliveries" element={<DeliveriesPage />} />

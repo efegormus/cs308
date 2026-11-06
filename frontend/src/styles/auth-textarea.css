@@ -1,0 +1,8 @@
+/* The home address on the register page. auth.css has no textarea rules and stays as it is, so these repeat
+   its rules for `.field input`. The padding keeps the 12px sides; the height holds three lines. */
+.auth-page .field textarea {
+  min-height: 88px; padding: 10px 12px; font: inherit; font-size: 16px; color: var(--fg);
+  background: var(--surface); border: 1px solid var(--field-line); border-radius: 6px; resize: vertical;
+}
+.auth-page .field textarea[aria-invalid="true"] { border: 2px solid var(--danger); }
+.auth-page .field textarea:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
