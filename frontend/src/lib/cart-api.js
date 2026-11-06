@@ -1,6 +1,9 @@
 // The cart API client (SCRUM-49, contract in docs/api-contract-cart.md). Guests and customers use the same routes;
 // the guest cart is identified by an HttpOnly cookie the browser sends by itself.
 
+// The most one request may set, as in the API (CartEndpoints.MaxQuantityPerRequest).
+export const MAX_LINE_QUANTITY = 99;
+
 export class CartError extends Error {
   constructor(message, status) {
     super(message);
@@ -50,5 +53,16 @@ export function removeCartItem(productId, csrfToken, { signal } = {}) {
   if (!Number.isInteger(productId) || productId <= 0) throw new CartError("Invalid product.");
   return sendCartRequest(`/api/cart/items/${productId}`, {
     method: "DELETE", headers: { "X-CSRF-TOKEN": csrfToken }
+  }, signal);
+}
+
+// Sets the quantity of a line that is already in the cart (PUT /api/cart/items/{productId}). 404 means the line is
+// gone, 409 means the stock changed. The minus and plus buttons of the cart page use it.
+export function setCartItemQuantity(productId, quantity, csrfToken, { signal } = {}) {
+  if (!Number.isInteger(productId) || productId <= 0) throw new CartError("Invalid product.");
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_LINE_QUANTITY) throw new CartError("Invalid quantity.");
+  return sendCartRequest(`/api/cart/items/${productId}`, {
+    method: "PUT", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken },
+    body: JSON.stringify({ quantity })
   }, signal);
 }
