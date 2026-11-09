@@ -66,3 +66,14 @@ export function setCartItemQuantity(productId, quantity, csrfToken, { signal } =
     body: JSON.stringify({ quantity })
   }, signal);
 }
+
+// Adds units of a product (POST /api/cart/items). A product that is already in the cart gets more units. The server
+// answers 404 for an unknown or inactive product, 409 when the stock is too low or the cart is full, 403 for staff.
+export function addCartItem(productId, quantity, csrfToken, { signal } = {}) {
+  if (!Number.isInteger(productId) || productId <= 0) throw new CartError("Invalid product.");
+  if (!Number.isInteger(quantity) || quantity < 1 || quantity > MAX_LINE_QUANTITY) throw new CartError("Invalid quantity.");
+  return sendCartRequest("/api/cart/items", {
+    method: "POST", headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": csrfToken },
+    body: JSON.stringify({ productId, quantity })
+  }, signal);
+}

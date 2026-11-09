@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CartError, fetchCart, parseCart, removeCartItem, setCartItemQuantity } from "./cart-api.js";
+import { addCartItem, CartError, fetchCart, parseCart, removeCartItem, setCartItemQuantity } from "./cart-api.js";
 
 const line = {
   productId: 10, name: "Phone Ten", unitPrice: 100.5, quantity: 2, stockQuantity: 5,
@@ -90,4 +90,22 @@ test("setCartItemQuantity refuses a quantity outside 1..99 and a bad product id"
     assert.throws(() => setCartItemQuantity(10, quantity, "t"), CartError);
   }
   assert.throws(() => setCartItemQuantity(0, 1, "t"), CartError);
+});
+
+test("addCartItem posts the product and quantity with the CSRF header", async () => {
+  const calls = mockFetch({ ok: true, json: async () => cart });
+  assert.equal(await addCartItem(10, 2, "tok"), cart);
+  assert.equal(calls[0].path, "/api/cart/items");
+  assert.equal(calls[0].init.method, "POST");
+  assert.equal(calls[0].init.headers["X-CSRF-TOKEN"], "tok");
+  assert.deepEqual(JSON.parse(calls[0].init.body), { productId: 10, quantity: 2 });
+});
+
+test("addCartItem rejects bad input before any request and reports the HTTP status", async () => {
+  const calls = mockFetch({ ok: false, status: 409 });
+  assert.throws(() => addCartItem(0, 1, "tok"), CartError);
+  assert.throws(() => addCartItem(10, 0, "tok"), CartError);
+  assert.throws(() => addCartItem(10, 100, "tok"), CartError);
+  assert.equal(calls.length, 0);
+  await assert.rejects(addCartItem(10, 1, "tok"), error => error.status === 409);
 });

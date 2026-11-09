@@ -1,3 +1,8 @@
+/* products.css hard-codes a light page (#222 on #f6f7f9) but the cart row follows the theme tokens, so in dark mode the
+   numbers were dark on dark. The cart page now takes its text, page and link colors from the same tokens as its rows. */
+.cart-page.catalog-page { color: var(--fg, #222); background: var(--bg, #f6f7f9); }
+.cart-page.catalog-page a { color: var(--link, #174a8b); }
+.cart-page.catalog-page .cart-checkout { color: var(--accent-fg, #fff); }
 .cart-page .cart-lines { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: .75rem; }
 .cart-page .cart-line {
   display: grid; grid-template-columns: 72px 1fr auto auto; gap: 1rem; align-items: center;
