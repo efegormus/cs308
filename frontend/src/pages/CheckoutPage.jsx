@@ -12,7 +12,7 @@ import { useRequest } from "../lib/useRequest.js";
 import "../styles/request-states.css";
 
 function Checkout({ account }) {
-  const { csrfToken, cartMergeConflicts } = useAuth();
+  const { csrfToken, refreshCsrf, cartMergeConflicts } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const [attempts] = useState(() => browserAttemptStore(account.id));
@@ -62,6 +62,9 @@ function Checkout({ account }) {
         attempts.clear();
         navigate(`/order-confirmation?orderId=${result.data.orderId}`);
       } else if (result.status === "error") {
+        // A 400 can mean the CSRF token is stale. Fetch a new one so the shopper's next, deliberate submit can
+        // succeed. The failed request is never sent again by itself (payment idempotency, SCRUM-113).
+        if (result.error.status === 400) await refreshCsrf();
         const definite = [400, 402, 409].includes(result.error.status);
         if (definite) attempts.clear();
         setUncertain(!definite);
