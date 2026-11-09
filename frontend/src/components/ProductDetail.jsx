@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "react-router";
 import { formatPrice, safeImageUrl, stockLabel } from "../lib/product-display.js";
 import { specRows } from "../lib/product-detail.js";
+import AddToCart from "./AddToCart.jsx";
 
 // One product with its stock count (SCRUM-45 / SCRUM-110). Give it key={product.id}, so a different product
 // starts without the "image failed" state of the previous one. Everything is rendered as text, never as HTML.
@@ -26,6 +27,7 @@ export default function ProductDetail({ product }) {
         {product.description && <p className="product-description">{product.description}</p>}
         <p className="price">{formatPrice(product.price)}</p>
         <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>
+        <AddToCart product={product} />
         <dl className="product-specs">
           {specRows(product).map(row => (
             <div key={row.label} style={{ display: "contents" }}>
