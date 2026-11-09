@@ -44,6 +44,7 @@ export default function Header() {
             <NavLink to="/products" end>Products</NavLink>
             <NavLink to="/cart" end>Cart</NavLink>
             <NavLink to="/checkout" end>Checkout</NavLink>
+            {account?.role === "Customer" && <NavLink to="/orders" end>My orders</NavLink>}
             {account?.role === "ProductManager" && <NavLink to="/deliveries" end>Deliveries</NavLink>}
             {account ? (
               <>

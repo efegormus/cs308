@@ -130,9 +130,14 @@ show the same order status immediately after the manager changes it.
   Permanent/configuration failures stop for manual intervention. Existing emailed invoices are skipped;
   a poison historical record cannot block dispatch of valid pending deliveries.
   See [invoice email configuration and lifecycle](invoices.md#invoice-email-delivery-scrum-75).
-- **SCRUM-76:** reuse the owner-only order-detail response and shared confirmation
-  components for history; avoid registering the same detail route twice. List
-  history is still SCRUM-76.
+- **SCRUM-76 (order history):** `GET /api/customer/orders` lists the signed-in customer's
+  paid orders, newest first, 20 per page: `{ "orders": [ { orderId, status, paymentStatus,
+  purchasedAt, deliveredAt, itemCount, total, invoiceStatus, invoiceUrl } ], "nextBeforeId": 12 }`.
+  Send `?beforeId=<nextBeforeId>` for the next older page; `nextBeforeId` is `null` on the last
+  page. `status` is Processing, InTransit, Delivered or Cancelled. Only the caller's own orders are
+  read, and unpaid attempts are not listed. Details and the invoice use the owner-only
+  `GET /api/customer/orders/{id}` response above, so the detail route is not registered twice.
+  The React page is `/orders` ("My orders" in the header for customers).
 
 ## Verification
 
