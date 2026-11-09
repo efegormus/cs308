@@ -39,6 +39,9 @@ public static class PurchaseEndpoints
         management.MapPost("/deliveries/{id:long}/status", async (long id, DeliveryTransition input,
             DeliveryService service, CancellationToken ct) => Results.Ok(await service.TransitionAsync(id, input, ct)))
             .AddEndpointFilter<CsrfFilter>();
+        // SCRUM-76: the customer's order history, newest first, 20 per page. Send ?beforeId=<nextBeforeId> for the next page.
+        customer.MapGet("/orders", async (long? beforeId, ClaimsPrincipal user, StoreDbContext db, CancellationToken ct) =>
+            Results.Ok(await OrderHistory.ListAsync(db, Owner(user), beforeId, ct)));
         // The confirmation screen and SCRUM-76 share this owner-only snapshot response.
         customer.MapGet("/orders/{id:long}", async (long id, ClaimsPrincipal user, StoreDbContext db,
             InvoiceService invoices, ILogger<InvoiceService> log, CancellationToken ct) =>

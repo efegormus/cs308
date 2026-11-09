@@ -1,0 +1,29 @@
+/* Order history (SCRUM-76). Colors follow the theme tokens, like the cart page. */
+.orders-page.catalog-page { color: var(--fg, #222); background: var(--bg, #f6f7f9); }
+.orders-page.catalog-page a { color: var(--link, #174a8b); }
+.orders-page.catalog-page .intro { color: var(--muted, #5d6877); }
+.orders-page .order-list { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: .75rem; }
+.orders-page .order-card {
+  padding: 1rem; background: var(--surface, #fff); border: 1px solid var(--line, #dce0e6); border-radius: .5rem;
+}
+.orders-page .order-card h2 { margin: 0; font-size: 1.1rem; }
+.orders-page .order-card p { margin: .4rem 0 0; }
+.orders-page .order-card-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.orders-page .order-badge {
+  padding: .2rem .7rem; border-radius: 999px; font-size: .85rem; font-weight: 600;
+  border: 1px solid var(--field-line, #7b8799);
+}
+.orders-page .order-badge--delivered { border-color: var(--ok, #238636); }
+.orders-page .order-badge--cancelled { border-color: var(--danger, #b00020); color: var(--danger, #b00020); }
+.orders-page .order-steps { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0 0; padding: 0; }
+.orders-page .order-step {
+  padding: .25rem .75rem; border-radius: .3rem; font-size: .85rem;
+  border: 1px dashed var(--line, #b8c0cc); color: var(--muted, #5d6877);
+}
+.orders-page .order-step--done { border-style: solid; }
+.orders-page .order-step--current {
+  border-style: solid; font-weight: 700; color: var(--accent-fg, #fff); background: var(--accent, #174a8b);
+  border-color: var(--accent, #174a8b);
+}
+.orders-page #more-orders { margin: .5rem 0 1.5rem; padding: .6rem 1.2rem; font: inherit; cursor: pointer; }
+.orders-page #more-orders:disabled { opacity: .6; cursor: wait; }
