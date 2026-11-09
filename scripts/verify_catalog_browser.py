@@ -19,7 +19,7 @@ def verify(base_url, executable=None, expect_seeded=False):
         assert categories_response.ok and products_response.ok
         categories, products = categories_response.json(), products_response.json()
         if expect_seeded:
-            assert len(categories) == 2 and len(products) == 10
+            assert len(categories) == 8 and len(products) == 25
         page.goto(base_url)
         if categories:
             tablets = next((category for category in categories if category["name"] == "Tablets"), categories[0])

@@ -1,10 +1,10 @@
 namespace OnlineStore.Models;
 
 // A shipment of an order. The product manager's delivery list is built from these rows.
-public class Delivery
+public partial class Delivery
 {
-    public int Id { get; set; }
-    public int OrderId { get; set; }
+    public long Id { get; set; }
+    public long OrderId { get; set; }
 
     // Address as it was at purchase time.
     public required string AddressSnapshot { get; set; }
@@ -16,10 +16,10 @@ public class Delivery
     public ICollection<DeliveryItem> Items { get; set; } = new List<DeliveryItem>();
 }
 
-public class DeliveryItem
+public partial class DeliveryItem
 {
-    public int DeliveryId { get; set; }
-    public int OrderItemId { get; set; }
+    public long DeliveryId { get; set; }
+    public long OrderItemId { get; set; }
     public int Quantity { get; set; }
     public decimal TotalPriceSnapshot { get; set; }
 

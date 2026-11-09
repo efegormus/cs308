@@ -13,7 +13,7 @@ test("categoryIdFromHash reads a category hash", () => {
 
 test("categoryIdFromHash returns null for any other hash", () => {
   for (const hash of ["", "#", "#top", "#category-", "#category-0", "#category-01", "#category--1", "#category-1.5",
-    "#category-3x", "#category-3 ", "category-3", "#Category-3", "#category-12345678901", undefined, null]) {
+    "#category-3x", "#category-3 ", "category-3", "#Category-3", "#category-9007199254740992", undefined, null]) {
     assert.equal(categoryIdFromHash(hash), null, String(hash));
   }
 });

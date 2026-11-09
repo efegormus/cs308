@@ -3,7 +3,7 @@ namespace OnlineStore.Dtos;
 // One line of the cart as the API returns it. `Available` is false when the product was
 // deactivated or its stock dropped below the quantity in the cart.
 public record CartLineDto(
-    int ProductId,
+    long ProductId,
     string Name,
     decimal UnitPrice,
     int Quantity,

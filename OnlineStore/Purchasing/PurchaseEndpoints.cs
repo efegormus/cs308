@@ -17,11 +17,9 @@ public static class PurchaseEndpoints
             CheckoutService service, InvoiceService invoices, InvoiceEmailOutbox outbox, ILogger<InvoiceService> log, CancellationToken ct) =>
         {
             var result = await service.CompleteAsync(Owner(user), input, ct);
-            // Separate from checkout/payment: reconciliation repairs any post-commit enqueue failure.
-            try { await outbox.EnqueueAsync(result.Receipt.OrderId, CancellationToken.None); }
-            catch (Exception) { log.LogWarning("Invoice email enqueue deferred for order {OrderId}.", result.Receipt.OrderId); }
-            // The purchase is already committed. An invoice failure leaves it "Pending" and a later read retries.
             var receipt = await WithInvoiceAsync(result.Receipt, invoices, log, ct);
+            try { await outbox.EnqueueAsync(receipt.OrderId, CancellationToken.None); }
+            catch (Exception) { log.LogWarning("Invoice email enqueue deferred for order {OrderId}.", receipt.OrderId); }
             return Results.Json(receipt, statusCode: result.Replayed ? 200 : 201);
         }).AddEndpointFilter<CsrfFilter>();
         customer.MapGet("/checkout/attempts/{key:guid}", async (Guid key, ClaimsPrincipal user, StoreDbContext db, CancellationToken ct) =>
@@ -36,13 +34,13 @@ public static class PurchaseEndpoints
             return payment is null ? Results.NotFound() : Results.Ok(PurchaseViews.Receipt(payment.Order));
         });
         var management = app.MapProductManagerApi().AddEndpointFilter<PurchaseErrorFilter>();
-        management.MapGet("/deliveries", async (int? afterId, DeliveryService service, CancellationToken ct) =>
+        management.MapGet("/deliveries", async (long? afterId, DeliveryService service, CancellationToken ct) =>
             Results.Ok(await service.ListAsync(afterId ?? 0, ct)));
-        management.MapPost("/deliveries/{id:int}/status", async (int id, DeliveryTransition input,
+        management.MapPost("/deliveries/{id:long}/status", async (long id, DeliveryTransition input,
             DeliveryService service, CancellationToken ct) => Results.Ok(await service.TransitionAsync(id, input, ct)))
             .AddEndpointFilter<CsrfFilter>();
         // The confirmation screen and SCRUM-76 share this owner-only snapshot response.
-        customer.MapGet("/orders/{id:int}", async (int id, ClaimsPrincipal user, StoreDbContext db,
+        customer.MapGet("/orders/{id:long}", async (long id, ClaimsPrincipal user, StoreDbContext db,
             InvoiceService invoices, ILogger<InvoiceService> log, CancellationToken ct) =>
         {
             var owner = Owner(user);
@@ -70,7 +68,7 @@ public static class PurchaseEndpoints
         }
     }
 
-    private static int Owner(ClaimsPrincipal user) => int.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+    private static long Owner(ClaimsPrincipal user) => long.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
 }
 
 public sealed class PurchaseErrorFilter : IEndpointFilter

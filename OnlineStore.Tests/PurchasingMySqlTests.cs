@@ -57,7 +57,7 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         var g = await SeedAsync();
         await using (var setup = fixture.Create())
         {
-            setup.Discounts.Add(new Discount { Rate = .2m, StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1),
+            setup.Discounts.Add(new Discount { Name = "Test discount", CreatedByUserId = g.Manager.Id, Rate = .2m, StartsAt = DateTime.UtcNow.AddDays(-1), EndsAt = DateTime.UtcNow.AddDays(1),
                 Products = [new DiscountProduct { ProductId = g.Product.Id }] });
             await setup.SaveChangesAsync();
         }
@@ -118,7 +118,7 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
             Assert.Equal(409, (await Assert.ThrowsAsync<PurchaseException>(() =>
                 Service(db).CompleteAsync(g.Buyer.Id, Request(quote), default))).Status);
         }
-        await AssertUnchangedAsync(5);
+        await AssertUnchangedAsync(5, failedPayment: true);
     }
 
     [MySqlFact]
@@ -162,7 +162,7 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         }
         var gate = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var ready = 0;
-        async Task<bool> Attempt(int userId)
+        async Task<bool> Attempt(long userId)
         {
             await using var db = fixture.Create();
             var quote = await Service(db).QuoteAsync(userId, default);
@@ -229,13 +229,13 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         {
             var quote = await Service(db).QuoteAsync(g.Buyer.Id, default);
             await Service(db).CompleteAsync(g.Buyer.Id, Request(quote), default);
-            await db.Users.Where(user => user.Id == g.Buyer.Id).ExecuteUpdateAsync(update => update.SetProperty(user => user.HomeAddress, "Later address"));
+            await db.Addresses.Where(a => a.UserId == g.Buyer.Id && a.IsDefault).ExecuteUpdateAsync(update => update.SetProperty(a => a.Text, "Later address"));
         }
         // Force sub-microsecond precision so API/database timestamp equality is deterministic.
         var deliveryTime = DateTimeOffset.UtcNow.AddMinutes(1);
         deliveryTime = deliveryTime.AddTicks(7 - deliveryTime.Ticks % 10);
         var deliveryClock = new FixedDeliveryClock(deliveryTime);
-        async Task<DeliveryView> Change(int id, string target, string version)
+        async Task<DeliveryView> Change(long id, string target, string version)
         {
             await using var db = fixture.Create();
             return await new DeliveryService(db, deliveryClock).TransitionAsync(id, new(target, version), default);
@@ -269,7 +269,7 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         var g = await SeedAsync();
         await using (var setup = fixture.Create())
         {
-            var order = new Order { UserId = g.Buyer.Id, OrderItems = [OrderItem.Snapshot(g.Product, 1)] };
+            var order = new Order { UserId = g.Buyer.Id, OrderItems = [OrderItem.Snapshot(g.Product, 1)] }.WithCustomerSnapshot(g.Buyer);
             order.OrderItems.Single().Product = null!; // Use the existing product FK, not the detached graph.
             order.Deliveries.Add(new Delivery { AddressSnapshot = "Original address", Items =
                 [new DeliveryItem { OrderItem = order.OrderItems.Single(), Quantity = 1, TotalPriceSnapshot = 100 }] });
@@ -317,14 +317,20 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         Assert.Equal("InTransit", updated!.Status);
     }
 
-    private async Task AssertUnchangedAsync(int stock)
+    private async Task AssertUnchangedAsync(int stock, bool failedPayment = false)
     {
         await using var check = fixture.Create();
         Assert.Equal(stock, (await check.Products.SingleAsync()).StockQuantity);
         Assert.Equal(CartState.Open, (await check.Carts.SingleAsync()).State);
         Assert.Single(await check.CartItems.ToListAsync());
         Assert.Empty(await check.Orders.ToListAsync());
-        Assert.Empty(await check.Payments.ToListAsync());
+        if (failedPayment)
+        {
+            var attempt = await check.Payments.SingleAsync();
+            Assert.Equal(PaymentStatus.Failed, attempt.Status);
+            Assert.Null(attempt.OrderId);
+        }
+        else Assert.Empty(await check.Payments.ToListAsync());
         Assert.Empty(await check.Deliveries.ToListAsync());
     }
 

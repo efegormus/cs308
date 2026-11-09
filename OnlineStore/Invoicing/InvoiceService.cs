@@ -1,4 +1,6 @@
 using Microsoft.EntityFrameworkCore;
+using System.Security.Cryptography;
+using MySqlConnector;
 using OnlineStore.Data;
 using OnlineStore.Models;
 
@@ -15,7 +17,7 @@ public sealed class InvoiceService(StoreDbContext db, IInvoiceStorage storage, T
         $"INV-{order.PurchasedAt!.Value.Year}-{order.Id:D6}";
 
     // Returns false when the order does not exist or is not paid. Never touches stock, payment or order status.
-    public async Task<bool> EnsureAsync(int orderId, CancellationToken ct)
+    public async Task<bool> EnsureAsync(long orderId, CancellationToken ct)
     {
         var order = await LoadAsync(orderId, ct);
         if (order is null || order.PaymentStatus != PaymentStatus.Confirmed || order.PurchasedAt is null) return false;
@@ -30,14 +32,20 @@ public sealed class InvoiceService(StoreDbContext db, IInvoiceStorage storage, T
                 CustomerNameSnapshot = order.CustomerNameSnapshot ?? "",
                 TaxIdSnapshot = order.TaxIdSnapshot ?? "",
                 AddressSnapshot = order.AddressSnapshot ?? "",
-                IssuedAt = instant.AddTicks(-(instant.Ticks % 10)) // MySQL datetime(6) precision.
+                IssuedAt = instant.AddTicks(-(instant.Ticks % 10)),
+                Subtotal = order.Subtotal, DiscountTotal = order.DiscountTotal,
+                ShippingTotal = order.ShippingTotal, GrandTotal = order.GrandTotal,
+                ProtectedDocumentKey = $"{NumberFor(order)}.pdf"
             };
+            var document = InvoiceDocument.Render(DataFor(order, invoice));
+            invoice.PdfSha256 = SHA256.HashData(document);
+            await storage.SaveAsync(invoice.ProtectedDocumentKey!, document, ct);
             db.Invoices.Add(invoice);
             try
             {
                 await db.SaveChangesAsync(ct);
             }
-            catch (DbUpdateException)
+            catch (DbUpdateException error) when (error.InnerException is MySqlException { Number: 1062 })
             {
                 // A concurrent request issued the invoice first (unique OrderId/InvoiceNumber). Use that one.
                 db.ChangeTracker.Clear();
@@ -49,8 +57,9 @@ public sealed class InvoiceService(StoreDbContext db, IInvoiceStorage storage, T
         // The PDF is rebuilt from the stored snapshots, so a retry always produces the same document.
         var key = $"{invoice.InvoiceNumber}.pdf";
         if (invoice.ProtectedDocumentKey == key && await storage.ReadAsync(key, ct) is not null) return true;
-        await storage.SaveAsync(key, InvoiceDocument.Render(DataFor(order!, invoice)), ct);
-        if (invoice.ProtectedDocumentKey != key)
+        var repaired = InvoiceDocument.Render(DataFor(order!, invoice));
+        await storage.SaveAsync(key, repaired, ct);
+        invoice.PdfSha256 = SHA256.HashData(repaired);
         {
             invoice.ProtectedDocumentKey = key;
             await db.SaveChangesAsync(ct);
@@ -59,7 +68,7 @@ public sealed class InvoiceService(StoreDbContext db, IInvoiceStorage storage, T
     }
 
     // Callers check who may read the order before calling this.
-    public async Task<InvoiceFile?> GetPdfAsync(int orderId, CancellationToken ct)
+    public async Task<InvoiceFile?> GetPdfAsync(long orderId, CancellationToken ct)
     {
         if (!await EnsureAsync(orderId, ct)) return null;
         var invoice = await db.Invoices.AsNoTracking().SingleAsync(invoice => invoice.OrderId == orderId, ct);
@@ -74,7 +83,7 @@ public sealed class InvoiceService(StoreDbContext db, IInvoiceStorage storage, T
         order.OrderItems.OrderBy(line => line.ProductId)
             .Select(line => new InvoiceLine(line.ProductName, line.Quantity, line.UnitPrice)).ToList());
 
-    private Task<Order?> LoadAsync(int orderId, CancellationToken ct) =>
+    private Task<Order?> LoadAsync(long orderId, CancellationToken ct) =>
         db.Orders.Include(order => order.OrderItems).Include(order => order.Invoice)
             .SingleOrDefaultAsync(order => order.Id == orderId, ct);
 }

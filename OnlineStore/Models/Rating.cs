@@ -1,14 +1,14 @@
 namespace OnlineStore.Models;
 
 // A 1-5 star rating. It is visible immediately, no approval is needed.
-public class Rating
+public partial class Rating
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
-    public int ProductId { get; set; }
+    public long Id { get; set; }
+    public long UserId { get; set; }
+    public long ProductId { get; set; }
 
     // The delivered order line that proves the user bought the product.
-    public int OrderItemId { get; set; }
+    public long OrderItemId { get; set; }
     public byte Stars { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 

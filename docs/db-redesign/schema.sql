@@ -580,6 +580,7 @@ CREATE TABLE EmailOutbox (
   LeaseOwner        VARCHAR(64) NULL,
   LeaseExpiresAt    DATETIME(6) NULL,
   LastError         VARCHAR(500) NULL,
+  LastAttemptAt     DATETIME(6) NULL, -- SCRUM-119: preserve retry diagnostics
   CreatedAt         DATETIME(6) NOT NULL DEFAULT (UTC_TIMESTAMP(6)),
   SentAt            DATETIME(6) NULL,
   PRIMARY KEY (Id),

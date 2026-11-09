@@ -1,8 +1,8 @@
 namespace OnlineStore.Models;
 
-public class Discount
+public partial class Discount
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
 
     // 0.15 means 15% off.
     public decimal Rate { get; set; }
@@ -14,10 +14,10 @@ public class Discount
 }
 
 // Which products a discount applies to (many-to-many).
-public class DiscountProduct
+public partial class DiscountProduct
 {
-    public int DiscountId { get; set; }
-    public int ProductId { get; set; }
+    public long DiscountId { get; set; }
+    public long ProductId { get; set; }
 
     public Discount Discount { get; set; } = null!;
     public Product Product { get; set; } = null!;

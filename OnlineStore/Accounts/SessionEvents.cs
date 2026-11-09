@@ -12,7 +12,7 @@ public sealed class SessionEvents(StoreDbContext db) : CookieAuthenticationEvent
 
     public override async Task ValidatePrincipal(CookieValidatePrincipalContext context)
     {
-        if (!int.TryParse(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
+        if (!long.TryParse(context.Principal?.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
         {
             context.RejectPrincipal();
             return;
@@ -20,7 +20,7 @@ public sealed class SessionEvents(StoreDbContext db) : CookieAuthenticationEvent
         try
         {
             var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id, context.HttpContext.RequestAborted);
-            if (user is not null && !string.IsNullOrEmpty(user.SecurityStamp)
+            if (user is not null && user.IsActive && !string.IsNullOrEmpty(user.SecurityStamp)
                 && context.Principal!.FindFirstValue(StampClaim) == user.SecurityStamp
                 && context.Principal.FindFirstValue(ClaimTypes.Role) == user.Role.ToString()) return;
             context.RejectPrincipal();

@@ -1,11 +1,11 @@
 namespace OnlineStore.Models;
 
-public class Order
+public partial class Order
 {
-    public int Id { get; set; }
-    public int UserId { get; set; }
+    public long Id { get; set; }
+    public long UserId { get; set; }
     // A cart can produce at most one purchase, even with different retry keys.
-    public int? SourceCartId { get; set; }
+    public long? SourceCartId { get; set; }
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
     public OrderStatus Status { get; private set; } = OrderStatus.Processing;
     public PaymentStatus PaymentStatus { get; private set; } = PaymentStatus.Pending;
@@ -58,6 +58,7 @@ public class Order
         };
         if (!allowed || (PurchasedAt is { } purchased && occurredAtUtc < purchased)) return false;
         Status = target;
+        if (target == OrderStatus.Cancelled) CancelledAt = occurredAtUtc;
         if (target == OrderStatus.Delivered) DeliveredAt = occurredAtUtc;
         return true;
     }

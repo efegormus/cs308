@@ -26,7 +26,7 @@ public sealed class MockPaymentGateway(TimeProvider clock) : ICheckoutPaymentGat
 
         // The documented decline card lets the UI and tests exercise failure safely.
         var approved = number != "4000000000000002";
-        return Task.FromResult(new MockPaymentResult(approved, approved ? "mock_" + attemptKey : null));
+        return Task.FromResult(new MockPaymentResult(approved, approved ? "mock_" + attemptKey[..Math.Min(59, attemptKey.Length)] : null));
     }
 
     private static bool PassesChecksum(string number)

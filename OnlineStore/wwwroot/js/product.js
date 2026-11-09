@@ -64,7 +64,7 @@ const retry = document.querySelector("#retry");
 // The id comes from the address bar (?id=3), so it is validated before it is used.
 function readProductId() {
   const raw = new URLSearchParams(window.location.search).get("id");
-  if (!/^\d{1,9}$/.test(raw ?? "")) return null;
+  if (!/^\d{1,16}$/.test(raw ?? "")) return null;
   return Number(raw);
 }
 

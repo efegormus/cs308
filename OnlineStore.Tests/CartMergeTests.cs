@@ -27,7 +27,7 @@ public partial class CartEndpointsTests
 
     // A customer with one account cart who is now a guest with a second cart, then logs in again.
     private static async Task CustomerWithAccountCartAndGuestCartAsync(
-        HttpClient client, (int ProductId, int Quantity) account, (int ProductId, int Quantity) guest)
+        HttpClient client, (long ProductId, int Quantity) account, (long ProductId, int Quantity) guest)
     {
         await LoginNewCustomerAsync(client);
         await PostAsync(client, "/api/cart/items", new { productId = account.ProductId, quantity = account.Quantity });

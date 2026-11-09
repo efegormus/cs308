@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using OnlineStore.Data.Configurations;
+
 using OnlineStore.Models;
 using System.ComponentModel.DataAnnotations;
 
@@ -7,10 +7,18 @@ namespace OnlineStore.Data;
 
 public class StoreDbContext : DbContext
 {
+    public PersonalDataProtector Protector { get; }
     public StoreDbContext(DbContextOptions<StoreDbContext> options) : base(options)
     {
+        Protector = PersonalDataProtector.Load(options.Extensions.Any(e => e.GetType().Name.Contains("InMemory")));
     }
 
+    public DbSet<Address> Addresses => Set<Address>();
+    public DbSet<Brand> Brands => Set<Brand>();
+    public DbSet<Distributor> Distributors => Set<Distributor>();
+    public DbSet<AttributeDefinition> AttributeDefinitions => Set<AttributeDefinition>();
+    public DbSet<ProductAttributeValue> ProductAttributeValues => Set<ProductAttributeValue>();
+    public DbSet<ProductImage> ProductImages => Set<ProductImage>();
     public DbSet<Category> Categories => Set<Category>();
     public DbSet<Product> Products => Set<Product>();
     public DbSet<User> Users => Set<User>();
@@ -37,14 +45,22 @@ public class StoreDbContext : DbContext
 
     public override int SaveChanges(bool acceptAllChangesOnSuccess)
     {
+        PreparePersonalData();
         ValidateActiveProducts();
         return base.SaveChanges(acceptAllChangesOnSuccess);
     }
 
     public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = default)
     {
+        PreparePersonalData();
         ValidateActiveProducts();
         return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
+    }
+
+    private void PreparePersonalData()
+    {
+        foreach (var e in ChangeTracker.Entries<User>().Where(e => e.State is EntityState.Added or EntityState.Modified))
+            e.Entity.EmailBlindIndex = Protector.EmailIndex(e.Entity.Email);
     }
 
     private void ValidateActiveProducts()
@@ -60,31 +76,6 @@ public class StoreDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        base.OnModelCreating(modelBuilder);
-
-        modelBuilder.UseCollation("utf8mb4_0900_ai_ci");
-        modelBuilder.ApplyConfiguration(new CategoryConfiguration());
-        modelBuilder.ApplyConfiguration(new ProductConfiguration());
-        modelBuilder.ApplyConfiguration(new UserConfiguration());
-        modelBuilder.ApplyConfiguration(new OrderConfiguration());
-        modelBuilder.ApplyConfiguration(new OrderItemConfiguration());
-        modelBuilder.ApplyConfiguration(new DiscountConfiguration());
-        modelBuilder.ApplyConfiguration(new DiscountProductConfiguration());
-        modelBuilder.ApplyConfiguration(new PaymentConfiguration());
-        modelBuilder.ApplyConfiguration(new CartConfiguration());
-        modelBuilder.ApplyConfiguration(new CartItemConfiguration());
-        modelBuilder.ApplyConfiguration(new WishlistItemConfiguration());
-        modelBuilder.ApplyConfiguration(new InvoiceConfiguration());
-        modelBuilder.ApplyConfiguration(new InvoiceEmailDeliveryConfiguration());
-        modelBuilder.ApplyConfiguration(new DeliveryConfiguration());
-        modelBuilder.ApplyConfiguration(new DeliveryItemConfiguration());
-        modelBuilder.ApplyConfiguration(new RatingConfiguration());
-        modelBuilder.ApplyConfiguration(new CommentConfiguration());
-        modelBuilder.ApplyConfiguration(new ReturnRequestConfiguration());
-        modelBuilder.ApplyConfiguration(new RefundConfiguration());
-        modelBuilder.ApplyConfiguration(new NotificationConfiguration());
-        modelBuilder.ApplyConfiguration(new ConversationConfiguration());
-        modelBuilder.ApplyConfiguration(new ChatMessageConfiguration());
-        modelBuilder.ApplyConfiguration(new ChatAttachmentConfiguration());
+        RedesignConfiguration.Configure(modelBuilder, Protector);
     }
 }

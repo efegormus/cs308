@@ -1,11 +1,11 @@
 // Pure helpers for the product detail page (SCRUM-110), so Node can test them. Ported from wwwroot/js/product.js.
 
 // The id comes from the address bar (/product?id=3), so it is validated before it is used.
-// Only plain decimal digits are accepted: no sign, no decimals, no spaces, at most 9 digits.
+// Only plain decimal digits are accepted: no sign, no decimals, no spaces, within JavaScript’s safe integer range.
 export function parseProductId(raw) {
-  if (typeof raw !== "string" || !/^\d{1,9}$/.test(raw)) return null;
+  if (typeof raw !== "string" || !/^\d{1,16}$/.test(raw)) return null;
   const id = Number(raw);
-  return id > 0 ? id : null;
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
 }
 
 // The rows of the specification list. A row without a value is left out.

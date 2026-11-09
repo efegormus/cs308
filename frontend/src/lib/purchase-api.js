@@ -1,7 +1,7 @@
 import { parseCart } from "./cart-api.js";
 
 // Purchase responses are validated before rendering. Never forward an API title/detail or payment input into errors.
-const id = value => Number.isSafeInteger(value) && value > 0 && value <= 2147483647;
+const id = value => Number.isSafeInteger(value) && value > 0;
 const money = value => Number.isFinite(value) && value >= 0;
 const string = value => typeof value === "string";
 const instant = value => value === null || (string(value) && Number.isFinite(Date.parse(value)));

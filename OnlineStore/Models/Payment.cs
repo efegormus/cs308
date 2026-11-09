@@ -2,10 +2,10 @@ namespace OnlineStore.Models;
 
 // One payment attempt for an order. No card data is stored here:
 // the card is only checked by the mock bank and then discarded.
-public class Payment
+public partial class Payment
 {
-    public int Id { get; set; }
-    public int OrderId { get; set; }
+    public long Id { get; set; }
+    public long? OrderId { get; set; }
 
     // Sent with the request so retrying the same payment never charges twice.
     public required string IdempotencyKey { get; set; }

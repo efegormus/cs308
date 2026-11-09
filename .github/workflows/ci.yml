@@ -137,6 +137,11 @@ jobs:
           dotnet restore cs308.sln
           dotnet build cs308.sln --no-restore
 
+      - name: Create isolated encryption keys
+        run: |
+          python3 scripts/init_data_keys.py "$RUNNER_TEMP/onlinestore-data-keys.json"
+          echo "ONLINESTORE_DATA_KEYS_FILE=$RUNNER_TEMP/onlinestore-data-keys.json" >> "$GITHUB_ENV"
+
       # Same sequence as docs/local-development.md: explicit migrations, then the explicit seed command.
       - name: Apply migrations
         env:

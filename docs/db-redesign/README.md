@@ -1,25 +1,36 @@
-# Database redesign proposal (SCRUM-118)
+# Database redesign — implemented (SCRUM-119)
 
-A from-scratch design of the store database for a general electronics store (phones, tablets, laptops, monitors, audio,
-wearables, accessories), covering every requirement of Course Project.pdf. This folder is a **proposal**: the current
-schema in `docs/database-schema.md` and the EF Core migrations are unchanged until SCRUM-119 implements it.
+The design merged in **3acc716 / SCRUM-118** is now the application's database:
+**29 domain tables and one view**, with EF Core mappings, a fresh migration
+baseline, encrypted personal data and expanded demonstration data. The only
+additional column is `EmailOutbox.LastAttemptAt`, identified as missing by the
+original migration notes. The optional future schema is **not installed**.
 
-| File | What it is |
-|---|---|
-| [er-diagrams.md](er-diagrams.md) | Overview diagram and one diagram per module (Mermaid) |
-| [data-dictionary.md](data-dictionary.md) | Every table and column: type, null, default, keys, checks, indexes, and why the table exists |
-| [schema.sql](schema.sql) | Runnable MySQL 8.4 DDL for the 29 tables and one view |
-| [schema-future.sql](schema-future.sql) | Optional extensions that are **not** part of the proposal (product groups, VAT, security logs, history tables, carrier tracking, precomputed reports) |
-| [validation-results.md](validation-results.md) | 144 checks run against a real MySQL (invalid data is rejected, parallel requests, Turkish search) |
-| [migration-notes.md](migration-notes.md) | Current -> proposed table and column mapping, breaking changes, and the reset-and-reseed recommendation for SCRUM-119 |
-| [design-decisions.md](design-decisions.md) | Decisions and assumptions behind the design |
+| File | Purpose |
+| --- | --- |
+| [er-diagrams.md](er-diagrams.md) | Overview and module relationships |
+| [data-dictionary.md](data-dictionary.md) | All tables, columns, keys, checks and types |
+| [schema.sql](schema.sql) | MySQL 8.4 DDL; also embedded in the initial EF migration |
+| [schema-future.sql](schema-future.sql) | Excluded historical ideas; never executed by setup |
+| [validation-results.md](validation-results.md) | Current verification and clearly separated original design results |
+| [migration-notes.md](migration-notes.md) | Reset contract, mappings and application compatibility |
+| [design-decisions.md](design-decisions.md) | Design rationale and implementation decisions |
 
-## In short
+There are 25 tables tagged CORE in the original proposal and four retained
+catalog extensions: Brands, AttributeDefinitions, ProductAttributeValues and
+ProductImages. These tags identify design scope, not a PDF-mandated table count:
+for example, the PDF requires an address and distributor information but does
+not prescribe separate tables. The user's final instruction was to implement
+the last merged design, including its retained catalog extensions.
 
-- 29 tables: 25 required by a PDF requirement (`[CORE]`) and 4 catalog tables for product variety (`[EXT]`: Brands, AttributeDefinitions, ProductAttributeValues, ProductImages). 23 of the 29 already exist in the current schema.
-- Each product is one row with its own price, cost, stock, SKU and serial number. Specs differ per category and are typed (no free-form JSON).
-- Card numbers, CVV and expiry are never stored (brand and last four digits only). E-mail, tax ID and addresses are encrypted in the application; the database stores ciphertext, a key version and an e-mail blind index.
-- Many rules that were only service-layer rules are enforced by the database: one open cart per user, one refund per return request, stock cannot go below zero, a rating or comment must reference a line bought by the same user for the same product, delivered <= allocated <= ordered quantity.
-- Rules MySQL cannot express stay in the services (30-day return window counted from purchase, "the line was delivered", category cycles, role of the moderator, overlapping discounts, out-of-stock items in the cart).
+Local verification uses **MySQL 8.4.11**, UTC, strict mode and InnoDB. The
+application uses numeric routes for compatibility, with C# `long` IDs mapped to
+MySQL unsigned BIGINT; the existing frontend accepts safe JavaScript integers.
+The schema also has public UUID/order/invoice identifiers. Keeping those columns
+does not mean every existing route has been changed to UUIDs.
 
-Everything was run on MySQL 26.7.0 (the project targets 8.4); see the end of `validation-results.md`.
+A table's existence does not mean every final-demo feature already has an API or
+UI. The existing account, catalog, cart, checkout, invoice and delivery flows are
+adapted. Review submission/moderation, full returns/refunds management, live chat,
+wishlist/discount management and reporting still need their planned application
+features; their data model and demo records are present.

@@ -27,8 +27,40 @@ public static class SeedCatalogValidator
                 errors.Add($"Category {category.Code} has an empty name.");
         }
 
+        foreach (var category in catalog.Categories)
+        {
+            if (category.ParentCode is not null && !categoryCodes.Contains(category.ParentCode))
+                errors.Add($"Category {category.Code} references an unknown parent.");
+            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase) { category.Code };
+            var parent = category.ParentCode;
+            while (parent is not null)
+            {
+                if (!visited.Add(parent)) { errors.Add($"Category cycle at {category.Code}."); break; }
+                parent = catalog.Categories.FirstOrDefault(c => c.Code.Equals(parent, StringComparison.OrdinalIgnoreCase))?.ParentCode;
+            }
+        }
+        var types = new Dictionary<string, string>();
+
         foreach (var product in catalog.Products)
         {
+            foreach (var spec in product.Specifications)
+            {
+                var valid = spec.DataType switch
+                {
+                    "Text" => spec.Text is not null && spec.Number is null && spec.Bool is null,
+                    "Number" => spec.Number is not null && spec.Text is null && spec.Bool is null,
+                    "Bool" => spec.Bool is not null && spec.Text is null && spec.Number is null,
+                    _ => false
+                };
+                if (!valid || string.IsNullOrWhiteSpace(spec.Code) || string.IsNullOrWhiteSpace(spec.Label))
+                    errors.Add($"Invalid specification on {product.SeedKey}.");
+                var definitionKey = product.CategoryCode + ":" + spec.Code;
+                if (types.TryGetValue(definitionKey, out var type) && type != spec.DataType)
+                    errors.Add($"Conflicting specification type: {definitionKey}.");
+                types[definitionKey] = spec.DataType;
+            }
+            if (product.Specifications.Select(s => s.Code).Distinct().Count() != product.Specifications.Count)
+                errors.Add($"Duplicate specification on {product.SeedKey}.");
             var key = string.IsNullOrWhiteSpace(product.SeedKey) ? "<missing-key>" : product.SeedKey;
 
             if (string.IsNullOrWhiteSpace(product.SeedKey))

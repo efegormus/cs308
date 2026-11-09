@@ -135,7 +135,7 @@ public partial class CartEndpointsTests
     [Theory]
     [InlineData(13)]   // inactive product
     [InlineData(999)]  // unknown product
-    public async Task AddItem_UnknownOrInactiveProduct_Returns404(int productId)
+    public async Task AddItem_UnknownOrInactiveProduct_Returns404(long productId)
     {
         using var factory = new CartApplication();
         await factory.SeedAsync(Catalog());
@@ -151,7 +151,7 @@ public partial class CartEndpointsTests
     [InlineData(10, -1)]
     [InlineData(10, 100)]
     [InlineData(0, 1)]
-    public async Task AddItem_InvalidInput_Returns400(int productId, int quantity)
+    public async Task AddItem_InvalidInput_Returns400(long productId, int quantity)
     {
         using var factory = new CartApplication();
         await factory.SeedAsync(Catalog());
@@ -364,7 +364,7 @@ public partial class CartEndpointsTests
         return await client.SendAsync(request);
     }
 
-    private static async Task<int> LoginNewCustomerAsync(HttpClient client)
+    private static async Task<long> LoginNewCustomerAsync(HttpClient client)
     {
         var register = await PostAsync(client, "/api/auth/register",
             new RegisterRequest("Cart Customer", "cart@example.com", "TAX-1", "1 Example Street", Password));

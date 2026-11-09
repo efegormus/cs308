@@ -1,3 +1,6 @@
+> SCRUM-119 uses a fresh 29-table baseline. Existing 23-table databases need the
+> backed-up reset using `scripts/redesign_db.py reset --reset-local`; do not apply it as an in-place upgrade.
+
 # Reproducible local development (SCRUM-53)
 
 Prerequisites: Git, the .NET 8 SDK, Python 3.9+, and either **Docker with Compose
@@ -11,6 +14,7 @@ From the repository root:
 
 ```sh
 python3 scripts/dev.py init
+python3 scripts/init_data_keys.py
 python3 scripts/dev.py database
 dotnet restore cs308.sln
 python3 scripts/dev.py migrate
@@ -28,8 +32,8 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
 `check` queries database-backed categories/products, not only `/api/health`.
-After seeding a fresh database the sample has two categories and ten products,
-including one sold-out tablet. A second seed run adds 0/0 and keeps existing rows.
+After seeding a fresh database the sample has eight categories and 25 products,
+including sold-out examples. A second seed run adds 0/0 and keeps existing rows.
 
 The helper creates independent random application/root passwords in ignored
 `.local/` files with private permissions. It passes the application connection
@@ -66,6 +70,7 @@ Use the database/user provisioning and User Secrets instructions in the
 [README](../README.md#mysql-setup-and-configuration). Then:
 
 ```sh
+python3 scripts/init_data_keys.py
 dotnet tool restore
 dotnet restore cs308.sln
 dotnet ef database update --project OnlineStore -- --environment Development

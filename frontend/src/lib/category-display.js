@@ -7,8 +7,9 @@ export function categoryAnchorId(categoryId) {
 
 // The category id in a URL hash such as "#category-3", or null for any other hash.
 export function categoryIdFromHash(hash) {
-  const match = /^#category-([1-9]\d{0,9})$/.exec(hash ?? "");
-  return match ? Number(match[1]) : null;
+  const match = /^#category-([1-9]\d{0,15})$/.exec(hash ?? "");
+  const id = match ? Number(match[1]) : NaN;
+  return Number.isSafeInteger(id) ? id : null;
 }
 
 export function productCountLabel(count) {

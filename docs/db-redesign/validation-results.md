@@ -1,5 +1,29 @@
 # Validation results
 
+## SCRUM-119 implementation verification — 2026-11-09
+
+The application was migrated and tested against local **MySQL 8.4.11**, with strict SQL mode and UTC timestamps. The implemented baseline contains **29 domain tables**, `vw_DeliveryList`, and EF migration history. The only added column relative to the merged design is `EmailOutbox.LastAttemptAt`.
+
+| Verification | Result |
+|---|---|
+| .NET test suite | 373 passed, 0 failed, 0 skipped; includes 39 real-MySQL tests |
+| Frontend unit tests | 128 passed, 0 failed |
+| Frontend production build | Passed |
+| Python tooling tests | 11 passed |
+| Catalog browser verification in Chrome | All 7 sections passed, including mobile and error/retry behavior |
+| Purchasing browser verification in Chrome | All 4 scenario groups passed: checkout/PDF, delivery management, lost-response recovery, role isolation |
+| EF model versus migration snapshot | No pending model changes |
+| Fresh local database recreation | Backup, migration and demo seed succeeded |
+| Repeated demo seed | Added 0 categories and 0 products; demo records did not duplicate |
+
+The final clean seed contains 8 categories, 25 products, 6 brands, 21 attribute definitions, 75 typed attribute values, 4 role accounts, and 3 orders with payments, deliveries and invoices. Browser test fixtures were removed by a backed-up reset and reseed after browser verification. The backup includes SQL, encryption keys, demo credentials and invoice files under the private `.local/db-redesign/backups/` directory.
+
+Real-MySQL coverage includes physical schema and encrypted persistence, composite ownership constraints, typed attributes, concurrent cart/checkout behavior, rollback, declined payments, invoices, and email-outbox processing. Payment and email transports are local simulations. The presence of return, review, discount and support demo rows does not mean their complete management APIs or screens are implemented.
+
+## Historical design-only verification (from the merged design)
+
+The 144 checks below are the original design report, retained for traceability. They were **not rerun as this same 144-check script** during SCRUM-119; the implementation verification above is a separate test run.
+
 Run on MySQL **26.7.0** (the target is 8.4: see the note at the end), `sql_mode` = STRICT_TRANS_TABLES + defaults, database `schema_design_test`, user `onlinestore_dev`. Each test sends one statement (or a short sequence) against seeded data and compares the MySQL error number with the expectation.
 
 **Result: 144 of 144 checks passed** (138 negative/positive SQL checks + 6 concurrency checks).

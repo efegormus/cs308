@@ -11,7 +11,7 @@ public sealed record InvoiceLine(string ProductName, int Quantity, decimal UnitP
 }
 
 // Everything printed on an invoice. Built only from purchase-time snapshots, never from current products or profiles.
-public sealed record InvoiceData(string InvoiceNumber, int OrderId, DateTime PurchasedAt, DateTime IssuedAt,
+public sealed record InvoiceData(string InvoiceNumber, long OrderId, DateTime PurchasedAt, DateTime IssuedAt,
     string CustomerName, string TaxId, string Address, string Currency, IReadOnlyList<InvoiceLine> Lines)
 {
     public decimal Total => Lines.Sum(line => line.Total);

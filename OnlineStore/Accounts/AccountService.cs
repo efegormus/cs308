@@ -12,8 +12,8 @@ public sealed class AccountService(StoreDbContext db, PasswordService passwords)
     {
         if (CustomerProfileValidation.Validate(profile).Count != 0 || !PasswordService.IsValidNewPassword(password))
             throw new ArgumentException("A valid customer profile and password are required.");
-        var normalizedEmail = profile.Email!.Trim().ToUpperInvariant();
-        if (await db.Users.AnyAsync(user => user.Email.ToUpper() == normalizedEmail, ct)) return null;
+        var emailIndex = db.Protector.EmailIndex(profile.Email!);
+        if (await db.Users.AnyAsync(user => user.EmailBlindIndex == emailIndex, ct)) return null;
 
         var user = new User { Name = "", Email = "", PasswordHash = "", Role = UserRole.Customer };
         CustomerProfileValidation.Apply(user, profile);
@@ -32,9 +32,9 @@ public sealed class AccountService(StoreDbContext db, PasswordService passwords)
     {
         if (string.IsNullOrWhiteSpace(email) || email.Length > 254 || password is not { Length: > 0 and <= 128 })
             return null;
-        var normalizedEmail = email.Trim().ToUpperInvariant();
-        var user = await db.Users.SingleOrDefaultAsync(user => user.Email.ToUpper() == normalizedEmail, ct);
-        if (user is null)
+        var emailIndex = db.Protector.EmailIndex(email);
+        var user = await db.Users.SingleOrDefaultAsync(user => user.EmailBlindIndex == emailIndex, ct);
+        if (user is null || !user.IsActive)
         {
             passwords.VerifyMissingUser(password);
             return null;
@@ -54,8 +54,8 @@ public sealed class AccountService(StoreDbContext db, PasswordService passwords)
     public async Task<bool> SetRoleAsync(string email, UserRole role, CancellationToken ct = default)
     {
         if (!Enum.IsDefined(role)) throw new ArgumentOutOfRangeException(nameof(role));
-        var normalizedEmail = email.Trim().ToUpperInvariant();
-        var user = await db.Users.SingleOrDefaultAsync(user => user.Email.ToUpper() == normalizedEmail, ct);
+        var emailIndex = db.Protector.EmailIndex(email);
+        var user = await db.Users.SingleOrDefaultAsync(user => user.EmailBlindIndex == emailIndex, ct);
         if (user is null) return false;
         user.Role = role;
         user.SecurityStamp = Guid.NewGuid().ToString("N");

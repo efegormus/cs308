@@ -1,3 +1,8 @@
+> SCRUM-119 update: checkout now fills the redesigned totals/snapshots/counters and
+> stores declined attempts without an order. Only card brand/last four are retained;
+> PAN/CVV/expiry are discarded. The current schema is documented in
+> [the implementation notes](db-redesign/migration-notes.md).
+
 # Checkout and delivery integration (SCRUM-72 / SCRUM-79)
 
 The checkout, confirmation and ProductManager delivery pages are `/checkout`,

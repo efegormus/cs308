@@ -21,23 +21,34 @@ public class InvoiceEmailTests
         Assert.Same(sink.Messages[0].Attachment.Content, sink.Messages[0].Attachment.Content);
     }
 
+    private static Order PaidOrder(string email, bool paid = true)
+    {
+        var user = new User { Name = "Buyer", Email = email, TaxId = "TAX", HomeAddress = "Address", PasswordHash = "test" };
+        var order = new Order { User = user }.WithCustomerSnapshot(user);
+        if (paid) order.ConfirmPayment(DateTime.UtcNow);
+        order.Invoice = new Invoice { InvoiceNumber = Guid.NewGuid().ToString("N")[..24],
+            CustomerNameSnapshot = user.Name, TaxIdSnapshot = user.TaxId, AddressSnapshot = user.HomeAddress,
+            ProtectedDocumentKey = "TEST.pdf", PdfSha256 = new byte[32] };
+        return order;
+    }
+
     [Fact]
-    public async Task ExistingEmailedAt_PreventsDirectAndReconciledEnqueue()
+    public async Task SentOutbox_PreventsDirectAndReconciledEnqueue()
     {
         await using var db = new StoreDbContext(new DbContextOptionsBuilder<StoreDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        var order = new Order { EmailSnapshot = "purchase@example.com" };
-        order.ConfirmPayment(DateTime.UtcNow);
+        var order = PaidOrder("purchase@example.com");
         db.Orders.Add(order);
-        await db.SaveChangesAsync();
-        var emailedAt = DateTime.UtcNow.AddDays(-1);
-        db.Invoices.Add(new Invoice { OrderId = order.Id, EmailedAt = emailedAt, InvoiceNumber = "INV-2026-000001", CustomerNameSnapshot = "Buyer", TaxIdSnapshot = "TAX", AddressSnapshot = "Address" });
         await db.SaveChangesAsync();
         var outbox = new InvoiceEmailOutbox(db, TimeProvider.System);
         await outbox.EnqueueAsync(order.Id, default);
+        var row = await db.InvoiceEmailDeliveries.SingleAsync();
+        row.Status = "Sent"; row.SentAt = DateTime.UtcNow;
+        await db.SaveChangesAsync();
+        await outbox.EnqueueAsync(order.Id, default);
         await outbox.ReconcileAsync(default);
-        Assert.Empty(await db.InvoiceEmailDeliveries.ToListAsync());
-        Assert.Equal(emailedAt, await db.Invoices.Select(x => x.EmailedAt).SingleAsync());
+        Assert.Single(await db.InvoiceEmailDeliveries.ToListAsync());
+        Assert.NotNull(row.SentAt);
     }
 
     [Fact]
@@ -45,8 +56,8 @@ public class InvoiceEmailTests
     {
         await using var db = new PoisonDb(new DbContextOptionsBuilder<StoreDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        var poison = new Order { EmailSnapshot = "" };
-        var valid = new Order { EmailSnapshot = "snapshot@example.com" };
+        var poison = PaidOrder("");
+        var valid = PaidOrder("snapshot@example.com");
         poison.ConfirmPayment(DateTime.UtcNow);
         valid.ConfirmPayment(DateTime.UtcNow);
         db.Orders.AddRange(poison, valid);
@@ -110,7 +121,7 @@ public class InvoiceEmailTests
     {
         await using var db = new StoreDbContext(new DbContextOptionsBuilder<StoreDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        var order = new Order { EmailSnapshot = "purchase@example.com", User = new User { Name = "Current", PasswordHash = "x", Email = "current@example.com" } };
+        var order = PaidOrder("purchase@example.com");
         order.ConfirmPayment(DateTime.UtcNow);
         db.Orders.Add(order);
         await db.SaveChangesAsync();
@@ -118,7 +129,7 @@ public class InvoiceEmailTests
         await outbox.EnqueueAsync(order.Id, default);
         await outbox.EnqueueAsync(order.Id, default);
         Assert.Equal("purchase@example.com", (await db.InvoiceEmailDeliveries.SingleAsync()).RecipientSnapshot);
-        Assert.Empty(await db.Invoices.ToListAsync()); // Enqueue does not require PDF generation.
+        Assert.Single(await db.Invoices.ToListAsync()); // New outbox references an issued invoice.
     }
 
     [Fact]
@@ -126,9 +137,9 @@ public class InvoiceEmailTests
     {
         await using var db = new StoreDbContext(new DbContextOptionsBuilder<StoreDbContext>()
             .UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        var paid = new Order { EmailSnapshot = "purchase@example.com" };
+        var paid = PaidOrder("purchase@example.com");
         paid.ConfirmPayment(DateTime.UtcNow);
-        db.Orders.AddRange(paid, new Order { EmailSnapshot = "unpaid@example.com" });
+        db.Orders.AddRange(paid, PaidOrder("unpaid@example.com", paid: false));
         await db.SaveChangesAsync();
         await new InvoiceEmailOutbox(db, TimeProvider.System).ReconcileAsync(default);
         Assert.Equal(paid.Id, (await db.InvoiceEmailDeliveries.SingleAsync()).OrderId);

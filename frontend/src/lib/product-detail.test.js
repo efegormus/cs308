@@ -5,12 +5,13 @@ import { isLoadedProduct, parseProductId, specRows } from "./product-detail.js";
 test("parseProductId accepts plain positive integers", () => {
   assert.equal(parseProductId("3"), 3);
   assert.equal(parseProductId("20"), 20);
+  assert.equal(parseProductId("3000000000"), 3000000000);
   assert.equal(parseProductId("123456789"), 123456789);
 });
 
 test("parseProductId rejects everything else", () => {
   for (const value of [null, undefined, "", "0", "00", "-1", "+1", "1.5", "1e3", " 3", "3 ", "abc", "3abc",
-    "1234567890", "0x10", "٣", ["3"], 3]) {
+    "9007199254740992", "0x10", "٣", ["3"], 3]) {
     assert.equal(parseProductId(value), null, String(value));
   }
 });

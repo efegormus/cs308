@@ -1,3 +1,8 @@
+> SCRUM-119 storage update: the current queue is `EmailOutbox`, linked to an issued
+> invoice. Status is Pending/Sending/Sent/Failed; EmailedAt is derived from SentAt.
+> The new baseline supersedes the older migration instructions below. See
+> [current mapping and retry flow](db-redesign/migration-notes.md).
+
 # Invoices (SCRUM-74)
 
 Every paid order gets exactly one numbered PDF invoice. The code is in `OnlineStore/Invoicing/`.
