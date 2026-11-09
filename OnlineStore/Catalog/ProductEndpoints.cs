@@ -20,10 +20,10 @@ public static class ProductEndpoints
         // GET /api/products?sort=price&order=desc -> sorted by price or popularity (SCRUM-51)
         // Out-of-stock products are included; the UI blocks adding them to the cart.
         app.MapGet("/api/products", async (
-            int? categoryId, string? search, string? sort, string? order,
+            long? categoryId, string? search, string? sort, string? order,
             StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
         {
-            var term = search?.Trim();
+            var term = search?.Trim().Replace("ı", "i").Replace("İ", "i");
             if (term is { Length: > MaxSearchLength })
             {
                 return BadRequest($"The search text can be at most {MaxSearchLength} characters.");
@@ -47,7 +47,15 @@ public static class ProductEndpoints
 
                 if (categoryId is not null)
                 {
-                    query = query.Where(product => product.CategoryId == categoryId);
+                    var tree = await db.Categories.AsNoTracking().Select(c => new { c.Id, c.ParentId }).ToListAsync(cancellationToken);
+                    var categoryIds = new HashSet<long> { categoryId.Value };
+                    while (true)
+                    {
+                        var children = tree.Where(c => c.ParentId is { } parent && categoryIds.Contains(parent) && !categoryIds.Contains(c.Id)).Select(c => c.Id).ToList();
+                        if (children.Count == 0) break;
+                        categoryIds.UnionWith(children);
+                    }
+                    query = query.Where(product => categoryIds.Contains(product.CategoryId));
                 }
 
                 if (!string.IsNullOrEmpty(term))
@@ -56,8 +64,8 @@ public static class ProductEndpoints
                     // escape LIKE wildcards so "%" or "_" typed by a visitor match literally.
                     var pattern = "%" + term.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_").ToLowerInvariant() + "%";
                     query = query.Where(product =>
-                        EF.Functions.Like(product.Name.ToLower(), pattern, "\\")
-                        || (product.Description != null && EF.Functions.Like(product.Description.ToLower(), pattern, "\\")));
+                        EF.Functions.Like(product.Name.Replace("ı", "i").Replace("İ", "i").ToLower(), pattern, "\\")
+                        || (product.Description != null && EF.Functions.Like(product.Description.Replace("ı", "i").Replace("İ", "i").ToLower(), pattern, "\\")));
                 }
 
                 var descending = direction == "desc";
@@ -76,7 +84,7 @@ public static class ProductEndpoints
                         .Where(item => item.ProductId == product.Id
                             && item.Order.PaymentStatus == PaymentStatus.Confirmed
                             && item.Order.Status != OrderStatus.Cancelled)
-                        .Sum(item => (int?)item.Quantity) ?? 0);
+                        .Sum(item => (int?)(item.Quantity - item.RefundedQuantity)) ?? 0);
                     // Popularity is highest first unless the caller asks for ascending.
                     ordered = direction == "asc"
                         ? query.OrderBy(sold)
@@ -107,9 +115,9 @@ public static class ProductEndpoints
 
         // Public: one product for the detail page (SCRUM-45, section 5.1 of the API contract).
         // Unknown or inactive product -> 404. Out-of-stock products are returned (inStock = false).
-        // A non-integer id does not match the {id:int} route, so the framework answers 404.
-        app.MapGet("/api/products/{id:int}", async (
-            int id, StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+        // A non-integer id does not match the {id:long} route, so the framework answers 404.
+        app.MapGet("/api/products/{id:long}", async (
+            long id, StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
         {
             try
             {

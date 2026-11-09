@@ -6,7 +6,7 @@ namespace OnlineStore.Dtos;
 // What the product detail API returns (section 5.1 of docs/api-contract-catalog.md).
 // SKU, serial number, cost and isActive are internal and are not returned to customers.
 public record ProductDetailDto(
-    int Id,
+    long Id,
     string Name,
     string Model,
     string? Description,
@@ -14,7 +14,7 @@ public record ProductDetailDto(
     int StockQuantity,
     bool InStock,
     string? ImageUrl,
-    int CategoryId,
+    long CategoryId,
     string CategoryName,
     string WarrantyStatus,
     string DistributorInformation)
@@ -29,9 +29,9 @@ public record ProductDetailDto(
             product.Price,
             product.StockQuantity,
             product.StockQuantity > 0,
-            product.ImageUrl,
+            product.Images.Where(image => image.IsPrimary).Select(image => image.StorageKey).FirstOrDefault(),
             product.CategoryId,
             product.Category.Name,
             product.WarrantyStatus,
-            product.DistributorInformation);
+            product.Distributor.ContactInfo);
 }

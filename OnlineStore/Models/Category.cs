@@ -1,8 +1,8 @@
 namespace OnlineStore.Models;
 
-public class Category
+public partial class Category
 {
-    public int Id { get; set; }
+    public long Id { get; set; }
     public required string Name { get; set; }
     public string? Description { get; set; }
 

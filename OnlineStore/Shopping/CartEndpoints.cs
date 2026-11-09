@@ -13,7 +13,7 @@ using OnlineStore.Models;
 namespace OnlineStore.Shopping;
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record AddCartItemRequest(int ProductId, int Quantity);
+public sealed record AddCartItemRequest(long ProductId, int Quantity);
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record SetCartItemQuantityRequest(int Quantity);
@@ -107,8 +107,8 @@ public static class CartEndpoints
         // not in the cart is not an error, so a double click does nothing harmful.
         // PUT /api/cart/items/{productId} -> sets the quantity of a line that is already in the cart (the cart
         // page's minus and plus buttons). The stock is checked again here; a line is emptied with DELETE.
-        cart.MapPut("/items/{productId:int}", async (
-            int productId, SetCartItemQuantityRequest input, HttpContext context, StoreDbContext db,
+        cart.MapPut("/items/{productId:long}", async (
+            long productId, SetCartItemQuantityRequest input, HttpContext context, StoreDbContext db,
             CancellationToken cancellationToken) =>
         {
             if (!MayUseCart(context)) return NotForStaff();
@@ -148,8 +148,8 @@ public static class CartEndpoints
             return Results.Ok(await LoadAsync(db, current.Id, cancellationToken));
         }).AllowAnonymous().AddEndpointFilter<CsrfFilter>();
 
-        cart.MapDelete("/items/{productId:int}", async (
-            int productId, HttpContext context, StoreDbContext db, CancellationToken cancellationToken) =>
+        cart.MapDelete("/items/{productId:long}", async (
+            long productId, HttpContext context, StoreDbContext db, CancellationToken cancellationToken) =>
         {
             if (!MayUseCart(context)) return NotForStaff();
             await using var transaction = await BeginAsync(context, db, cancellationToken);
@@ -178,7 +178,7 @@ public static class CartEndpoints
         cart.MapPost("/merge", async (HttpContext context, StoreDbContext db, CancellationToken cancellationToken) =>
         {
             if (!MayUseCart(context)) return NotForStaff();
-            var userId = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
 
             // Lock order matches checkout: customer row, then the customer's cart, then the guest cart.
             await using var transaction = await BeginAsync(context, db, cancellationToken);
@@ -291,7 +291,7 @@ public static class CartEndpoints
         var open = db.Carts.AsNoTracking().Where(cart => cart.State == CartState.Open);
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            var userId = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var carts = await open.Where(cart => cart.UserId == userId).Take(2).ToListAsync(cancellationToken);
             return (carts.FirstOrDefault(), carts.Count > 1);
         }
@@ -312,7 +312,7 @@ public static class CartEndpoints
         var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, cancellationToken);
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            var userId = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var userId = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             await db.Users.FromSqlInterpolated($"SELECT * FROM Users WHERE Id = {userId} FOR UPDATE")
                 .AsNoTracking().ToListAsync(cancellationToken);
         }
@@ -320,7 +320,7 @@ public static class CartEndpoints
     }
 
     // Returns the tracked cart (locked on MySQL), or null when it is gone or no longer Open.
-    private static async Task<Cart?> LockCartAsync(StoreDbContext db, int cartId, CancellationToken cancellationToken)
+    private static async Task<Cart?> LockCartAsync(StoreDbContext db, long cartId, CancellationToken cancellationToken)
     {
         var cart = db.Database.IsRelational()
             ? (await db.Carts.FromSqlInterpolated($"SELECT * FROM Carts WHERE Id = {cartId} FOR UPDATE")
@@ -335,7 +335,7 @@ public static class CartEndpoints
         var cart = new Cart();
         if (context.User.Identity?.IsAuthenticated == true)
         {
-            cart.UserId = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            cart.UserId = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             return cart;
         }
 
@@ -374,7 +374,7 @@ public static class CartEndpoints
     private static string HashToken(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.ASCII.GetBytes(token)));
 
-    private static async Task<CartDto> LoadAsync(StoreDbContext db, int cartId, CancellationToken cancellationToken)
+    private static async Task<CartDto> LoadAsync(StoreDbContext db, long cartId, CancellationToken cancellationToken)
     {
         var rows = await db.CartItems.AsNoTracking()
             .Where(item => item.CartId == cartId)
@@ -382,7 +382,7 @@ public static class CartEndpoints
             .Select(item => new
             {
                 item.ProductId, item.Product.Name, item.Product.Price, item.Quantity,
-                item.Product.StockQuantity, item.Product.ImageUrl, item.Product.IsActive
+                item.Product.StockQuantity, ImageUrl = item.Product.Images.Where(i => i.IsPrimary).Select(i => i.StorageKey).FirstOrDefault(), item.Product.IsActive
             })
             .ToListAsync(cancellationToken);
 

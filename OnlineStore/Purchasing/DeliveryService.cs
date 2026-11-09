@@ -9,15 +9,15 @@ namespace OnlineStore.Purchasing;
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record DeliveryTransition(string? Status, string? Version);
-public sealed record DeliveryLine(int ProductId, string Name, int Quantity, decimal Total);
-public sealed record DeliveryView(int Id, int OrderId, int CustomerId, string Address, string Status,
+public sealed record DeliveryLine(long ProductId, string Name, int Quantity, decimal Total);
+public sealed record DeliveryView(long Id, long OrderId, long CustomerId, string Address, string Status,
     string PaymentStatus, DateTime CreatedAt, DateTime? DeliveredAt, string Version,
     IReadOnlyList<DeliveryLine> Items, decimal Total, bool CanShip, bool CanDeliver);
-public sealed record DeliveryPage(IReadOnlyList<DeliveryView> Items, int? NextAfterId);
+public sealed record DeliveryPage(IReadOnlyList<DeliveryView> Items, long? NextAfterId);
 
 public sealed class DeliveryService(StoreDbContext db, TimeProvider clock)
 {
-    public async Task<DeliveryPage> ListAsync(int afterId, CancellationToken ct)
+    public async Task<DeliveryPage> ListAsync(long afterId, CancellationToken ct)
     {
         if (afterId < 0) throw new PurchaseException(400, "Use a non-negative delivery cursor.");
         var deliveries = await db.Deliveries.AsNoTrackingWithIdentityResolution().Where(delivery => delivery.Id > afterId)
@@ -29,13 +29,13 @@ public sealed class DeliveryService(StoreDbContext db, TimeProvider clock)
             deliveries.Count > 50 ? deliveries[49].Id : null);
     }
 
-    public async Task<DeliveryView> TransitionAsync(int id, DeliveryTransition input, CancellationToken ct)
+    public async Task<DeliveryView> TransitionAsync(long id, DeliveryTransition input, CancellationToken ct)
     {
         if (!Enum.TryParse<OrderStatus>(input.Status, false, out var target)
             || target is not (OrderStatus.InTransit or OrderStatus.Delivered) || string.IsNullOrEmpty(input.Version))
             throw new PurchaseException(400, "Use InTransit or Delivered and the current delivery version.");
         var orderId = await db.Deliveries.AsNoTracking().Where(delivery => delivery.Id == id)
-            .Select(delivery => (int?)delivery.OrderId).SingleOrDefaultAsync(ct)
+            .Select(delivery => (long?)delivery.OrderId).SingleOrDefaultAsync(ct)
             ?? throw new PurchaseException(404, "Delivery not found.");
         await using var transaction = await db.Database.BeginTransactionAsync(IsolationLevel.ReadCommitted, ct);
         // All fulfillment writers lock the order first, then its shipment, and use the order guard.
@@ -56,6 +56,8 @@ public sealed class DeliveryService(StoreDbContext db, TimeProvider clock)
             throw new PurchaseException(409, "That fulfillment transition is not allowed.");
         delivery.Status = target;
         delivery.DeliveredAt = order.DeliveredAt;
+        if (target == OrderStatus.Delivered)
+            foreach (var item in order.OrderItems) item.DeliveredQuantity = item.Quantity;
         await db.SaveChangesAsync(ct);
         await transaction.CommitAsync(ct);
         return View(delivery);

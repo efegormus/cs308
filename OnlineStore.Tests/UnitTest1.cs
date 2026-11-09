@@ -9,7 +9,7 @@ namespace OnlineStore.Tests;
 public class SeedDataTests
 {
     [Fact]
-    public void SeedData_ShouldContainTenProducts()
+    public void SeedData_ShouldContainTwentyFiveProducts()
     {
         // Find the main cs308 project folder
         var projectPath = Path.GetFullPath(
@@ -36,6 +36,6 @@ public class SeedDataTests
             .GetProperty("products");
 
         // Check that there are exactly 10 products
-        Assert.Equal(10, products.GetArrayLength());
+        Assert.Equal(25, products.GetArrayLength());
     }
 }

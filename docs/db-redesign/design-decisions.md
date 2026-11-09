@@ -1,6 +1,7 @@
 # Design decisions and assumptions
 
-Status: proposal for review (Tuna, then Efe and Taha). The EF model, migrations and existing docs are unchanged.
+Status: implemented in SCRUM-119. Earlier sections below record the design history;
+the implementation decisions at the end supersede obsolete proposal-only assumptions.
 
 ## Sources read
 
@@ -84,3 +85,25 @@ Status: proposal for review (Tuna, then Efe and Taha). The EF model, migrations 
 - Jira SCRUM-118 says returns are allowed "30 days after delivery"; PDF 16 says 30 days after
   PURCHASE, with delivery as a prerequisite. This design follows the PDF.
 - Verified on MySQL 26.7.0 (the project targets 8.4): see `validation-results.md`.
+
+## SCRUM-119 implementation (2026-11-09)
+
+- The final user instruction selected the last merged design, with its 29 tables,
+  rather than a reduction to the former 23-table schema. Future SQL remains excluded.
+- The actual application is adapted to the new storage, preserving existing API
+  field names through explicit mappings and relationship projections.
+- A fresh EF baseline and backed-up reset/reseed workflow replace the earlier
+  migration chain for development. No invented historical data conversion is used.
+- MySQL 8.4.11 was installed locally and the schema, migrations, services and
+  concurrency checks were exercised on that engine. The earlier 26.7.0 report is
+  historical evidence, not the verification environment for this implementation.
+- LastAttemptAt was added to EmailOutbox, as anticipated by the proposal's gap list.
+- Version-1 encrypted values use nonce (12 bytes), ciphertext and authentication
+  tag (16 bytes); a separate 32-byte HMAC key indexes trimmed, uppercase e-mails.
+  Runtime keys are never stored in SQL or Git. Automatic key rotation is not implemented.
+- Existing numeric API routes are retained. UUID/order/invoice identifiers remain
+  in the database; role/ownership checks, not identifier secrecy, authorize reads.
+- Existing substring search is kept for short model names and compatibility;
+  Turkish i normalization is applied. A FULLTEXT index is present but not queried
+  by the current endpoint.
+- Demo examples in future-feature tables do not claim those APIs/UI are complete.

@@ -1,17 +1,18 @@
 namespace OnlineStore.Models;
 
 // A support chat. It belongs either to a logged-in customer or to a guest (identified by a hashed token).
-public class Conversation
+public partial class Conversation
 {
-    public int Id { get; set; }
-    public int? CustomerUserId { get; set; }
+    public long Id { get; set; }
+    public long? CustomerUserId { get; set; }
     public string? GuestTokenHash { get; set; }
 
     // The support agent who claimed the chat; null while it waits in the queue.
-    public int? ClaimedByUserId { get; set; }
+    public long? ClaimedByUserId { get; set; }
 
     // The customer's cart, so the agent can see it (logged-in customers only).
-    public int? CartId { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public long? CartId { get; set; }
     public ConversationStatus Status { get; set; } = ConversationStatus.Waiting;
     public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
@@ -21,13 +22,13 @@ public class Conversation
     public ICollection<ChatMessage> Messages { get; set; } = new List<ChatMessage>();
 }
 
-public class ChatMessage
+public partial class ChatMessage
 {
-    public int Id { get; set; }
-    public int ConversationId { get; set; }
+    public long Id { get; set; }
+    public long ConversationId { get; set; }
 
     // Null when the guest customer wrote it.
-    public int? SenderUserId { get; set; }
+    public long? SenderUserId { get; set; }
 
     // Null when the message is only an attachment.
     public string? Body { get; set; }
@@ -38,10 +39,10 @@ public class ChatMessage
 }
 
 // A file sent in chat (PDF, image or video). The file itself is stored outside wwwroot.
-public class ChatAttachment
+public partial class ChatAttachment
 {
-    public int Id { get; set; }
-    public int ChatMessageId { get; set; }
+    public long Id { get; set; }
+    public long ChatMessageId { get; set; }
     public required string ProtectedStorageKey { get; set; }
     public required string OriginalFileName { get; set; }
     public required string ContentType { get; set; }

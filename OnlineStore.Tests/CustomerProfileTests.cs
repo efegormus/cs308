@@ -93,10 +93,9 @@ public class CustomerProfileTests
         using var db = new StoreDbContext(new DbContextOptionsBuilder<StoreDbContext>()
             .UseMySql("Server=127.0.0.1;Database=model_only;User ID=test", new MySqlServerVersion(new Version(8, 4, 13))).Options);
         var model = db.Model.FindEntityType(typeof(User))!;
-        Assert.False(model.FindProperty(nameof(User.TaxId))!.IsNullable);
-        Assert.Equal(64, model.FindProperty(nameof(User.TaxId))!.GetMaxLength());
-        Assert.False(model.FindProperty(nameof(User.HomeAddress))!.IsNullable);
-        Assert.Equal(1000, model.FindProperty(nameof(User.HomeAddress))!.GetMaxLength());
-        Assert.Contains(model.GetIndexes(), index => index.IsUnique && index.Properties.Single().Name == nameof(User.Email));
+        Assert.Equal("varbinary(256)", model.FindProperty(nameof(User.TaxId))!.GetColumnType());
+        Assert.Null(model.FindProperty(nameof(User.HomeAddress)));
+        Assert.Contains(model.GetIndexes(), index => index.IsUnique && index.Properties.Single().Name == nameof(User.EmailBlindIndex));
+        Assert.Equal("varbinary(2048)", db.Model.FindEntityType(typeof(Address))!.FindProperty(nameof(Address.Text))!.GetColumnType());
     }
 }

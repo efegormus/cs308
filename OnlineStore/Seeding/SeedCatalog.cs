@@ -10,12 +10,16 @@ public sealed record SeedCatalog
 
 public sealed record SeedCategory
 {
+    public string? ParentCode { get; init; }
     public string Code { get; init; } = "";
     public string Name { get; init; } = "";
 }
 
 public sealed record SeedProduct
 {
+    public string? Brand { get; init; }
+    public string? ImageUrl { get; init; }
+    public List<SeedSpecification> Specifications { get; init; } = new();
     public string SeedKey { get; init; } = "";
     public string Name { get; init; } = "";
     public string Model { get; init; } = "";
@@ -27,4 +31,15 @@ public sealed record SeedProduct
     public string WarrantyStatus { get; init; } = "";
     public string DistributorInformation { get; init; } = "";
     public string CategoryCode { get; init; } = "";
+}
+
+public sealed record SeedSpecification
+{
+    public string Code { get; init; } = "";
+    public string Label { get; init; } = "";
+    public string DataType { get; init; } = "Text";
+    public string? Unit { get; init; }
+    public string? Text { get; init; }
+    public decimal? Number { get; init; }
+    public bool? Bool { get; init; }
 }

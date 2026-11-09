@@ -15,7 +15,7 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
     private const int ChildRowExists = 1451;
     private const int DataTooLong = 1406;
 
-    private sealed record Graph(User Customer, User Manager, Product Product, Order Order, OrderItem Line);
+    private sealed record Graph(User Customer, User Manager, Product Product, Order Order, OrderItem Line, Cart Cart);
 
     private static User NewUser(string email, UserRole role = UserRole.Customer) => new()
     {
@@ -32,17 +32,27 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         var manager = NewUser("manager@example.com", UserRole.ProductManager);
         var product = new Product { Sku = "P1", Name = "Phone", Price = 100, StockQuantity = 5, Category = new Category { Name = "Phones" } };
         CatalogFixture.CompleteDetails(product);
-        var line = new OrderItem { Product = product, ProductName = "Phone", UnitPrice = 100, UnitCost = 50, Quantity = 1 };
+        var line = OrderItem.Snapshot(product, 1);
         var order = new Order
         {
-            User = customer, OrderItems = [line]
+            User = customer, Subtotal = 100, GrandTotal = 100, OrderItems = [line]
         }.WithCustomerSnapshot(customer);
         order.ConfirmPayment(DateTime.UtcNow);
         db.Users.Add(manager);
         db.Orders.Add(order);
         await db.SaveChangesAsync();
-        return new Graph(customer, manager, product, order, line);
+        var cart = new Cart { UserId = customer.Id, State = CartState.CheckedOut };
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        return new Graph(customer, manager, product, order, line, cart);
     }
+
+    private static string Hash(string key) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(key)));
+    private static Payment NewPayment(Graph g, string key, decimal amount, DateTime? confirmedAt = null) => new()
+    {
+        UserId = g.Customer.Id, CartId = g.Cart.Id, OrderId = g.Order.Id, CardBrand = "Visa", CardLast4 = "4242",
+        IdempotencyKey = Hash(key), Amount = amount, Status = PaymentStatus.Confirmed, ConfirmedAt = confirmedAt
+    };
 
     // Saves in a fresh context; returns the MySQL error number, or null if MySQL accepted it.
     private async Task<int?> TryAsync(Action<StoreDbContext> add)
@@ -67,11 +77,10 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         var now = DateTime.UtcNow;
         var invalid = new (string Name, Action<StoreDbContext> Add)[]
         {
-            ("negative payment", db => db.Payments.Add(new Payment { OrderId = g.Order.Id, IdempotencyKey = "a", Amount = -1 })),
-            ("confirmed payment without a time", db => db.Payments.Add(new Payment
-                { OrderId = g.Order.Id, IdempotencyKey = "b", Amount = 1, Status = PaymentStatus.Confirmed })),
-            ("discount over 100 percent", db => db.Discounts.Add(new Discount { Rate = 1.5m, StartsAt = now, EndsAt = now.AddDays(1) })),
-            ("discount that ends before it starts", db => db.Discounts.Add(new Discount { Rate = 0.2m, StartsAt = now, EndsAt = now.AddDays(-1) })),
+            ("negative payment", db => db.Payments.Add(NewPayment(g, "a", -1))),
+            ("confirmed payment without a time", db => db.Payments.Add(NewPayment(g, "b", 1, confirmedAt: null))),
+            ("discount over 100 percent", db => db.Discounts.Add(new Discount { Name = "Test", CreatedByUserId = g.Manager.Id, Rate = 1.5m, StartsAt = now, EndsAt = now.AddDays(1) })),
+            ("discount that ends before it starts", db => db.Discounts.Add(new Discount { Name = "Test", CreatedByUserId = g.Manager.Id, Rate = 0.2m, StartsAt = now, EndsAt = now.AddDays(-1) })),
             ("rating of 6 stars", db => db.Ratings.Add(new Rating
                 { UserId = g.Customer.Id, ProductId = g.Product.Id, OrderItemId = g.Line.Id, Stars = 6 })),
             ("approved comment without a moderator", db => db.Comments.Add(new Comment
@@ -80,9 +89,9 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
             ("active chat without an agent", db => db.Conversations.Add(new Conversation
                 { CustomerUserId = g.Customer.Id, Status = ConversationStatus.Active })),
             ("approved return without a reviewer", db => db.ReturnRequests.Add(new ReturnRequest
-                { OrderItemId = g.Line.Id, UserId = g.Customer.Id, Quantity = 1, Status = ReturnStatus.Approved, ReceivedAt = now })),
+                { OrderItemId = g.Line.Id, ProductId = g.Product.Id, Reason = "Test return", UserId = g.Customer.Id, Quantity = 1, Status = ReturnStatus.Approved, ReceivedAt = now })),
             ("delivered delivery without a time", db => db.Deliveries.Add(new Delivery
-                { OrderId = g.Order.Id, AddressSnapshot = "a", Status = OrderStatus.Delivered }))
+                { OrderId = g.Order.Id, UserId = g.Customer.Id, AddressSnapshot = "a", Status = OrderStatus.Delivered }))
         };
 
         foreach (var (name, add) in invalid)
@@ -98,16 +107,14 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         var now = DateTime.UtcNow;
 
         // The same payment sent twice is stored once.
-        Assert.Null(await TryAsync(db => db.Payments.Add(new Payment
-            { OrderId = g.Order.Id, IdempotencyKey = "same", Amount = 100, Status = PaymentStatus.Confirmed, ConfirmedAt = now })));
-        Assert.Equal(DuplicateKey, await TryAsync(db => db.Payments.Add(new Payment
-            { OrderId = g.Order.Id, IdempotencyKey = "same", Amount = 100 })));
+        Assert.Null(await TryAsync(db => db.Payments.Add(NewPayment(g, "same", 100, now))));
+        Assert.Equal(DuplicateKey, await TryAsync(db => db.Payments.Add(NewPayment(g, "same", 100, now))));
 
         // One invoice per order.
         Invoice NewInvoice(string number) => new()
         {
             OrderId = g.Order.Id, InvoiceNumber = number, CustomerNameSnapshot = "Test user",
-            TaxIdSnapshot = "TAX-1", AddressSnapshot = "10 Example Street"
+            TaxIdSnapshot = "TAX-1", AddressSnapshot = "10 Example Street", ProtectedDocumentKey = number + ".pdf", PdfSha256 = new byte[32]
         };
         Assert.Null(await TryAsync(db => db.Invoices.Add(NewInvoice("INV-1"))));
         Assert.Equal(DuplicateKey, await TryAsync(db => db.Invoices.Add(NewInvoice("INV-2"))));
@@ -121,14 +128,14 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         Assert.Equal(DuplicateKey, await TryAsync(db => db.Carts.Add(new Cart { GuestTokenHash = "guest" })));
 
         // A return request can be refunded only once.
-        int returnId;
-        int paymentId;
+        long returnId;
+        long paymentId;
         await using (var db = fixture.Create())
         {
             var request = new ReturnRequest
             {
-                OrderItemId = g.Line.Id, UserId = g.Customer.Id, Quantity = 1,
-                Status = ReturnStatus.Approved, ReceivedAt = now, ReviewedByUserId = g.Manager.Id
+                OrderItemId = g.Line.Id, ProductId = g.Product.Id, Reason = "Test return", UserId = g.Customer.Id, Quantity = 1,
+                Status = ReturnStatus.Approved, ReceivedAt = now, ReviewedAt = now, ReviewedByUserId = g.Manager.Id
             };
             db.ReturnRequests.Add(request);
             await db.SaveChangesAsync();
@@ -136,9 +143,9 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
             paymentId = await db.Payments.Select(p => p.Id).FirstAsync();
         }
         Assert.Null(await TryAsync(db => db.Refunds.Add(new Refund
-            { ReturnRequestId = returnId, PaymentId = paymentId, IdempotencyKey = "r1", Amount = 100 })));
+            { OrderId = g.Order.Id, Reason = "Return", ReturnRequestId = returnId, PaymentId = paymentId, IdempotencyKey = Hash("r1"), Amount = 100 })));
         Assert.Equal(DuplicateKey, await TryAsync(db => db.Refunds.Add(new Refund
-            { ReturnRequestId = returnId, PaymentId = paymentId, IdempotencyKey = "r2", Amount = 100 })));
+            { OrderId = g.Order.Id, Reason = "Return", ReturnRequestId = returnId, PaymentId = paymentId, IdempotencyKey = Hash("r2"), Amount = 100 })));
     }
 
     [MySqlFact]
@@ -147,13 +154,13 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         var g = await SeedPurchasedOrderAsync();
         await using var db = fixture.Create();
         var now = DateTime.UtcNow;
-        var discount = new Discount { Rate = 0.1m, StartsAt = now, EndsAt = now.AddDays(1) };
+        var discount = new Discount { Name = "Test", CreatedByUserId = g.Manager.Id, Rate = 0.1m, StartsAt = now, EndsAt = now.AddDays(1) };
         db.Discounts.Add(discount);
-        db.Payments.Add(new Payment
-            { OrderId = g.Order.Id, IdempotencyKey = "p", Amount = 100, Status = PaymentStatus.Confirmed, ConfirmedAt = now });
+        db.Payments.Add(NewPayment(g, "p", 100, now));
         await db.SaveChangesAsync();
         await db.OrderItems.Where(item => item.Id == g.Line.Id)
-            .ExecuteUpdateAsync(set => set.SetProperty(item => item.DiscountId, discount.Id));
+            .ExecuteUpdateAsync(set => set.SetProperty(item => item.DiscountId, discount.Id)
+                .SetProperty(item => item.DiscountRate, .1m).SetProperty(item => item.UnitPrice, 90m).SetProperty(item => item.LineTotal, 90m));
 
         foreach (var delete in new Func<Task<int>>[]
         {
@@ -181,7 +188,7 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         await db.Carts.Where(existing => existing.Id == cart.Id).ExecuteDeleteAsync();
 
         Assert.Empty(await db.CartItems.AsNoTracking().ToListAsync());
-        Assert.Null(await db.Conversations.AsNoTracking().Where(c => c.Id == chat.Id).Select(c => c.CartId).SingleAsync());
+        Assert.Equal(g.Customer.Id, await db.Conversations.Where(c => c.Id == chat.Id).Select(c => c.CustomerUserId).SingleAsync());
     }
 
     [MySqlFact]
@@ -214,7 +221,7 @@ public class SchemaMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture
         };
 
         Assert.Null(await TryAsync(db => db.Orders.Add(NewOrder(64, 1000))));   // as long as the profile allows
-        Assert.Equal(DataTooLong, await TryAsync(db => db.Orders.Add(NewOrder(65, 10))));
-        Assert.Equal(DataTooLong, await TryAsync(db => db.Orders.Add(NewOrder(10, 1001))));
+        Assert.Equal(DataTooLong, await TryAsync(db => db.Orders.Add(NewOrder(229, 10))));
+        Assert.Equal(DataTooLong, await TryAsync(db => db.Orders.Add(NewOrder(10, 2021))));
     }
 }

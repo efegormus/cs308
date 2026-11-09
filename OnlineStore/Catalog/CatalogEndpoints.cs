@@ -27,7 +27,7 @@ public static class CatalogEndpoints
                             .ThenBy(product => product.Id)
                             .Select(product => new ProductListing(
                                 product.Id, product.Name, product.Description,
-                                product.Price, product.StockQuantity, product.ImageUrl))
+                                product.Price, product.StockQuantity, product.Images.Where(i => i.IsPrimary).Select(i => i.StorageKey).FirstOrDefault()))
                             .ToList()))
                     .ToListAsync(cancellationToken);
 
@@ -47,7 +47,7 @@ public static class CatalogEndpoints
 }
 
 public sealed record CategoryListing(
-    int Id, string Name, string? Description, List<ProductListing> Products);
+    long Id, string Name, string? Description, List<ProductListing> Products);
 
 public sealed record ProductListing(
-    int Id, string Name, string? Description, decimal Price, int StockQuantity, string? ImageUrl);
+    long Id, string Name, string? Description, decimal Price, int StockQuantity, string? ImageUrl);

@@ -4,7 +4,7 @@ using OnlineStore.Models;
 namespace OnlineStore.Purchasing;
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
-public sealed record CheckoutRequest(int CartId, string? IdempotencyKey, string? QuoteToken, MockCard? Payment);
+public sealed record CheckoutRequest(long CartId, string? IdempotencyKey, string? QuoteToken, MockCard? Payment);
 
 // Never log or serialize payment input in an error or response.
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
@@ -17,10 +17,10 @@ public sealed class MockCard
     public override string ToString() => "[redacted mock payment input]";
 }
 
-public sealed record CheckoutLine(int ProductId, string Name, int Quantity, decimal UnitPrice, decimal Total);
-public sealed record CheckoutQuote(int CartId, string QuoteToken, string Currency, string Name, string TaxId,
+public sealed record CheckoutLine(long ProductId, string Name, int Quantity, decimal UnitPrice, decimal Total);
+public sealed record CheckoutQuote(long CartId, string QuoteToken, string Currency, string Name, string TaxId,
     string Email, string Address, IReadOnlyList<CheckoutLine> Items, decimal Total);
-public sealed record PurchaseReceipt(int OrderId, int? CartId, string Status, string PaymentStatus,
+public sealed record PurchaseReceipt(long OrderId, long? CartId, string Status, string PaymentStatus,
     DateTime? PurchasedAt, DateTime? DeliveredAt, string Currency, string Name, string TaxId, string Address,
     IReadOnlyList<CheckoutLine> Items, decimal Total, string InvoiceStatus, string? InvoiceUrl);
 

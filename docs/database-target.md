@@ -1,3 +1,6 @@
+> Historical pre-SCRUM-119 target. The implemented 29-table design is now in
+> [db-redesign/README.md](db-redesign/README.md); use its diagrams and dictionary.
+
 # Full e-commerce data model
 
 This is the **target design** for SCRUM-97 and the feature owners, derived from

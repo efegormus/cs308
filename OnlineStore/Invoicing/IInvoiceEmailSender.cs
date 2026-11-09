@@ -1,6 +1,6 @@
 namespace OnlineStore.Invoicing;
 
-public sealed record InvoiceEmailMessage(int OrderId, string Recipient, InvoiceFile Attachment)
+public sealed record InvoiceEmailMessage(long OrderId, string Recipient, InvoiceFile Attachment)
 {
     public string MessageId => $"<invoice-order-{OrderId}@onlinestore.invalid>";
 }

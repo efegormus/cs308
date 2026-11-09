@@ -5,13 +5,13 @@ namespace OnlineStore.Dtos;
 
 // What the product list API returns for one product.
 public record ProductListItemDto(
-    int Id,
+    long Id,
     string Name,
     decimal Price,
     int StockQuantity,
     bool InStock,
     string? ImageUrl,
-    int CategoryId,
+    long CategoryId,
     string CategoryName,
     string? Description = null)
 {
@@ -24,7 +24,7 @@ public record ProductListItemDto(
             product.Price,
             product.StockQuantity,
             product.StockQuantity > 0,
-            product.ImageUrl,
+            product.Images.Where(image => image.IsPrimary).Select(image => image.StorageKey).FirstOrDefault(),
             product.CategoryId,
             product.Category.Name,
             product.Description);

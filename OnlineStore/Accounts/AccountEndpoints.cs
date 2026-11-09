@@ -13,7 +13,7 @@ namespace OnlineStore.Accounts;
 public sealed record RegisterRequest(string? Name, string? Email, string? TaxId, string? HomeAddress, string? Password);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record LoginRequest(string? Email, string? Password);
-public sealed record AccountDto(int Id, string Name, string Email, string Role)
+public sealed record AccountDto(long Id, string Name, string Email, string Role)
 {
     public static AccountDto FromUser(User user) => new(user.Id, user.Name, user.Email, user.Role.ToString());
 }
@@ -68,7 +68,7 @@ public static class AccountEndpoints
 
         auth.MapPost("/logout", async (HttpContext context, StoreDbContext db, CancellationToken ct) =>
         {
-            var id = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var id = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var user = await db.Users.SingleOrDefaultAsync(user => user.Id == id, ct);
             if (user is not null)
             {
@@ -81,7 +81,7 @@ public static class AccountEndpoints
 
         auth.MapGet("/me", async (ClaimsPrincipal principal, StoreDbContext db, CancellationToken ct) =>
         {
-            var id = int.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var id = long.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id, ct);
             return user is null ? Results.Unauthorized() : Results.Ok(AccountDto.FromUser(user));
         }).RequireAuthorization();
@@ -96,7 +96,7 @@ public static class AccountEndpoints
         app.MapCustomerApi().AddEndpointFilter(PrivateRequest).MapGet("/profile", async (HttpContext context, StoreDbContext db, CancellationToken ct) =>
         {
             context.Response.Headers.CacheControl = "no-store";
-            var id = int.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var id = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
             var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id, ct);
             return user is null ? Results.Unauthorized() : Results.Ok(CustomerProfileDto.FromUser(user));
         });

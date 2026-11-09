@@ -1,5 +1,7 @@
 # Data dictionary (29 tables)
 
+Implemented by SCRUM-119.
+
 Generated from `schema.sql` (types, nullability, defaults and constraints are copied from the DDL).
 The "Why" line of each table is the sentence kept in the SQL comment, so reviewers can see
 which PDF requirement a table serves. Columns that are self-explanatory have no note.
@@ -613,7 +615,8 @@ All DATETIME(6) values are UTC. All FKs are `ON DELETE RESTRICT` unless a table 
 | NextAttemptAt | DATETIME(6) | NOT NULL | (UTC_TIMESTAMP(6)) |  |  |
 | LeaseOwner | VARCHAR(64) | NULL |  |  | Worker that claimed the row; with LeaseExpiresAt it prevents double sending. |
 | LeaseExpiresAt | DATETIME(6) | NULL |  |  |  |
-| LastError | VARCHAR(500) | NULL |  |  |  |
+| LastError | VARCHAR(500) | NULL |  |  | Sanitized failure code; never exception text. |
+| LastAttemptAt | DATETIME(6) | NULL |  |  | SCRUM-119: UTC time the worker last claimed this message. |
 | CreatedAt | DATETIME(6) | NOT NULL | (UTC_TIMESTAMP(6)) |  |  |
 | SentAt | DATETIME(6) | NULL |  |  |  |
 

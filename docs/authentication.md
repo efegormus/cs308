@@ -1,3 +1,7 @@
+> SCRUM-119 storage update: e-mail/tax/address data is encrypted, e-mail lookups use
+> a HMAC blind index, and the default address lives in Addresses. Role/session
+> protections still apply. See [current storage contract](db-redesign/migration-notes.md).
+
 # Passwords, sessions and roles (SCRUM-48)
 
 The authentication backend supplies the shared foundation for SCRUM-47

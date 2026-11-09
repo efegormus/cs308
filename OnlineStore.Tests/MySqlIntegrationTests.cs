@@ -59,7 +59,13 @@ public sealed class MySqlFixture : IAsyncLifetime
         await db.Discounts.ExecuteDeleteAsync();
         await db.Orders.ExecuteDeleteAsync();
         await db.Carts.ExecuteDeleteAsync();
+        await db.ProductAttributeValues.ExecuteDeleteAsync();
+        await db.ProductImages.ExecuteDeleteAsync();
+        await db.AttributeDefinitions.ExecuteDeleteAsync();
         await db.Products.ExecuteDeleteAsync();
+        await db.Brands.ExecuteDeleteAsync();
+        await db.Distributors.ExecuteDeleteAsync();
+        await db.Categories.Where(c => c.ParentId != null).ExecuteDeleteAsync();
         await db.Categories.ExecuteDeleteAsync();
         await db.Users.ExecuteDeleteAsync();
     }
@@ -96,14 +102,14 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         await fixture.ResetAsync();
         await using var db = fixture.Create();
         Assert.Empty(await db.Database.GetPendingMigrationsAsync());
-        Assert.Equal(new SeedResult(2, 10), await SeedDataLoader.LoadAsync(db, SampleCatalog()));
+        Assert.Equal(new SeedResult(8, 25), await SeedDataLoader.LoadAsync(db, SampleCatalog()));
         var product = await db.Products.FirstAsync();
         product.StockQuantity = 123;
         await db.SaveChangesAsync();
         Assert.Equal(new SeedResult(0, 0), await SeedDataLoader.LoadAsync(db, SampleCatalog()));
         Assert.Equal(123, await db.Products.Where(p => p.Id == product.Id).Select(p => p.StockQuantity).SingleAsync());
-        Assert.Equal(2, await db.Categories.CountAsync());
-        Assert.Equal(10, await db.Products.CountAsync());
+        Assert.Equal(8, await db.Categories.CountAsync());
+        Assert.Equal(25, await db.Products.CountAsync());
     }
 
     [MySqlFact]
@@ -114,16 +120,12 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         var category = new Category { Name = "Phones" };
         db.Categories.Add(category);
         await db.SaveChangesAsync();
-        foreach (var field in new[] { "price", "stock", "cost", "category" })
-        {
-            await using var attempt = fixture.Create();
-            var product = new Product { Sku = field, Name = "Invalid", CategoryId = field == "category" ? int.MaxValue : category.Id,
-                Price = field == "price" ? -1 : 1, StockQuantity = field == "stock" ? -1 : 1, Cost = field == "cost" ? -1 : null };
-            CatalogFixture.CompleteDetails(product);
-            attempt.Products.Add(product);
-            var error = await Assert.ThrowsAsync<DbUpdateException>(() => attempt.SaveChangesAsync());
-            Assert.IsType<MySqlException>(error.InnerException);
-        }
+        var product = new Product { Sku = "GUARD", Name = "Valid", CategoryId = category.Id, Price = 10, StockQuantity = 1 };
+        CatalogFixture.CompleteDetails(product);
+        db.Products.Add(product);
+        await db.SaveChangesAsync();
+        foreach (var assignment in new[] { "Price = -1", "StockQuantity = -1", "Cost = -1", "CategoryId = 99999999" })
+            await Assert.ThrowsAsync<MySqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE Products SET " + assignment));
     }
 
     [MySqlFact]
@@ -143,13 +145,13 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         await using (var overlong = fixture.Create())
         {
             var other = NewUser("other@example.com");
-            other.TaxId = new string('x', 65);
+            other.TaxId = new string('x', 229);
             overlong.Users.Add(other);
             Assert.IsType<MySqlException>((await Assert.ThrowsAsync<DbUpdateException>(() => overlong.SaveChangesAsync())).InnerException);
         }
         await Assert.ThrowsAsync<MySqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE Users SET Role = 'customer'"));
         await Assert.ThrowsAsync<MySqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE Users SET Role = 'Administrator'"));
-        await Assert.ThrowsAsync<MySqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE Users SET HomeAddress = NULL"));
+        await Assert.ThrowsAsync<MySqlException>(() => db.Database.ExecuteSqlRawAsync("UPDATE Addresses SET AddressEnc = NULL"));
         Assert.Equal(UserRole.Customer, await db.Users.AsNoTracking().Select(u => u.Role).SingleAsync());
     }
 
@@ -163,7 +165,7 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         var product = new Product { Sku = "PHONE", Name = "Original phone", Price = 10, Category = category };
         CatalogFixture.CompleteDetails(product);
         var order = new Order { User = user,
-            OrderItems = [new OrderItem { Product = product, ProductName = product.Name, UnitPrice = product.Price, Quantity = 2 }] };
+            OrderItems = [OrderItem.Snapshot(product, 2)] };
         order.WithCustomerSnapshot(user).ConfirmPayment(DateTime.UtcNow);
         db.Orders.Add(order);
         await db.SaveChangesAsync();
@@ -183,8 +185,8 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
             Assert.Equal(1451, (await Assert.ThrowsAsync<MySqlException>(delete)).Number);
         }
         // Bypass EF's tracked-entity cascade to test the actual database FK action.
-        await db.Orders.Where(existing => existing.Id == order.Id).ExecuteDeleteAsync();
-        Assert.Empty(await db.OrderItems.ToListAsync());
+        Assert.Equal(1451, (await Assert.ThrowsAsync<MySqlException>(() => db.Orders.Where(existing => existing.Id == order.Id).ExecuteDeleteAsync())).Number);
+        Assert.Single(await db.OrderItems.ToListAsync());
         Assert.Single(await db.Products.ToListAsync());
     }
 
@@ -221,9 +223,9 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         Assert.False(persisted.CanRequestReturn(purchasedAt.AddDays(31)));
         Assert.Equal(3819, (await Assert.ThrowsAsync<MySqlException>(() =>
             check.Database.ExecuteSqlRawAsync("UPDATE Orders SET PaymentStatus = 'Pending' WHERE Status = 'Delivered'"))).Number);
-        Assert.Equal(3819, (await Assert.ThrowsAsync<MySqlException>(() =>
+        Assert.Equal(1048, (await Assert.ThrowsAsync<MySqlException>(() =>
             check.Database.ExecuteSqlRawAsync("UPDATE Products SET Description = NULL WHERE IsActive = 1"))).Number);
-        await check.Database.ExecuteSqlRawAsync("UPDATE Products SET IsActive = 0, Description = NULL");
+        await check.Database.ExecuteSqlRawAsync("UPDATE Products SET IsActive = 0, Description = ''");
         Assert.Equal(3819, (await Assert.ThrowsAsync<MySqlException>(() =>
             check.Database.ExecuteSqlRawAsync("UPDATE Products SET IsActive = 1"))).Number);
     }

@@ -5,6 +5,9 @@ public static class ProductCatalogValidation
     public static Dictionary<string, string[]> Validate(Product product)
     {
         var errors = new Dictionary<string, string[]>();
+        if (product.Price < 0) errors["price"] = ["Price cannot be negative."];
+        if (product.Cost < 0) errors["cost"] = ["Cost cannot be negative."];
+        if (product.StockQuantity < 0) errors["stockQuantity"] = ["Stock cannot be negative."];
         if (!product.IsActive) return errors;
         Required(product.Sku, "sku", 64, errors);
         Required(product.Name, "name", 200, errors);

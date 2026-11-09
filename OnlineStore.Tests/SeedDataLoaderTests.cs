@@ -155,13 +155,13 @@ public class SeedDataLoaderTests
     }
 
     [Fact]
-    public async Task Load_RealSeedFile_AddsTwoCategoriesAndTenProducts()
+    public async Task Load_RealSeedFile_AddsEightCategoriesAndTwentyFiveProducts()
     {
         var name = Guid.NewGuid().ToString();
         using (var db = OpenDb(name))
         {
             var result = await SeedDataLoader.LoadAsync(db, SeedCatalogReader.ReadFromFile(SeedFilePath));
-            Assert.Equal(new SeedResult(2, 10), result);
+            Assert.Equal(new SeedResult(8, 25), result);
         }
 
         using var check = OpenDb(name);

@@ -272,14 +272,14 @@ public class ProductSearchSortTests
 // unsold product only has a cancelled and a pending order, which must not count.
 internal static class PopularityOrders
 {
-    public static async Task AddAsync(StoreDbContext db, int topId, int middleId, int unsoldId)
+    public static async Task AddAsync(StoreDbContext db, long topId, long middleId, long unsoldId)
     {
         var user = new User { Name = "Buyer", Email = "buyer@example.com", PasswordHash = "x" };
         db.Users.Add(user);
         var products = await db.Products.ToDictionaryAsync(product => product.Id);
         var now = DateTime.UtcNow;
 
-        Order Confirmed(params (int ProductId, int Quantity)[] lines)
+        Order Confirmed(params (long ProductId, int Quantity)[] lines)
         {
             var order = new Order { User = user }.WithCustomerSnapshot(user);
             Assert.True(order.ConfirmPayment(now));
@@ -308,7 +308,7 @@ public class ProductSearchSortMySqlTests(MySqlFixture fixture) : IClassFixture<M
     public async Task MySql_PopularityAndSearch_CountConfirmedOrdersAndEscapeWildcards()
     {
         await fixture.ResetAsync();
-        int alphaId, betaId, gammaId;
+        long alphaId, betaId, gammaId;
         await using (var db = fixture.Create())
         {
             var category = new Category { Name = "Phones" };

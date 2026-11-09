@@ -1,8 +1,11 @@
 namespace OnlineStore.Models;
 
-public sealed class InvoiceEmailDelivery
+public sealed partial class InvoiceEmailDelivery
 {
-    public int OrderId { get; init; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public long OrderId { get => Invoice?.OrderId ?? orderId; init => orderId = value; }
+    private long orderId;
+    public Invoice? Invoice { get; set; }
     public string RecipientSnapshot { get; init; } = "";
     public int AttemptCount { get; set; }
     public DateTime CreatedAt { get; init; }
@@ -11,10 +14,8 @@ public sealed class InvoiceEmailDelivery
     public DateTime? LeaseUntil { get; set; }
     public string? LeaseToken { get; set; }
     public DateTime? SentAt { get; set; }
-    public DateTime? StoppedAt { get; set; }
+    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
+    public DateTime? StoppedAt { get => Status == "Failed" ? LastAttemptAt : null; set { if (value is not null) { Status = "Failed"; LastAttemptAt = value; } } }
     public string? LastErrorCode { get; set; }
 
-    [System.ComponentModel.DataAnnotations.Schema.NotMapped]
-    public string Status => SentAt != null ? "Sent" : StoppedAt != null ? "Stopped"
-        : LastErrorCode != null ? "Retrying" : "Pending";
 }

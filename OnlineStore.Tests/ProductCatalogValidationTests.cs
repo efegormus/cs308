@@ -31,7 +31,7 @@ public class ProductCatalogValidationTests
             case "name": product.Name = " "; break;
             case "model": product.Model = " "; break;
             case "serialNumber": product.SerialNumber = " "; break;
-            case "description": product.Description = null; break;
+            case "description": product.Description = ""; break;
             case "warrantyStatus": product.WarrantyStatus = "\t\r\n"; break;
             default: product.DistributorInformation = " "; break;
         }
@@ -59,12 +59,13 @@ public class ProductCatalogValidationTests
     public async Task InactiveLegacyRecords_AreRetainedButCannotBeReactivatedIncomplete()
     {
         using var db = new StoreDbContext(new DbContextOptionsBuilder<StoreDbContext>().UseInMemoryDatabase(Guid.NewGuid().ToString()).Options);
-        var product = new Product { Sku = "LEGACY", Name = "Legacy", IsActive = false };
+        var product = new Product { Sku = "LEGACY", Name = "Legacy", Description = "", IsActive = false };
         db.Products.Add(product);
         await db.SaveChangesAsync();
         product.IsActive = true;
         await Assert.ThrowsAsync<ValidationException>(() => db.SaveChangesAsync());
         CatalogFixture.CompleteDetails(product);
+        product.Description = "Completed product details";
         await db.SaveChangesAsync();
         Assert.True((await db.Products.SingleAsync()).IsActive);
     }

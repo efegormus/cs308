@@ -85,6 +85,12 @@ if (args.Contains(RoleCommand.Flag))
     return;
 }
 
+if (args.Contains(DemoSeedCommand.Flag))
+{
+    Environment.ExitCode = await DemoSeedCommand.RunAsync(app);
+    return;
+}
+
 // `dotnet run --project OnlineStore -- --seed` loads the sample data and exits (development only).
 if (args.Contains(SeedCommand.Flag))
 {

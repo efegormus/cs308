@@ -69,7 +69,7 @@ def main(argv=None):
     commands = parser.add_subparsers(dest="command", required=True)
     init = commands.add_parser("init", help="create local configuration once")
     init.add_argument("--port", type=int, default=3306)
-    for command in ("database", "migrate", "seed", "run", "stop", "frontend", "frontend-build"):
+    for command in ("database", "migrate", "seed", "seed-demo", "run", "stop", "frontend", "frontend-build"):
         commands.add_parser(command)
     check = commands.add_parser("check", help="check the real API-to-database connection")
     check.add_argument("--url", default="http://127.0.0.1:5200")
@@ -105,8 +105,8 @@ def main(argv=None):
     elif args.command == "migrate":
         run(["dotnet", "tool", "restore"], env)
         run(["dotnet", "ef", "database", "update", "--project", "OnlineStore"], env)
-    elif args.command == "seed":
-        run(["dotnet", "run", "--project", "OnlineStore", "--no-launch-profile", "--", "--seed"], env)
+    elif args.command in ("seed", "seed-demo"):
+        run(["dotnet", "run", "--project", "OnlineStore", "--no-launch-profile", "--", "--" + args.command], env)
     elif args.command == "role":
         run(["dotnet", "run", "--project", "OnlineStore", "--no-launch-profile", "--", "--set-role", args.email, args.role], env)
     else:

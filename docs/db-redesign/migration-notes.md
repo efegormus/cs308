@@ -1,98 +1,98 @@
-# Migration notes: current schema -> proposed schema
+# SCRUM-119 implementation and migration notes
 
-For SCRUM-119 (EF Core migrations). "Current" = `main` at `8533156` (23 tables, read from `OnlineStore/Models`).
-"Proposed" = `schema.sql` (29 tables). Nothing in the repository has been changed by this design.
+## Applied strategy
 
-## 1. Recommendation: reset and reseed, do not convert data
+The user's final instruction was to build the **last merged 29-table design**,
+reset/reseed locally, and adapt the existing application. We implemented that
+scope. The optional `schema-future.sql` was not applied.
 
-The only data in the development and CI databases is seed and test data (SCRUM-120 will reseed it). Converting it is risky and
-buys nothing: several new `NOT NULL` columns and `CHECK` rules cannot be satisfied by old rows without inventing values
-(see section 4), and the existing docs already say "nothing is invented for legacy rows".
+This is an explicit **fresh database baseline**, `RedesignedStore`. The old chain
+is available in Git at `3acc716`; it is not an upgrade path for existing data.
+The native local helper `scripts/redesign_db.py reset --reset-local` backs up the database before recreating it.
+Do not run the new baseline over an existing 23-table database.
 
-So: a new migration chain that builds the proposed schema on an empty MySQL, plus a documented "drop and recreate the
-development database, then run `--seed`" path. If a real upgrade of existing rows is ever needed, the column mapping below is
-the starting point.
+`schema.sql` is embedded in the migration, rather than loaded from a mutable file
+at runtime. EF records the baseline in `__EFMigrationsHistory`. Applying the same
+migration twice is a no-op. Never bootstrap with standalone SQL and then attempt
+to apply the same EF baseline on top.
 
-## 2. Tables
+## Old → new mapping
 
-| Current table | Proposed table | Change |
-|---|---|---|
-| Users | Users | changed (encryption, new columns) |
-| Categories | Categories | changed (tree, slug) |
-| Products | Products | changed (distributor, image, brand, search) |
-| Carts, CartItems, WishlistItems | same names | small changes |
-| Orders, OrderItems | same names | changed (totals, snapshots, counters) |
-| Discounts, DiscountProducts | same names | small changes |
-| Payments | Payments | changed (cart link, card brand/last 4) |
-| Invoices | Invoices | changed (totals, encrypted snapshots) |
-| InvoiceEmailDeliveries | **EmailOutbox** | renamed and reshaped |
-| Deliveries, DeliveryItems | same names | small changes |
-| Ratings, Comments | same names | small changes |
-| ReturnRequests, Refunds | same names | small changes |
-| Notifications | Notifications | small changes |
-| Conversations, ChatMessages, ChatAttachments | same names | small changes |
-| (none) | **Addresses, Distributors, Brands, AttributeDefinitions, ProductAttributeValues, ProductImages** | 6 new tables |
+| Previous application data | New storage / application behavior |
+| --- | --- |
+| INT IDs | BIGINT UNSIGNED; C# `long` plus unsigned provider conversion |
+| Users.Email | AES-GCM `EmailEnc`; login and duplicate detection use `EmailBlindIndex` |
+| Users.TaxId | AES-GCM `TaxIdEnc`; customers still require a real value |
+| Users.HomeAddress | Default active row in Addresses; profile API keeps `homeAddress` |
+| Categories | ParentId, unique Slug and sibling-name uniqueness; seed has one root and seven leaves |
+| Products.DistributorInformation | Distributors + DistributorId; detail API keeps distributorInformation |
+| Products.ImageUrl | Primary ProductImages row; existing API keeps imageUrl |
+| New catalog metadata | Brands, AttributeDefinitions and ProductAttributeValues |
+| Orders snapshots | Renamed customer snapshot columns; e-mail/tax/address encrypted |
+| Orders totals | Subtotal, DiscountTotal, ShippingTotal, GrandTotal; populated at checkout |
+| OrderItems.UnitPrice | PaidUnitPrice; CLR alias kept for existing purchase/invoice code |
+| OrderItems | List price, discount rate, SKU and line total snapshots; allocation/delivery/return/refund counters |
+| Payments | User/cart ownership; nullable OrderId; failed bank attempts persist without an order |
+| Payment/refund idempotency keys | Binary 32-byte hashes; existing CLR strings are hex representations |
+| Invoices.ProtectedDocumentKey | PdfStorageKey plus PdfSha256; PDF is written before the invoice row |
+| InvoiceEmailDeliveries | EmailOutbox, linked to an issued invoice, with persisted status and dedup key |
+| Invoice.EmailedAt | Derived from the successful outbox delivery; no duplicate database column |
+| Outbox lease/retry fields | LeaseOwner/LeaseExpiresAt and LastError; CLR aliases preserve the dispatcher structure |
+| Deliveries.DeliveredAt | CompletedAt; UserId binds the delivery to the order owner |
+| DeliveryItems | Composite order references prevent attaching another order's line |
+| Comments.ApprovalStatus | Status; existing CLR enum name retained |
+| Conversations.CartId | Not stored; authenticated customer context is obtained through CustomerUserId |
+| Notifications | Title, Body, DiscountId and ReadAt; in-app notices do not store SentAt |
 
-23 current tables + 6 new = 29. No table is dropped.
+## Necessary difference from the proposal
 
-## 3. Column mapping
+`EmailOutbox.LastAttemptAt DATETIME(6) NULL` was added to preserve retry diagnostics.
+The original notes explicitly identified this gap. The data dictionary, SQL and
+migration now agree. No optional future-extension table was introduced.
 
-Key type: every `Id` and foreign key changes from `INT` to `BIGINT UNSIGNED`.
+The EF model cannot use nullable composite alternate keys for all parents.
+`Payments(CartId, UserId) → Carts(Id, UserId)` and
+`Refunds(PaymentId, OrderId) → Payments(Id, OrderId)` remain enforced by the SQL
+baseline. The latter has a simpler EF navigation; do not weaken its SQL
+constraint in later migrations. Other composite alternate keys use their actual
+SQL `UX_*` constraint names.
 
-| Table | Current -> proposed |
-|---|---|
-| **Users** | `Email` -> `EmailEnc` + `EmailBlindIndex` (HMAC-SHA256 of the normalised e-mail; login looks up the blind index). `TaxId` -> `TaxIdEnc` (null allowed for staff, required for customers). `HomeAddress` -> a row in `Addresses` (`Label` = 'Home', `IsDefault` = 1). `Name`, `PasswordHash`, `Role`, `SecurityStamp`, `CreatedAt` unchanged. New: `PublicId`, `DataKeyVersion`, `IsActive`, `FailedLoginCount`, `LockoutUntil`, `UpdatedAt`, `RowVersion` |
-| **Categories** | `Name` is unique per parent instead of globally. New: `ParentId`, `Slug` (required, unique), `SortOrder`, `IsActive`, `CreatedAt` |
-| **Products** | `DistributorInformation` -> `Distributors` (one row per distinct text; `Name` and `ContactInfo`) + `Products.DistributorId`. `ImageUrl` -> a `ProductImages` row (`IsPrimary` = 1, `StorageKey` = the URL). `Description` becomes `NOT NULL`. `StockQuantity` becomes `INT UNSIGNED`. New: `BrandId` (nullable), `SearchText` (computed), `CreatedAt`, `UpdatedAt`, `RowVersion`. Other columns unchanged |
-| **Carts** | New: `RowVersion`, computed `OpenUserId` (unique: one open cart per user). Old data with several open carts for one user must be merged first |
-| **CartItems, WishlistItems** | unchanged (`Quantity` is unsigned) |
-| **Orders** | `CustomerNameSnapshot` -> `CustomerName`; `EmailSnapshot` -> `CustomerEmailEnc`; `TaxIdSnapshot` -> `CustomerTaxIdEnc`; `AddressSnapshot` -> `ShippingAddressEnc` (encrypted, now `NOT NULL`). `PaymentStatus` value `Unknown` is removed. New: `OrderNumber`, `CurrencyCode`, `Subtotal`, `DiscountTotal`, `ShippingTotal`, `GrandTotal`, `CancelledAt`, `CancelReason`, `DataKeyVersion` |
-| **OrderItems** | `UnitPrice` -> `PaidUnitPrice`. New: `UserId` (copy of the order owner, used by composite FKs), `Sku` (snapshot), `ListUnitPrice`, `DiscountRate` (from the discount), `LineTotal`, and four counters: `DeliveryAllocatedQuantity`, `DeliveredQuantity`, `ReturnRequestedQuantity`, `RefundedQuantity`. `UnitCost` becomes `NOT NULL` |
-| **Discounts** | New: `Name`, `CreatedByUserId` (`NOT NULL`), `CancelledAt`, `CreatedAt`. `DiscountProducts` unchanged |
-| **Payments** | `OrderId` becomes nullable (set when confirmed). `IdempotencyKey` -> `IdempotencyKeyHash` (`BINARY(32)`). New: `UserId`, `CartId`, `CardBrand`, `CardLast4`, `CurrencyCode`, `FailureCode` |
-| **Invoices** | `CustomerNameSnapshot` -> `CustomerName`; `TaxIdSnapshot` -> `CustomerTaxIdEnc`; `AddressSnapshot` -> `BillingAddressEnc`; `ProtectedDocumentKey` -> `PdfStorageKey`. `EmailedAt` is dropped (read it from `EmailOutbox`). New: `Subtotal`, `DiscountTotal`, `ShippingTotal`, `GrandTotal`, `CurrencyCode`, `PdfSha256`, `DataKeyVersion` |
-| **InvoiceEmailDeliveries -> EmailOutbox** | `OrderId` -> `InvoiceId` (via `Invoices.OrderId`). `RecipientSnapshot` -> `RecipientEmailEnc` + `RecipientUserId`. `LeaseUntil` -> `LeaseExpiresAt`; `LeaseToken` -> `LeaseOwner`; `LastErrorCode` -> `LastError`; `StoppedAt` -> `Status` = 'Failed'. `AttemptCount`, `NextAttemptAt`, `SentAt`, `CreatedAt` unchanged. New: `DedupKey` (for example `invoice:{InvoiceId}`), `Kind` ('InvoiceEmail' or 'RefundNotice'), `Status`. **`LastAttemptAt` has no column yet** (see section 4) |
-| **Deliveries** | `AddressSnapshot` -> `ShippingAddressEnc`; `DeliveredAt` -> `CompletedAt`. New: `UserId` (order owner), `DataKeyVersion`, `RowVersion`, computed `IsCompleted`. `Status` also allows 'Cancelled' |
-| **DeliveryItems** | New: `OrderId` (copy from the delivery). Other columns unchanged |
-| **Ratings** | New: `UpdatedAt` |
-| **Comments** | `ApprovalStatus` -> `Status`. `Body` is limited to 2000 characters. New: `ModerationNote`, `UpdatedAt` |
-| **ReturnRequests** | Status values unchanged (`Requested, Received, Approved, Rejected`). New: `ProductId` (from the line), `Reason` (`NOT NULL`), `ReviewedAt`, `ReviewNote` |
-| **Refunds** | `IdempotencyKey` -> `IdempotencyKeyHash`; `RefundedAt` -> `CompletedAt`. New: `OrderId` (from the payment), `Reason` ('Return' or 'Cancellation'), `Status`, `CurrencyCode`, `CreatedAt` |
-| **Notifications** | `DeduplicationKey` -> `DedupKey`. `SentAt` is dropped (in-app notices have no send step). Kind values unchanged (`WishlistDiscount, RefundApproved, ReturnRejected`). New: `DiscountId`, `Title`, `Body` (`NOT NULL`), `ReadAt` |
-| **Conversations** | `CartId` is dropped: cart and order context come from `CustomerUserId` on the server. New: `PublicId`, `ClaimedAt`, `ClosedAt` |
-| **ChatMessages** | New: `SenderKind` (Guest when `SenderUserId` is null, otherwise Customer or Agent), `ReadAt` |
-| **ChatAttachments** | `ProtectedStorageKey` -> `StorageKey`. New: `Sha256`, `CreatedAt` |
+## Application changes that matter
 
-## 4. Where old rows cannot honestly fill the new columns
+- Account/profile DTOs retain their public field names. Encryption happens in EF
+  value converters. Search by plaintext e-mail was replaced with HMAC lookup.
+- Personal-data keys are required for relational contexts and remain outside the
+  repository/database. Tests create isolated temporary keys.
+- Cart mutations and checkout retain their existing row locks. Unique OpenUserId
+  adds database protection against multiple open carts.
+- Checkout fills list/paid prices, totals, allocation counters and safe card
+  metadata. PAN, CVV and expiry are discarded. A declined attempt survives the
+  rolled-back checkout; retrying that same key returns the same decline.
+- Delivery completion updates delivered counters with the order/delivery state.
+- Invoice creation stores the PDF hash; email enqueue follows invoice issuance.
+  Reconciliation repairs paid orders that were interrupted before invoice/outbox
+  completion. Workers use leases, fencing tokens and row locks.
+- Product projections read normalized distributor/image relationships. Category
+  filtering includes descendants. Substring search remains compatible with the
+  existing API and normalizes Turkish dotted/dotless i; FULLTEXT exists in the
+  schema but is not used by the current substring endpoint.
+- Popularity subtracts refunded quantities from confirmed, noncancelled sales.
+- Browser ID validators accept JavaScript-safe integer IDs rather than the old
+  nine-digit / signed-INT ceilings. Numeric route compatibility is retained.
 
-These are the reasons for the "reset and reseed" recommendation. None of them should be filled with invented values:
+## Seed and demo
 
-- `Orders` snapshots and totals: old orders may have `NULL` snapshots and no `PurchasedAt`.
-- `OrderItems.UnitCost`: old rows may be `NULL`; `ListUnitPrice` of a discounted line cannot be recovered exactly.
-- `Payments.CardBrand` / `CardLast4`: old payments stored no card data (by design).
-- `Discounts.CreatedByUserId`: the current table has no creator.
-- `ReturnRequests.Reason`: the current table has no reason.
-- `PaymentStatus = 'Unknown'` (cancelled legacy orders): not allowed any more.
-- `EmailOutbox.LastAttemptAt`: the current table has `LastAttemptAt`, the proposed one does not. This is a gap in the
-  proposal: add one nullable `DATETIME(6)` column if the retry logic still needs it.
+The catalog seed contains 8 categories, 25 products, 6 brands, one distributor,
+21 attribute definitions, 75 typed values and 25 primary images. Prices,
+quantities, serial numbers and technical specifications are fictional examples.
 
-## 5. Changes the application code will notice
+`--seed` adds missing catalog rows and does not overwrite existing inventory.
+`--seed-demo` additionally creates four role accounts, three order states,
+invoices/outbox entries, a delivered review, a selective return/refund, a
+notification, wishlist and support conversation/attachment. It uses the actual
+account, checkout, delivery and invoice services; the future feature examples are
+inserted as valid demonstration records. It does not implement their missing UI.
 
-1. **Login by e-mail** uses `EmailBlindIndex`; e-mail, tax ID and addresses are encrypted in the application (AES-GCM, key never in the database). This is SCRUM-93.
-2. **Keys are `BIGINT UNSIGNED`** (C# `long`/`ulong`); public identifiers are separate columns (`PublicId`, `OrderNumber`, `InvoiceNumber`).
-3. **Checkout** writes the order, the lines and the counters under the order-line row lock; a failed payment is stored as a `Payments` row with no order (linked to the cart), so it survives the rolled-back checkout.
-4. **Stock** is an unsigned column: keep the conditional `UPDATE ... WHERE StockQuantity >= @qty` and check affected rows.
-5. **Search** must replace `ı` and `İ` by `i` in the search text (same as `Products.SearchText`) and use `LIKE` for words shorter than 3 characters.
-6. **Popularity** is computed from `OrderItems` (`Quantity` minus `RefundedQuantity` for paid, not cancelled orders). There is no precomputed statistics table in this version.
-7. **Support chat** no longer stores `CartId`.
-8. **Return window** counts from `Orders.PurchasedAt`, delivery is only a prerequisite (PDF 16). SCRUM-118's text says "after delivery"; that is not what the PDF says.
-
-## 6. Suggested migration order
-
-1. Create the new tables (`Addresses`, `Distributors`, `Brands`, `AttributeDefinitions`, `ProductAttributeValues`, `ProductImages`).
-2. Change the existing tables in dependency order (Users, Categories, Products, then carts, orders and the rest).
-3. Rebuild the seed data (SCRUM-120) with categories, brands, specs and images.
-4. Run the existing checkout, cart and login tests, then the MySQL integration tests in CI.
-
-`schema-future.sql` (ProductGroups, VAT, security logs, history tables, carrier tracking, precomputed reports) is optional and
-should be added by separate migrations only if the team decides to.
+The local reset command backs up first, recreates the application database,
+applies the baseline and reseeds it. Existing local key/credential files are
+retained so demo passwords and ciphertext remain usable across resets.

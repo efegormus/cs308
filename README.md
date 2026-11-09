@@ -1,6 +1,6 @@
 # CS 308 Online Store
 
-Online store for phones and tablets, built for the Sabancı University CS 308 course project.
+Electronics store with phones, tablets, laptops, monitors, audio, wearables and accessories, built for the Sabancı University CS 308 course project.
 
 ## Tech stack
 
@@ -14,7 +14,7 @@ Online store for phones and tablets, built for the Sabancı University CS 308 co
 ```
 OnlineStore/          ASP.NET Core project
   Program.cs          application entry point
-  Models/             SCRUM-39 entities
+  Models/             domain entities for the 29-table SCRUM-119 schema
   Data/               StoreDbContext, entity mappings, and migrations
   wwwroot/            legacy pages retained during the React migration
 frontend/             React routes, components, tests and Vite build
@@ -24,7 +24,7 @@ docs/                 database schema documentation
 
 See [course requirements](docs/project-requirements.md), the
 [implemented database schema](docs/database-schema.md), and the
-[full target ER design](docs/database-target.md) before extending the domain.
+[current ER diagrams](docs/db-redesign/er-diagrams.md) before extending the domain.
 The [order/payment rules](docs/order-lifecycle.md) and
 [Sprint 2 purchasing plan](docs/sprint-2-mvp.md) define the current integration contract.
 
@@ -32,7 +32,8 @@ The [order/payment rules](docs/order-lifecycle.md) and
 
 For a fresh clone, follow the [reproducible local setup](docs/local-development.md)
 using `python3 scripts/dev.py init`, `database`, `migrate`, `seed`, `frontend-build`, and `run`.
-It creates private random credentials and starts the pinned MySQL Compose service.
+Run `python3 scripts/init_data_keys.py` before migrating a new database.
+The workflow creates private random credentials and starts the pinned MySQL Compose service.
 The manual setup below remains available for an existing local MySQL installation.
 
 1. Install the [.NET 8 SDK](https://dotnet.microsoft.com/download/dotnet/8.0) and Node.js 22.22 or later.
@@ -45,7 +46,13 @@ The manual setup below remains available for an existing local MySQL installatio
    dotnet build OnlineStore/OnlineStore.csproj --no-restore
    ```
 
-4. Apply the provided initial migration to your development database:
+4. Initialize private encryption keys for a **new** database, then apply the initial migration:
+
+   ```sh
+   python3 scripts/init_data_keys.py
+   ```
+
+   Existing 23-table installations require the documented backed-up reset, not an in-place upgrade.
 
    ```sh
    dotnet ef database update --project OnlineStore --context StoreDbContext -- --environment Development

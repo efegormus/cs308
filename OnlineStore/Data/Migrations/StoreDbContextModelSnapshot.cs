@@ -23,1094 +23,2259 @@ namespace OnlineStore.Data.Migrations
 
             MySqlModelBuilderExtensions.AutoIncrementColumns(modelBuilder);
 
-            modelBuilder.Entity("OnlineStore.Models.Cart", b =>
+            modelBuilder.Entity("OnlineStore.Models.Address", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ushort>("DataKeyVersion")
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("DataKeyVersion");
+
+                    b.Property<ulong?>("DefaultOwnerId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("DefaultOwnerId")
+                        .HasComputedColumnSql("if(((`IsDefault` = 1) and (`IsActive` = 1)),`UserId`,NULL)", false);
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsActive")
+                        .HasDefaultValueSql("1");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsDefault")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("Label");
+
+                    b.Property<byte[]>("Text")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("varbinary(2048)")
+                        .HasColumnName("AddressEnc");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DefaultOwnerId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Addresses_OneDefault");
+
+                    b.HasIndex("UserId")
+                        .HasDatabaseName("IX_Addresses_User");
+
+                    b.ToTable("Addresses", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Addresses_KeyVersion", "(`DataKeyVersion` > 0)");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.AttributeDefinition", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<ulong>("CategoryId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CategoryId");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("Code");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("DataType")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<bool>("IsFilterable")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsFilterable")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("Label")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("Label");
+
+                    b.Property<ushort>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("SortOrder")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("Unit")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Unit");
+
+                    b.HasKey("Id");
+
+                    b.HasAlternateKey("Id", "DataType")
+                        .HasName("UX_AttributeDefinitions_Typed");
+
+                    b.HasIndex("CategoryId", "Code")
+                        .IsUnique()
+                        .HasDatabaseName("UX_AttributeDefinitions_Code");
+
+                    b.ToTable("AttributeDefinitions", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_AttributeDefinitions_DataType", "(`DataType` in (_utf8mb4'Text',_utf8mb4'Number',_utf8mb4'Bool'))");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.Brand", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsActive")
+                        .HasDefaultValueSql("1");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("Name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Brands_Name");
+
+                    b.ToTable("Brands", (string)null);
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.Cart", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<string>("GuestTokenHash")
                         .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("char(64)")
+                        .HasColumnName("GuestTokenHash");
+
+                    b.Property<ulong?>("OpenUserId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OpenUserId")
+                        .HasComputedColumnSql("if((`State` = _utf8mb4'Open'),`UserId`,NULL)", false);
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
 
                     b.Property<string>("State")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Open")
+                        .HasColumnName("State")
+                        .HasDefaultValueSql("'Open'")
                         .UseCollation("utf8mb4_bin");
 
                     b.Property<DateTime>("UpdatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<int?>("UserId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
                     b.HasIndex("GuestTokenHash")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Carts_GuestToken");
 
-                    b.HasIndex("UserId", "State");
+                    b.HasIndex("OpenUserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Carts_OneOpenPerUser");
+
+                    b.HasIndex("Id", "UserId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Carts_IdUser");
+
+                    b.HasIndex("UserId", "State")
+                        .HasDatabaseName("IX_Carts_UserState");
 
                     b.ToTable("Carts", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Carts_Owner", "(`UserId` IS NOT NULL AND `GuestTokenHash` IS NULL) OR (`UserId` IS NULL AND `GuestTokenHash` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_Carts_Owner", "(((`UserId` is not null) and (`GuestTokenHash` is null)) or ((`UserId` is null) and (`GuestTokenHash` is not null)))");
 
-                            t.HasCheckConstraint("CK_Carts_State", "`State` IN ('Open', 'CheckedOut', 'Abandoned')");
+                            t.HasCheckConstraint("CK_Carts_State", "(`State` in (_utf8mb4'Open',_utf8mb4'CheckedOut',_utf8mb4'Abandoned'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.CartItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<int>("CartId")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("AddedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("AddedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("CartId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CartId");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
+
+                    b.Property<uint>("Quantity")
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("Quantity");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_CartItems_Product");
 
                     b.HasIndex("CartId", "ProductId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_CartItems_CartProduct");
 
                     b.ToTable("CartItems", null, t =>
                         {
-                            t.HasCheckConstraint("CK_CartItems_Quantity", "`Quantity` > 0");
+                            t.HasCheckConstraint("CK_CartItems_Quantity", "(`Quantity` > 0)");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Category", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
+                        .HasColumnType("text")
+                        .HasColumnName("Description");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsActive")
+                        .HasDefaultValueSql("1");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("Name");
+
+                    b.Property<ulong?>("ParentId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ParentId");
+
+                    b.Property<ulong?>("ParentKey")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ParentKey")
+                        .HasComputedColumnSql("ifnull(`ParentId`,0)", false);
+
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("Slug");
+
+                    b.Property<ushort>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("SortOrder")
+                        .HasDefaultValueSql("0");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Name")
-                        .IsUnique();
+                    b.HasIndex("ParentId")
+                        .HasDatabaseName("FK_Categories_Parent");
+
+                    b.HasIndex("Slug")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Categories_Slug");
+
+                    b.HasIndex("ParentKey", "Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Categories_ParentName");
 
                     b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("OnlineStore.Models.ChatAttachment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<int>("ChatMessageId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ChatMessageId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ChatMessageId");
 
                     b.Property<string>("ContentType")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("ContentType");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<string>("OriginalFileName")
                         .IsRequired()
                         .HasMaxLength(255)
-                        .HasColumnType("varchar(255)");
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("OriginalFileName");
 
                     b.Property<string>("ProtectedStorageKey")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)")
+                        .HasColumnName("StorageKey");
 
-                    b.Property<long>("SizeBytes")
-                        .HasColumnType("bigint");
+                    b.Property<byte[]>("Sha256")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("Sha256");
+
+                    b.Property<ulong>("SizeBytes")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("SizeBytes");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChatMessageId");
-
-                    b.HasIndex("ProtectedStorageKey")
-                        .IsUnique();
+                    b.HasIndex("ChatMessageId")
+                        .HasDatabaseName("IX_ChatAttachments_Message");
 
                     b.ToTable("ChatAttachments", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ChatAttachments_Size", "`SizeBytes` > 0");
+                            t.HasCheckConstraint("CK_ChatAttachments_Size", "(`SizeBytes` between 1 and 104857600)");
+
+                            t.HasCheckConstraint("CK_ChatAttachments_Type", "((`ContentType` = _utf8mb4'application/pdf') or (`ContentType` like _utf8mb4'image/%') or (`ContentType` like _utf8mb4'video/%'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.ChatMessage", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<string>("Body")
-                        .HasMaxLength(4000)
-                        .HasColumnType("varchar(4000)");
+                        .HasColumnType("text")
+                        .HasColumnName("Body");
 
-                    b.Property<int>("ConversationId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ConversationId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ConversationId");
 
-                    b.Property<int?>("SenderUserId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ReadAt");
+
+                    b.Property<string>("SenderKind")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("SenderKind")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<ulong?>("SenderUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("SenderUserId");
 
                     b.Property<DateTime>("SentAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("SentAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("SenderUserId");
+                    b.HasIndex("SenderUserId")
+                        .HasDatabaseName("IX_ChatMessages_Sender");
 
-                    b.HasIndex("ConversationId", "SentAt");
+                    b.HasIndex("ConversationId", "Id")
+                        .HasDatabaseName("IX_ChatMessages_Conversation");
 
                     b.ToTable("ChatMessages", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ChatMessages_Body", "`Body` IS NULL OR CHAR_LENGTH(`Body`) > 0");
+                            t.HasCheckConstraint("CK_ChatMessages_Sender", "((`SenderKind` in (_utf8mb4'Customer',_utf8mb4'Guest',_utf8mb4'Agent',_utf8mb4'System')) and ((`SenderKind` in (_utf8mb4'Customer',_utf8mb4'Agent')) = (`SenderUserId` is not null)))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Comment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<string>("ApprovalStatus")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Pending")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Pending'")
                         .UseCollation("utf8mb4_bin");
 
                     b.Property<string>("Body")
                         .IsRequired()
                         .HasMaxLength(2000)
-                        .HasColumnType("varchar(2000)");
+                        .HasColumnType("varchar(2000)")
+                        .HasColumnName("Body");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<DateTime?>("ModeratedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ModeratedAt");
 
-                    b.Property<int?>("ModeratedByUserId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("ModeratedByUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ModeratedByUserId");
 
-                    b.Property<int>("OrderItemId")
-                        .HasColumnType("int");
+                    b.Property<string>("ModerationNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ModerationNote");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("OrderItemId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderItemId");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ModeratedByUserId");
+                    b.HasIndex("ModeratedByUserId")
+                        .HasDatabaseName("IX_Comments_Moderator");
 
-                    b.HasIndex("OrderItemId");
-
-                    b.HasIndex("ApprovalStatus", "CreatedAt");
+                    b.HasIndex("ApprovalStatus", "CreatedAt")
+                        .HasDatabaseName("IX_Comments_Queue");
 
                     b.HasIndex("UserId", "ProductId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Comments_UserProduct");
 
-                    b.HasIndex("ProductId", "ApprovalStatus", "CreatedAt");
+                    b.HasIndex("OrderItemId", "UserId", "ProductId")
+                        .HasDatabaseName("IX_Comments_OrderItem");
+
+                    b.HasIndex("ProductId", "ApprovalStatus", "CreatedAt")
+                        .HasDatabaseName("IX_Comments_ProductVisible");
 
                     b.ToTable("Comments", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Comments_ApprovalStatus", "`ApprovalStatus` IN ('Pending', 'Approved', 'Rejected')");
+                            t.HasCheckConstraint("CK_Comments_Body", "(char_length(trim(`Body`)) > 0)");
 
-                            t.HasCheckConstraint("CK_Comments_Moderation", "(`ApprovalStatus` = 'Pending' AND `ModeratedAt` IS NULL AND `ModeratedByUserId` IS NULL) OR (`ApprovalStatus` <> 'Pending' AND `ModeratedAt` IS NOT NULL AND `ModeratedByUserId` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_Comments_Moderation", "((`Status` = _utf8mb4'Pending') = ((`ModeratedByUserId` is null) and (`ModeratedAt` is null)))");
+
+                            t.HasCheckConstraint("CK_Comments_Status", "(`Status` in (_utf8mb4'Pending',_utf8mb4'Approved',_utf8mb4'Rejected'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Conversation", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<int?>("CartId")
-                        .HasColumnType("int");
+                    b.Property<DateTime?>("ClaimedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ClaimedAt");
 
-                    b.Property<int?>("ClaimedByUserId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("ClaimedByUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ClaimedByUserId");
+
+                    b.Property<DateTime?>("ClosedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ClosedAt");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<int?>("CustomerUserId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("CustomerUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CustomerUserId");
 
                     b.Property<string>("GuestTokenHash")
                         .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("char(64)")
+                        .HasColumnName("GuestTokenHash");
+
+                    b.Property<Guid>("PublicId")
+                        .HasMaxLength(36)
+                        .HasColumnType("char(36)")
+                        .HasColumnName("PublicId");
 
                     b.Property<DateTime>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Waiting")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Waiting'")
                         .UseCollation("utf8mb4_bin");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("CartId");
+                    b.HasIndex("GuestTokenHash")
+                        .HasDatabaseName("IX_Conversations_Guest");
 
-                    b.HasIndex("ClaimedByUserId");
+                    b.HasIndex("PublicId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Conversations_PublicId");
 
-                    b.HasIndex("CustomerUserId");
+                    b.HasIndex("ClaimedByUserId", "Status")
+                        .HasDatabaseName("IX_Conversations_Agent");
 
-                    b.HasIndex("GuestTokenHash");
+                    b.HasIndex("CustomerUserId", "CreatedAt")
+                        .HasDatabaseName("IX_Conversations_Customer");
 
-                    b.HasIndex("Status", "CreatedAt");
+                    b.HasIndex("Status", "CreatedAt")
+                        .HasDatabaseName("IX_Conversations_Queue");
 
                     b.ToTable("Conversations", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Conversations_Claim", "(`Status` = 'Waiting' AND `ClaimedByUserId` IS NULL) OR (`Status` = 'Active' AND `ClaimedByUserId` IS NOT NULL) OR `Status` = 'Closed'");
+                            t.HasCheckConstraint("CK_Conversations_Claim", "(((`Status` = _utf8mb4'Waiting') and (`ClaimedByUserId` is null) and (`ClaimedAt` is null)) or ((`Status` = _utf8mb4'Active') and (`ClaimedByUserId` is not null) and (`ClaimedAt` is not null)) or ((`Status` = _utf8mb4'Closed') and (`ClosedAt` is not null)))");
 
-                            t.HasCheckConstraint("CK_Conversations_Customer", "(`CustomerUserId` IS NOT NULL AND `GuestTokenHash` IS NULL) OR (`CustomerUserId` IS NULL AND `GuestTokenHash` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_Conversations_Owner", "(((`CustomerUserId` is not null) and (`GuestTokenHash` is null)) or ((`CustomerUserId` is null) and (`GuestTokenHash` is not null)))");
 
-                            t.HasCheckConstraint("CK_Conversations_Status", "`Status` IN ('Waiting', 'Active', 'Closed')");
+                            t.HasCheckConstraint("CK_Conversations_Status", "(`Status` in (_utf8mb4'Waiting',_utf8mb4'Active',_utf8mb4'Closed'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Delivery", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<string>("AddressSnapshot")
+                    b.Property<byte[]>("AddressSnapshot")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varbinary(2048)")
+                        .HasColumnName("ShippingAddressEnc");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ushort>("DataKeyVersion")
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("DataKeyVersion");
 
                     b.Property<DateTime?>("DeliveredAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CompletedAt");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<bool?>("IsCompleted")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsCompleted")
+                        .HasComputedColumnSql("(`Status` = _utf8mb4'Delivered')", false);
+
+                    b.Property<ulong>("OrderId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderId");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Processing")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Processing'")
                         .UseCollation("utf8mb4_bin");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderId");
+                    b.HasAlternateKey("Id", "OrderId")
+                        .HasName("UX_Deliveries_IdOrder");
 
-                    b.HasIndex("Status", "CreatedAt");
+                    b.HasIndex("OrderId", "UserId")
+                        .HasDatabaseName("IX_Deliveries_Order");
+
+                    b.HasIndex("Status", "Id")
+                        .HasDatabaseName("IX_Deliveries_Queue");
 
                     b.ToTable("Deliveries", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Deliveries_DeliveredAt", "`Status` <> 'Delivered' OR `DeliveredAt` IS NOT NULL");
+                            t.HasCheckConstraint("CK_Deliveries_Completed", "((`Status` = _utf8mb4'Delivered') = (`CompletedAt` is not null))");
 
-                            t.HasCheckConstraint("CK_Deliveries_Status", "`Status` IN ('Processing', 'InTransit', 'Delivered', 'Cancelled')");
+                            t.HasCheckConstraint("CK_Deliveries_KeyVersion", "(`DataKeyVersion` > 0)");
+
+                            t.HasCheckConstraint("CK_Deliveries_Status", "(`Status` in (_utf8mb4'Processing',_utf8mb4'InTransit',_utf8mb4'Delivered',_utf8mb4'Cancelled'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.DeliveryItem", b =>
                 {
-                    b.Property<int>("DeliveryId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("DeliveryId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("DeliveryId");
 
-                    b.Property<int>("OrderItemId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("OrderItemId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderItemId");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<ulong>("OrderId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderId");
+
+                    b.Property<uint>("Quantity")
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("Quantity");
 
                     b.Property<decimal>("TotalPriceSnapshot")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("TotalPriceSnapshot");
 
                     b.HasKey("DeliveryId", "OrderItemId");
 
-                    b.HasIndex("OrderItemId");
+                    b.HasIndex("DeliveryId", "OrderId")
+                        .HasDatabaseName("IX_DeliveryItems_Delivery");
+
+                    b.HasIndex("OrderItemId", "OrderId")
+                        .HasDatabaseName("IX_DeliveryItems_OrderItem");
 
                     b.ToTable("DeliveryItems", null, t =>
                         {
-                            t.HasCheckConstraint("CK_DeliveryItems_Quantity", "`Quantity` > 0");
+                            t.HasCheckConstraint("CK_DeliveryItems_Price", "(`TotalPriceSnapshot` >= 0)");
 
-                            t.HasCheckConstraint("CK_DeliveryItems_TotalPrice", "`TotalPriceSnapshot` >= 0");
+                            t.HasCheckConstraint("CK_DeliveryItems_Quantity", "(`Quantity` > 0)");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Discount", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CancelledAt");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ulong>("CreatedByUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CreatedByUserId");
 
                     b.Property<DateTime>("EndsAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("EndsAt");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("Name");
 
                     b.Property<decimal>("Rate")
-                        .HasPrecision(5, 4)
-                        .HasColumnType("decimal(5,4)");
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("Rate");
 
                     b.Property<DateTime>("StartsAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("StartsAt");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("StartsAt", "EndsAt");
+                    b.HasIndex("CreatedByUserId")
+                        .HasDatabaseName("IX_Discounts_CreatedBy");
+
+                    b.HasIndex("StartsAt", "EndsAt")
+                        .HasDatabaseName("IX_Discounts_Active");
 
                     b.ToTable("Discounts", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Discounts_Period", "`EndsAt` > `StartsAt`");
+                            t.HasCheckConstraint("CK_Discounts_Period", "(`EndsAt` > `StartsAt`)");
 
-                            t.HasCheckConstraint("CK_Discounts_Rate", "`Rate` > 0 AND `Rate` <= 1");
+                            t.HasCheckConstraint("CK_Discounts_Rate", "((`Rate` > 0) and (`Rate` <= 1))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.DiscountProduct", b =>
                 {
-                    b.Property<int>("DiscountId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("DiscountId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("DiscountId");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
 
                     b.HasKey("DiscountId", "ProductId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_DiscountProducts_Product");
 
                     b.ToTable("DiscountProducts", (string)null);
                 });
 
+            modelBuilder.Entity("OnlineStore.Models.Distributor", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<string>("ContactInfo")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ContactInfo");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsActive")
+                        .HasDefaultValueSql("1");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)")
+                        .HasColumnName("Name");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Name")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Distributors_Name");
+
+                    b.ToTable("Distributors", (string)null);
+                });
+
             modelBuilder.Entity("OnlineStore.Models.Invoice", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<string>("AddressSnapshot")
+                    b.Property<byte[]>("AddressSnapshot")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
+                        .HasMaxLength(2048)
+                        .HasColumnType("varbinary(2048)")
+                        .HasColumnName("BillingAddressEnc");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)")
+                        .HasColumnName("CurrencyCode")
+                        .HasDefaultValueSql("'TRY'")
+                        .UseCollation("utf8mb4_bin");
 
                     b.Property<string>("CustomerNameSnapshot")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("CustomerName");
 
-                    b.Property<DateTime?>("EmailedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                    b.Property<ushort>("DataKeyVersion")
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("DataKeyVersion");
+
+                    b.Property<decimal>("DiscountTotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("DiscountTotal");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("GrandTotal");
 
                     b.Property<string>("InvoiceNumber")
                         .IsRequired()
-                        .HasMaxLength(40)
-                        .HasColumnType("varchar(40)");
+                        .HasMaxLength(24)
+                        .HasColumnType("varchar(24)")
+                        .HasColumnName("InvoiceNumber");
 
                     b.Property<DateTime>("IssuedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("IssuedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("OrderId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderId");
+
+                    b.Property<byte[]>("PdfSha256")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("PdfSha256");
 
                     b.Property<string>("ProtectedDocumentKey")
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.Property<string>("TaxIdSnapshot")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("PdfStorageKey");
+
+                    b.Property<decimal>("ShippingTotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("ShippingTotal");
+
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Subtotal");
+
+                    b.Property<byte[]>("TaxIdSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varbinary(256)")
+                        .HasColumnName("CustomerTaxIdEnc");
 
                     b.HasKey("Id");
 
                     b.HasIndex("InvoiceNumber")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Invoices_Number");
 
-                    b.HasIndex("IssuedAt");
+                    b.HasIndex("IssuedAt")
+                        .HasDatabaseName("IX_Invoices_IssuedAt");
 
                     b.HasIndex("OrderId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Invoices_Order");
 
-                    b.ToTable("Invoices", (string)null);
+                    b.ToTable("Invoices", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Invoices_Currency", "(`CurrencyCode` = _utf8mb4'TRY')");
+
+                            t.HasCheckConstraint("CK_Invoices_KeyVersion", "(`DataKeyVersion` > 0)");
+
+                            t.HasCheckConstraint("CK_Invoices_Money", "((`Subtotal` >= 0) and (`DiscountTotal` >= 0) and (`ShippingTotal` >= 0) and (`GrandTotal` = ((`Subtotal` - `DiscountTotal`) + `ShippingTotal`)))");
+                        });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.InvoiceEmailDelivery", b =>
                 {
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    b.Property<int>("AttemptCount")
-                        .HasColumnType("int");
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<ushort>("AttemptCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("AttemptCount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ushort>("DataKeyVersion")
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("DataKeyVersion");
+
+                    b.Property<string>("DedupKey")
+                        .IsRequired()
+                        .HasMaxLength(120)
+                        .HasColumnType("varchar(120)")
+                        .HasColumnName("DedupKey");
+
+                    b.Property<ulong?>("InvoiceId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("InvoiceId");
+
+                    b.Property<string>("Kind")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Kind")
+                        .UseCollation("utf8mb4_bin");
 
                     b.Property<DateTime?>("LastAttemptAt")
-                        .HasPrecision(6)
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("LastErrorCode")
-                        .HasMaxLength(40)
-                        .HasColumnType("varchar(40)");
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("LastError");
 
                     b.Property<string>("LeaseToken")
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("LeaseOwner");
 
                     b.Property<DateTime?>("LeaseUntil")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("LeaseExpiresAt");
 
                     b.Property<DateTime>("NextAttemptAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("NextAttemptAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<string>("RecipientSnapshot")
+                    b.Property<byte[]>("RecipientSnapshot")
                         .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("varchar(254)");
+                        .HasMaxLength(512)
+                        .HasColumnType("varbinary(512)")
+                        .HasColumnName("RecipientEmailEnc");
+
+                    b.Property<ulong>("RecipientUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("RecipientUserId");
+
+                    b.Property<ulong?>("RefundId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("RefundId");
 
                     b.Property<DateTime?>("SentAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("SentAt");
 
-                    b.Property<DateTime?>("StoppedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Pending'")
+                        .UseCollation("utf8mb4_bin");
 
-                    b.HasKey("OrderId");
+                    b.HasKey("Id");
 
-                    b.HasIndex("SentAt", "StoppedAt", "NextAttemptAt", "LeaseUntil");
+                    b.HasIndex("DedupKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_EmailOutbox_Dedup");
 
-                    b.ToTable("InvoiceEmailDeliveries", null, t =>
+                    b.HasIndex("InvoiceId")
+                        .HasDatabaseName("IX_EmailOutbox_Invoice");
+
+                    b.HasIndex("RecipientUserId")
+                        .HasDatabaseName("IX_EmailOutbox_Recipient");
+
+                    b.HasIndex("RefundId")
+                        .HasDatabaseName("IX_EmailOutbox_Refund");
+
+                    b.HasIndex("Status", "NextAttemptAt")
+                        .HasDatabaseName("IX_EmailOutbox_Dequeue");
+
+                    b.ToTable("EmailOutbox", null, t =>
                         {
-                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Attempts", "`AttemptCount` >= 0");
+                            t.HasCheckConstraint("CK_EmailOutbox_KeyVersion", "(`DataKeyVersion` > 0)");
 
-                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Lease", "(`LeaseUntil` IS NULL) = (`LeaseToken` IS NULL)");
+                            t.HasCheckConstraint("CK_EmailOutbox_Kind", "(((`Kind` = _utf8mb4'InvoiceEmail') and (`InvoiceId` is not null) and (`RefundId` is null)) or ((`Kind` = _utf8mb4'RefundNotice') and (`RefundId` is not null) and (`InvoiceId` is null)))");
 
-                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Recipient", "CHAR_LENGTH(`RecipientSnapshot`) > 0");
+                            t.HasCheckConstraint("CK_EmailOutbox_Sent", "((`Status` = _utf8mb4'Sent') = (`SentAt` is not null))");
 
-                            t.HasCheckConstraint("CK_InvoiceEmailDelivery_Stopped", "`StoppedAt` IS NULL OR (`SentAt` IS NULL AND `LeaseUntil` IS NULL AND `LastErrorCode` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_EmailOutbox_Status", "(`Status` in (_utf8mb4'Pending',_utf8mb4'Sending',_utf8mb4'Sent',_utf8mb4'Failed'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Notification", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)")
+                        .HasColumnName("Body");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<string>("DeduplicationKey")
                         .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasMaxLength(160)
+                        .HasColumnType("varchar(160)")
+                        .HasColumnName("DedupKey");
+
+                    b.Property<ulong?>("DiscountId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("DiscountId");
 
                     b.Property<string>("Kind")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("varchar(30)")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Kind")
                         .UseCollation("utf8mb4_bin");
 
-                    b.Property<int?>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
 
-                    b.Property<DateTime?>("SentAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                    b.Property<DateTime?>("ReadAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ReadAt");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("Title");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
                     b.HasIndex("DeduplicationKey")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Notifications_Dedup");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("DiscountId")
+                        .HasDatabaseName("IX_Notifications_Discount");
 
-                    b.HasIndex("SentAt", "CreatedAt");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_Notifications_Product");
 
-                    b.HasIndex("UserId", "CreatedAt");
+                    b.HasIndex("UserId", "ReadAt", "CreatedAt")
+                        .HasDatabaseName("IX_Notifications_Inbox");
 
                     b.ToTable("Notifications", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Notifications_Kind", "`Kind` IN ('WishlistDiscount', 'RefundApproved', 'ReturnRejected')");
+                            t.HasCheckConstraint("CK_Notifications_Discount", "((`Kind` <> _utf8mb4'WishlistDiscount') or ((`ProductId` is not null) and (`DiscountId` is not null)))");
+
+                            t.HasCheckConstraint("CK_Notifications_Kind", "(`Kind` in (_utf8mb4'WishlistDiscount',_utf8mb4'RefundApproved',_utf8mb4'ReturnRejected'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Order", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<string>("AddressSnapshot")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
+                    b.Property<byte[]>("AddressSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(2048)
+                        .HasColumnType("varbinary(2048)")
+                        .HasColumnName("ShippingAddressEnc");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("CancelReason");
+
+                    b.Property<DateTime?>("CancelledAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CancelledAt");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)")
+                        .HasColumnName("CurrencyCode")
+                        .HasDefaultValueSql("'TRY'")
+                        .UseCollation("utf8mb4_bin");
 
                     b.Property<string>("CustomerNameSnapshot")
+                        .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("CustomerName");
+
+                    b.Property<ushort>("DataKeyVersion")
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("DataKeyVersion");
 
                     b.Property<DateTime?>("DeliveredAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("DeliveredAt");
 
-                    b.Property<string>("EmailSnapshot")
-                        .HasMaxLength(254)
-                        .HasColumnType("varchar(254)");
+                    b.Property<decimal>("DiscountTotal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("DiscountTotal")
+                        .HasDefaultValueSql("0.00");
+
+                    b.Property<byte[]>("EmailSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varbinary(512)")
+                        .HasColumnName("CustomerEmailEnc");
+
+                    b.Property<decimal>("GrandTotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("GrandTotal");
+
+                    b.Property<string>("OrderNumber")
+                        .IsRequired()
+                        .HasMaxLength(24)
+                        .HasColumnType("varchar(24)")
+                        .HasColumnName("OrderNumber");
 
                     b.Property<string>("PaymentStatus")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Pending")
+                        .HasColumnName("PaymentStatus")
+                        .HasDefaultValueSql("'Pending'")
                         .UseCollation("utf8mb4_bin");
 
                     b.Property<DateTime?>("PurchasedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("PurchasedAt");
 
                     b.Property<DateTime>("RowVersion")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
 
-                    b.Property<int?>("SourceCartId")
-                        .HasColumnType("int");
+                    b.Property<decimal>("ShippingTotal")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("ShippingTotal")
+                        .HasDefaultValueSql("0.00");
+
+                    b.Property<ulong?>("SourceCartId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("SourceCartId");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Processing")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Processing'")
                         .UseCollation("utf8mb4_bin");
 
-                    b.Property<string>("TaxIdSnapshot")
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                    b.Property<decimal>("Subtotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Subtotal");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<byte[]>("TaxIdSnapshot")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("varbinary(256)")
+                        .HasColumnName("CustomerTaxIdEnc");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
+                    b.HasAlternateKey("Id", "UserId")
+                        .HasName("UX_Orders_IdUser");
+
+                    b.HasIndex("OrderNumber")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Orders_Number");
+
+                    b.HasIndex("PurchasedAt")
+                        .HasDatabaseName("IX_Orders_PurchasedAt");
+
                     b.HasIndex("SourceCartId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Orders_SourceCart");
 
-                    b.HasIndex("Status", "PurchasedAt");
-
-                    b.HasIndex("UserId", "CreatedAt");
+                    b.HasIndex("UserId", "CreatedAt")
+                        .HasDatabaseName("IX_Orders_UserHistory");
 
                     b.ToTable("Orders", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Orders_FulfillmentPayment", "`Status` NOT IN ('InTransit', 'Delivered') OR (`Status` = 'InTransit' AND `PaymentStatus` = 'Confirmed') OR (`Status` = 'Delivered' AND `PaymentStatus` IN ('Confirmed', 'Refunded'))");
+                            t.HasCheckConstraint("CK_Orders_CancelledAt", "((`Status` = _utf8mb4'Cancelled') = (`CancelledAt` is not null))");
 
-                            t.HasCheckConstraint("CK_Orders_PaymentStatus", "`PaymentStatus` IN ('Pending', 'Confirmed', 'Failed', 'Refunded', 'Unknown')");
+                            t.HasCheckConstraint("CK_Orders_Currency", "(`CurrencyCode` = _utf8mb4'TRY')");
 
-                            t.HasCheckConstraint("CK_Orders_PurchaseSnapshot", "`PurchasedAt` IS NULL OR (`CustomerNameSnapshot` IS NOT NULL AND `TaxIdSnapshot` IS NOT NULL AND `EmailSnapshot` IS NOT NULL AND `AddressSnapshot` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_Orders_DeliveredAt", "((`Status` = _utf8mb4'Delivered') = (`DeliveredAt` is not null))");
 
-                            t.HasCheckConstraint("CK_Orders_Status", "`Status` IN ('Processing', 'InTransit', 'Delivered', 'Cancelled')");
+                            t.HasCheckConstraint("CK_Orders_FulfillmentPayment", "(((`Status` <> _utf8mb4'InTransit') or (`PaymentStatus` = _utf8mb4'Confirmed')) and ((`Status` <> _utf8mb4'Delivered') or (`PaymentStatus` in (_utf8mb4'Confirmed',_utf8mb4'Refunded'))))");
+
+                            t.HasCheckConstraint("CK_Orders_GrandTotal", "(`GrandTotal` = ((`Subtotal` - `DiscountTotal`) + `ShippingTotal`))");
+
+                            t.HasCheckConstraint("CK_Orders_KeyVersion", "(`DataKeyVersion` > 0)");
+
+                            t.HasCheckConstraint("CK_Orders_Money", "((`Subtotal` >= 0) and (`DiscountTotal` >= 0) and (`ShippingTotal` >= 0) and (`DiscountTotal` <= `Subtotal`))");
+
+                            t.HasCheckConstraint("CK_Orders_PaymentStatus", "(`PaymentStatus` in (_utf8mb4'Pending',_utf8mb4'Confirmed',_utf8mb4'Failed',_utf8mb4'Refunded'))");
+
+                            t.HasCheckConstraint("CK_Orders_PurchasedWhenPaid", "((`PaymentStatus` not in (_utf8mb4'Confirmed',_utf8mb4'Refunded')) or (`PurchasedAt` is not null))");
+
+                            t.HasCheckConstraint("CK_Orders_Status", "(`Status` in (_utf8mb4'Processing',_utf8mb4'InTransit',_utf8mb4'Delivered',_utf8mb4'Cancelled'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.OrderItem", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<int?>("DiscountId")
-                        .HasColumnType("int");
+                    b.Property<uint>("DeliveredQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("DeliveredQuantity")
+                        .HasDefaultValueSql("0");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<uint>("DeliveryAllocatedQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("DeliveryAllocatedQuantity")
+                        .HasDefaultValueSql("0");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("DiscountId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("DiscountId");
+
+                    b.Property<decimal?>("DiscountRate")
+                        .HasColumnType("decimal(5,4)")
+                        .HasColumnName("DiscountRate");
+
+                    b.Property<decimal>("LineTotal")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("LineTotal");
+
+                    b.Property<decimal>("ListUnitPrice")
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("ListUnitPrice");
+
+                    b.Property<ulong>("OrderId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderId");
+
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
 
                     b.Property<string>("ProductName")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("ProductName");
 
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
+                    b.Property<uint>("Quantity")
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("Quantity");
+
+                    b.Property<uint>("RefundedQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("RefundedQuantity")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<uint>("ReturnRequestedQuantity")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("ReturnRequestedQuantity")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
+
+                    b.Property<string>("Sku")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("Sku");
 
                     b.Property<decimal?>("UnitCost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .IsRequired()
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("UnitCost");
 
                     b.Property<decimal>("UnitPrice")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("PaidUnitPrice");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("DiscountId");
+                    b.HasAlternateKey("Id", "OrderId")
+                        .HasName("UX_OrderItems_IdOrder");
 
-                    b.HasIndex("ProductId");
+                    b.HasAlternateKey("Id", "UserId", "ProductId")
+                        .HasName("UX_OrderItems_IdUserProduct");
+
+                    b.HasIndex("DiscountId")
+                        .HasDatabaseName("IX_OrderItems_Discount");
 
                     b.HasIndex("OrderId", "ProductId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_OrderItems_OrderProduct");
+
+                    b.HasIndex("OrderId", "UserId")
+                        .HasDatabaseName("FK_OrderItems_Orders");
+
+                    b.HasIndex("ProductId", "OrderId")
+                        .HasDatabaseName("IX_OrderItems_ProductSales");
 
                     b.ToTable("OrderItems", null, t =>
                         {
-                            t.HasCheckConstraint("CK_OrderItems_Quantity", "`Quantity` > 0");
+                            t.HasCheckConstraint("CK_OrderItems_Counters", "((`DeliveryAllocatedQuantity` <= `Quantity`) and (`DeliveredQuantity` <= `DeliveryAllocatedQuantity`) and (`ReturnRequestedQuantity` <= `DeliveredQuantity`) and (`RefundedQuantity` <= `ReturnRequestedQuantity`))");
 
-                            t.HasCheckConstraint("CK_OrderItems_UnitCost", "`UnitCost` IS NULL OR `UnitCost` >= 0");
+                            t.HasCheckConstraint("CK_OrderItems_Discount", "(((`DiscountId` is null) and (`DiscountRate` is null) and (`PaidUnitPrice` = `ListUnitPrice`)) or ((`DiscountId` is not null) and (`DiscountRate` is not null) and (`DiscountRate` > 0) and (`DiscountRate` <= 1) and (`PaidUnitPrice` = round((`ListUnitPrice` * (1 - `DiscountRate`)),2))))");
 
-                            t.HasCheckConstraint("CK_OrderItems_UnitPrice", "`UnitPrice` >= 0");
+                            t.HasCheckConstraint("CK_OrderItems_LineTotal", "(`LineTotal` = (`PaidUnitPrice` * `Quantity`))");
+
+                            t.HasCheckConstraint("CK_OrderItems_Money", "((`ListUnitPrice` >= 0) and (`PaidUnitPrice` >= 0) and (`UnitCost` >= 0) and (`PaidUnitPrice` <= `ListUnitPrice`))");
+
+                            t.HasCheckConstraint("CK_OrderItems_Quantity", "(`Quantity` > 0)");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Payment", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Amount");
+
+                    b.Property<string>("CardBrand")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("CardBrand")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<string>("CardLast4")
+                        .IsRequired()
+                        .HasMaxLength(4)
+                        .HasColumnType("char(4)")
+                        .HasColumnName("CardLast4");
+
+                    b.Property<ulong>("CartId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CartId");
 
                     b.Property<DateTime?>("ConfirmedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ConfirmedAt");
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<string>("IdempotencyKey")
+                    b.Property<string>("CurrencyCode")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)")
+                        .HasColumnName("CurrencyCode")
+                        .HasDefaultValueSql("'TRY'")
+                        .UseCollation("utf8mb4_bin");
 
-                    b.Property<int>("OrderId")
-                        .HasColumnType("int");
+                    b.Property<string>("FailureCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasColumnName("FailureCode");
+
+                    b.Property<byte[]>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("IdempotencyKeyHash");
+
+                    b.Property<ulong?>("OrderId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderId");
 
                     b.Property<string>("ProviderReference")
-                        .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasMaxLength(64)
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("ProviderReference");
 
                     b.Property<string>("Status")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Pending")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Pending'")
                         .UseCollation("utf8mb4_bin");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("IdempotencyKey")
-                        .IsUnique();
-
-                    b.HasIndex("OrderId");
+                    b.HasIndex("OrderId")
+                        .HasDatabaseName("IX_Payments_Order");
 
                     b.HasIndex("ProviderReference")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Payments_Provider");
+
+                    b.HasIndex("CartId", "UserId")
+                        .HasDatabaseName("IX_Payments_Cart");
+
+                    b.HasIndex("Id", "OrderId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Payments_IdOrder");
+
+                    b.HasIndex("OrderId", "UserId")
+                        .HasDatabaseName("FK_Payments_Orders");
+
+                    b.HasIndex("UserId", "IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Payments_UserKey");
 
                     b.ToTable("Payments", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Payments_Amount", "`Amount` >= 0");
+                            t.HasCheckConstraint("CK_Payments_Amount", "(`Amount` >= 0)");
 
-                            t.HasCheckConstraint("CK_Payments_ConfirmedAt", "`Status` <> 'Confirmed' OR `ConfirmedAt` IS NOT NULL");
+                            t.HasCheckConstraint("CK_Payments_Card", "((`CardBrand` in (_utf8mb4'Visa',_utf8mb4'Mastercard',_utf8mb4'Amex',_utf8mb4'Troy',_utf8mb4'Other')) and regexp_like(`CardLast4`,_utf8mb4'^[0-9]{4}$'))");
 
-                            t.HasCheckConstraint("CK_Payments_Status", "`Status` IN ('Pending', 'Confirmed', 'Failed')");
+                            t.HasCheckConstraint("CK_Payments_Confirmed", "((`Status` = _utf8mb4'Confirmed') = ((`OrderId` is not null) and (`ConfirmedAt` is not null)))");
+
+                            t.HasCheckConstraint("CK_Payments_Currency", "(`CurrencyCode` = _utf8mb4'TRY')");
+
+                            t.HasCheckConstraint("CK_Payments_Status", "(`Status` in (_utf8mb4'Pending',_utf8mb4'Confirmed',_utf8mb4'Failed'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Product", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
+                    b.Property<ulong?>("BrandId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("BrandId");
+
+                    b.Property<ulong>("CategoryId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CategoryId");
 
                     b.Property<decimal?>("Cost")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Cost");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<string>("Description")
-                        .HasColumnType("text");
-
-                    b.Property<string>("DistributorInformation")
                         .IsRequired()
-                        .HasMaxLength(500)
-                        .HasColumnType("varchar(500)");
+                        .HasColumnType("text")
+                        .HasColumnName("Description");
 
-                    b.Property<string>("ImageUrl")
-                        .HasMaxLength(2048)
-                        .HasColumnType("varchar(2048)");
+                    b.Property<ulong>("DistributorId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("DistributorId");
 
                     b.Property<bool>("IsActive")
-                        .ValueGeneratedOnAdd()
                         .HasColumnType("tinyint(1)")
-                        .HasDefaultValue(true);
+                        .HasColumnName("IsActive")
+                        .HasDefaultValueSql("1");
 
                     b.Property<string>("Model")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("Model");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("Name");
 
                     b.Property<decimal>("Price")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Price");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
+
+                    b.Property<string>("SearchText")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("text")
+                        .HasColumnName("SearchText")
+                        .HasComputedColumnSql("replace(replace(concat_ws(_utf8mb4' ',`Name`,`Model`,`Description`),_utf8mb4'Ä±',_utf8mb4'i'),_utf8mb4'Ä°',_utf8mb4'i')", true);
 
                     b.Property<string>("SerialNumber")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("SerialNumber");
 
                     b.Property<string>("Sku")
                         .IsRequired()
                         .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasColumnType("varchar(64)")
+                        .HasColumnName("Sku");
 
-                    b.Property<int>("StockQuantity")
+                    b.Property<uint>("StockQuantity")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int")
-                        .HasDefaultValue(0);
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("StockQuantity")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.Property<string>("WarrantyStatus")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("WarrantyStatus");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Sku")
-                        .IsUnique();
+                    b.HasIndex("BrandId")
+                        .HasDatabaseName("IX_Products_Brand");
 
-                    b.HasIndex("CategoryId", "IsActive", "Name");
+                    b.HasIndex("DistributorId")
+                        .HasDatabaseName("IX_Products_Distributor");
+
+                    b.HasIndex("SearchText")
+                        .HasDatabaseName("FT_Products_Search")
+                        .HasAnnotation("MySql:FullTextIndex", true);
+
+                    b.HasIndex("Sku")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Products_Sku");
+
+                    b.HasIndex("IsActive", "Price")
+                        .HasDatabaseName("IX_Products_PriceSort");
+
+                    b.HasIndex("CategoryId", "IsActive", "Name")
+                        .HasDatabaseName("IX_Products_CategoryList");
 
                     b.ToTable("Products", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Products_ActiveDetails", "`IsActive` = 0 OR (CHAR_LENGTH(TRIM(`Sku`)) > 0 AND CHAR_LENGTH(TRIM(`Name`)) > 0 AND CHAR_LENGTH(TRIM(`Model`)) > 0 AND CHAR_LENGTH(TRIM(`SerialNumber`)) > 0 AND `Description` IS NOT NULL AND CHAR_LENGTH(TRIM(`Description`)) > 0 AND CHAR_LENGTH(TRIM(`WarrantyStatus`)) > 0 AND CHAR_LENGTH(TRIM(`DistributorInformation`)) > 0)");
+                            t.HasCheckConstraint("CK_Products_ActiveDetails", "((`IsActive` = 0) or ((char_length(trim(`Sku`)) > 0) and (char_length(trim(`Name`)) > 0) and (char_length(trim(`Model`)) > 0) and (char_length(trim(`SerialNumber`)) > 0) and (char_length(trim(`Description`)) > 0) and (char_length(trim(`WarrantyStatus`)) > 0)))");
 
-                            t.HasCheckConstraint("CK_Products_Cost", "`Cost` IS NULL OR `Cost` >= 0");
+                            t.HasCheckConstraint("CK_Products_Cost", "((`Cost` is null) or (`Cost` >= 0))");
 
-                            t.HasCheckConstraint("CK_Products_Price", "`Price` >= 0");
-
-                            t.HasCheckConstraint("CK_Products_StockQuantity", "`StockQuantity` >= 0");
+                            t.HasCheckConstraint("CK_Products_Price", "(`Price` >= 0)");
                         });
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.ProductAttributeValue", b =>
+                {
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
+
+                    b.Property<ulong>("AttributeDefinitionId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("AttributeDefinitionId");
+
+                    b.Property<string>("DataType")
+                        .IsRequired()
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)")
+                        .HasColumnName("DataType")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<bool?>("ValueBool")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("ValueBool");
+
+                    b.Property<decimal?>("ValueNumber")
+                        .HasColumnType("decimal(18,4)")
+                        .HasColumnName("ValueNumber");
+
+                    b.Property<string>("ValueText")
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("ValueText");
+
+                    b.HasKey("ProductId", "AttributeDefinitionId");
+
+                    b.HasIndex("AttributeDefinitionId", "DataType")
+                        .HasDatabaseName("FK_ProductAttributeValues_Definitions");
+
+                    b.HasIndex("AttributeDefinitionId", "ValueNumber")
+                        .HasDatabaseName("IX_ProductAttributeValues_Number");
+
+                    b.HasIndex("AttributeDefinitionId", "ValueText")
+                        .HasDatabaseName("IX_ProductAttributeValues_Text");
+
+                    b.ToTable("ProductAttributeValues", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_ProductAttributeValues_Typed", "(((`DataType` = _utf8mb4'Text') and (`ValueText` is not null) and (`ValueNumber` is null) and (`ValueBool` is null)) or ((`DataType` = _utf8mb4'Number') and (`ValueNumber` is not null) and (`ValueText` is null) and (`ValueBool` is null)) or ((`DataType` = _utf8mb4'Bool') and (`ValueBool` is not null) and (`ValueText` is null) and (`ValueNumber` is null)))");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.ProductImage", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<string>("AltText")
+                        .HasMaxLength(200)
+                        .HasColumnType("varchar(200)")
+                        .HasColumnName("AltText");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<bool>("IsPrimary")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsPrimary")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<ulong?>("PrimaryProductId")
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("PrimaryProductId")
+                        .HasComputedColumnSql("if((`IsPrimary` = 1),`ProductId`,NULL)", false);
+
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
+
+                    b.Property<ushort>("SortOrder")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("SortOrder")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<string>("StorageKey")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("varchar(512)")
+                        .HasColumnName("StorageKey");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PrimaryProductId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_ProductImages_OnePrimary");
+
+                    b.HasIndex("ProductId", "SortOrder")
+                        .HasDatabaseName("IX_ProductImages_Product");
+
+                    b.ToTable("ProductImages", (string)null);
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Rating", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<int>("OrderItemId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("OrderItemId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderItemId");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
 
                     b.Property<byte>("Stars")
-                        .HasColumnType("tinyint unsigned");
+                        .HasColumnType("tinyint unsigned")
+                        .HasColumnName("Stars");
 
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderItemId");
-
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_Ratings_Product");
 
                     b.HasIndex("UserId", "ProductId")
-                        .IsUnique();
+                        .IsUnique()
+                        .HasDatabaseName("UX_Ratings_UserProduct");
+
+                    b.HasIndex("OrderItemId", "UserId", "ProductId")
+                        .HasDatabaseName("IX_Ratings_OrderItem");
 
                     b.ToTable("Ratings", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Ratings_Stars", "`Stars` BETWEEN 1 AND 5");
+                            t.HasCheckConstraint("CK_Ratings_Stars", "(`Stars` between 1 and 5)");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Refund", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<decimal>("Amount")
-                        .HasPrecision(18, 2)
-                        .HasColumnType("decimal(18,2)");
+                        .HasColumnType("decimal(18,2)")
+                        .HasColumnName("Amount");
 
-                    b.Property<string>("IdempotencyKey")
-                        .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
-
-                    b.Property<int>("PaymentId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RefundedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int>("ReturnRequestId")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IdempotencyKey")
-                        .IsUnique();
-
-                    b.HasIndex("PaymentId");
-
-                    b.HasIndex("ReturnRequestId")
-                        .IsUnique();
-
-                    b.ToTable("Refunds", null, t =>
-                        {
-                            t.HasCheckConstraint("CK_Refunds_Amount", "`Amount` > 0");
-                        });
-                });
-
-            modelBuilder.Entity("OnlineStore.Models.ReturnRequest", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("OrderItemId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Quantity")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime?>("ReceivedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTime>("RequestedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<int?>("ReviewedByUserId")
-                        .HasColumnType("int");
-
-                    b.Property<DateTime>("RowVersion")
-                        .IsConcurrencyToken()
+                    b.Property<ulong?>("CancelOrderId")
                         .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("datetime(6)");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("CancelOrderId")
+                        .HasComputedColumnSql("if((`Reason` = _utf8mb4'Cancellation'),`OrderId`,NULL)", false);
+
+                    b.Property<DateTime>("CreatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<string>("CurrencyCode")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(3)
+                        .HasColumnType("char(3)")
+                        .HasColumnName("CurrencyCode")
+                        .HasDefaultValueSql("'TRY'")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<byte[]>("IdempotencyKey")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("IdempotencyKeyHash");
+
+                    b.Property<ulong>("OrderId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderId");
+
+                    b.Property<ulong>("PaymentId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("PaymentId");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Reason")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<DateTime?>("RefundedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CompletedAt");
+
+                    b.Property<ulong?>("ReturnRequestId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ReturnRequestId");
 
                     b.Property<string>("Status")
                         .IsRequired()
                         .ValueGeneratedOnAdd()
                         .HasMaxLength(20)
                         .HasColumnType("varchar(20)")
-                        .HasDefaultValue("Requested")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Pending'")
                         .UseCollation("utf8mb4_bin");
-
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OrderItemId");
+                    b.HasIndex("CancelOrderId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Refunds_OneCancellation");
 
-                    b.HasIndex("ReviewedByUserId");
+                    b.HasIndex("IdempotencyKey")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Refunds_Key");
 
-                    b.HasIndex("UserId");
+                    b.HasIndex("OrderId")
+                        .IsUnique()
+                        .HasDatabaseName("IX_Refunds_Order");
 
-                    b.HasIndex("Status", "RequestedAt");
+                    b.HasIndex("RefundedAt")
+                        .HasDatabaseName("IX_Refunds_Completed");
+
+                    b.HasIndex("ReturnRequestId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Refunds_ReturnRequest");
+
+                    b.HasIndex("PaymentId", "OrderId")
+                        .HasDatabaseName("IX_Refunds_Payment");
+
+                    b.ToTable("Refunds", null, t =>
+                        {
+                            t.HasCheckConstraint("CK_Refunds_Amount", "(`Amount` > 0)");
+
+                            t.HasCheckConstraint("CK_Refunds_Completed", "((`Status` = _utf8mb4'Completed') = (`CompletedAt` is not null))");
+
+                            t.HasCheckConstraint("CK_Refunds_Currency", "(`CurrencyCode` = _utf8mb4'TRY')");
+
+                            t.HasCheckConstraint("CK_Refunds_Reason", "((`Reason` in (_utf8mb4'Return',_utf8mb4'Cancellation')) and ((`Reason` = _utf8mb4'Return') = (`ReturnRequestId` is not null)))");
+
+                            t.HasCheckConstraint("CK_Refunds_Status", "(`Status` in (_utf8mb4'Pending',_utf8mb4'Completed',_utf8mb4'Failed'))");
+                        });
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.ReturnRequest", b =>
+                {
+                    b.Property<ulong>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
+
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
+
+                    b.Property<ulong>("OrderItemId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("OrderItemId");
+
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
+
+                    b.Property<uint>("Quantity")
+                        .HasColumnType("int unsigned")
+                        .HasColumnName("Quantity");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("Reason");
+
+                    b.Property<DateTime?>("ReceivedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ReceivedAt");
+
+                    b.Property<DateTime>("RequestedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RequestedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
+
+                    b.Property<string>("ReviewNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("varchar(500)")
+                        .HasColumnName("ReviewNote");
+
+                    b.Property<DateTime?>("ReviewedAt")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("ReviewedAt");
+
+                    b.Property<ulong?>("ReviewedByUserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ReviewedByUserId");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Status")
+                        .HasDefaultValueSql("'Requested'")
+                        .UseCollation("utf8mb4_bin");
+
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ReviewedByUserId")
+                        .HasDatabaseName("IX_ReturnRequests_Reviewer");
+
+                    b.HasIndex("Status", "RequestedAt")
+                        .HasDatabaseName("IX_ReturnRequests_Queue");
+
+                    b.HasIndex("UserId", "RequestedAt")
+                        .HasDatabaseName("IX_ReturnRequests_UserHistory");
+
+                    b.HasIndex("OrderItemId", "UserId", "ProductId")
+                        .HasDatabaseName("IX_ReturnRequests_Item");
 
                     b.ToTable("ReturnRequests", null, t =>
                         {
-                            t.HasCheckConstraint("CK_ReturnRequests_Progress", "(`Status` = 'Requested' AND `ReceivedAt` IS NULL AND `ReviewedByUserId` IS NULL) OR (`Status` = 'Received' AND `ReceivedAt` IS NOT NULL) OR (`Status` = 'Approved' AND `ReceivedAt` IS NOT NULL AND `ReviewedByUserId` IS NOT NULL) OR (`Status` = 'Rejected' AND `ReviewedByUserId` IS NOT NULL)");
+                            t.HasCheckConstraint("CK_ReturnRequests_Quantity", "(`Quantity` > 0)");
 
-                            t.HasCheckConstraint("CK_ReturnRequests_Quantity", "`Quantity` > 0");
+                            t.HasCheckConstraint("CK_ReturnRequests_Review", "(((`Status` = _utf8mb4'Requested') and (`ReviewedByUserId` is null) and (`ReviewedAt` is null) and (`ReceivedAt` is null)) or ((`Status` = _utf8mb4'Rejected') and (`ReviewedByUserId` is not null) and (`ReviewedAt` is not null) and (`ReceivedAt` is null)) or ((`Status` in (_utf8mb4'Received',_utf8mb4'Approved')) and (`ReviewedByUserId` is not null) and (`ReviewedAt` is not null) and (`ReceivedAt` is not null)))");
 
-                            t.HasCheckConstraint("CK_ReturnRequests_Status", "`Status` IN ('Requested', 'Received', 'Approved', 'Rejected')");
+                            t.HasCheckConstraint("CK_ReturnRequests_Status", "(`Status` in (_utf8mb4'Requested',_utf8mb4'Received',_utf8mb4'Approved',_utf8mb4'Rejected'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.User", b =>
                 {
-                    b.Property<int>("Id")
+                    b.Property<ulong>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("Id");
 
-                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<int>("Id"));
+                    MySqlPropertyBuilderExtensions.UseMySqlIdentityColumn(b.Property<ulong>("Id"));
 
                     b.Property<DateTime>("CreatedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("CreatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
-                    b.Property<string>("Email")
-                        .IsRequired()
-                        .HasMaxLength(254)
-                        .HasColumnType("varchar(254)");
+                    b.Property<ushort>("DataKeyVersion")
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("DataKeyVersion");
 
-                    b.Property<string>("HomeAddress")
+                    b.Property<byte[]>("Email")
                         .IsRequired()
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
+                        .HasMaxLength(512)
+                        .HasColumnType("varbinary(512)")
+                        .HasColumnName("EmailEnc");
+
+                    b.Property<byte[]>("EmailBlindIndex")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("binary(32)")
+                        .HasColumnName("EmailBlindIndex");
+
+                    b.Property<ushort>("FailedLoginCount")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("smallint unsigned")
+                        .HasColumnName("FailedLoginCount")
+                        .HasDefaultValueSql("0");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("tinyint(1)")
+                        .HasColumnName("IsActive")
+                        .HasDefaultValueSql("1");
+
+                    b.Property<DateTime?>("LockoutUntil")
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("LockoutUntil");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(100)
-                        .HasColumnType("varchar(100)");
+                        .HasColumnType("varchar(100)")
+                        .HasColumnName("Name");
 
                     b.Property<string>("PasswordHash")
                         .IsRequired()
-                        .HasMaxLength(512)
-                        .HasColumnType("varchar(512)");
+                        .HasMaxLength(255)
+                        .HasColumnType("varchar(255)")
+                        .HasColumnName("PasswordHash");
+
+                    b.Property<Guid>("PublicId")
+                        .HasMaxLength(36)
+                        .HasColumnType("char(36)")
+                        .HasColumnName("PublicId");
 
                     b.Property<string>("Role")
                         .IsRequired()
-                        .ValueGeneratedOnAdd()
-                        .HasMaxLength(32)
-                        .HasColumnType("varchar(32)")
-                        .HasDefaultValue("Customer")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)")
+                        .HasColumnName("Role")
+                        .HasDefaultValueSql("'Customer'")
                         .UseCollation("utf8mb4_bin");
+
+                    b.Property<DateTime>("RowVersion")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("RowVersion");
 
                     b.Property<string>("SecurityStamp")
                         .IsRequired()
                         .HasMaxLength(32)
-                        .HasColumnType("varchar(32)")
-                        .UseCollation("utf8mb4_bin");
+                        .HasColumnType("char(32)")
+                        .HasColumnName("SecurityStamp");
 
-                    b.Property<string>("TaxId")
+                    b.Property<byte[]>("TaxId")
                         .IsRequired()
-                        .HasMaxLength(64)
-                        .HasColumnType("varchar(64)");
+                        .HasMaxLength(256)
+                        .HasColumnType("varbinary(256)")
+                        .HasColumnName("TaxIdEnc");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("UpdatedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("Email")
-                        .IsUnique();
+                    b.HasIndex("EmailBlindIndex")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Users_EmailBlindIndex");
+
+                    b.HasIndex("PublicId")
+                        .IsUnique()
+                        .HasDatabaseName("UX_Users_PublicId");
 
                     b.ToTable("Users", null, t =>
                         {
-                            t.HasCheckConstraint("CK_Users_Role", "`Role` IN ('Customer', 'SalesManager', 'ProductManager', 'SupportAgent')");
+                            t.HasCheckConstraint("CK_Users_CustomerTaxId", "((`Role` <> _utf8mb4'Customer') or (`TaxIdEnc` is not null))");
+
+                            t.HasCheckConstraint("CK_Users_KeyVersion", "(`DataKeyVersion` > 0)");
+
+                            t.HasCheckConstraint("CK_Users_Name", "(char_length(trim(`Name`)) > 0)");
+
+                            t.HasCheckConstraint("CK_Users_Role", "(`Role` in (_utf8mb4'Customer',_utf8mb4'SalesManager',_utf8mb4'ProductManager',_utf8mb4'SupportAgent'))");
                         });
                 });
 
             modelBuilder.Entity("OnlineStore.Models.WishlistItem", b =>
                 {
-                    b.Property<int>("UserId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("UserId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("UserId");
 
-                    b.Property<int>("ProductId")
-                        .HasColumnType("int");
+                    b.Property<ulong>("ProductId")
+                        .HasColumnType("bigint unsigned")
+                        .HasColumnName("ProductId");
 
                     b.Property<DateTime>("AddedAt")
-                        .HasPrecision(6)
-                        .HasColumnType("datetime(6)");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("datetime(6)")
+                        .HasColumnName("AddedAt")
+                        .HasDefaultValueSql("utc_timestamp(6)");
 
                     b.HasKey("UserId", "ProductId");
 
-                    b.HasIndex("ProductId");
+                    b.HasIndex("ProductId")
+                        .HasDatabaseName("IX_WishlistItems_Product");
 
                     b.ToTable("WishlistItems", (string)null);
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.Address", b =>
+                {
+                    b.HasOne("OnlineStore.Models.User", null)
+                        .WithMany("Addresses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_Addresses_Users");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.AttributeDefinition", b =>
+                {
+                    b.HasOne("OnlineStore.Models.Category", "Category")
+                        .WithMany()
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_AttributeDefinitions_Categories");
+
+                    b.Navigation("Category");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Cart", b =>
@@ -1118,7 +2283,8 @@ namespace OnlineStore.Data.Migrations
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade);
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .HasConstraintName("FK_Carts_Users");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.CartItem", b =>
@@ -1127,17 +2293,30 @@ namespace OnlineStore.Data.Migrations
                         .WithMany("Items")
                         .HasForeignKey("CartId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_CartItems_Carts");
 
                     b.HasOne("OnlineStore.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_CartItems_Products");
 
                     b.Navigation("Cart");
 
                     b.Navigation("Product");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.Category", b =>
+                {
+                    b.HasOne("OnlineStore.Models.Category", "Parent")
+                        .WithMany()
+                        .HasForeignKey("ParentId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Categories_Parent");
+
+                    b.Navigation("Parent");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.ChatAttachment", b =>
@@ -1146,7 +2325,8 @@ namespace OnlineStore.Data.Migrations
                         .WithMany("Attachments")
                         .HasForeignKey("ChatMessageId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_ChatAttachments_Messages");
 
                     b.Navigation("ChatMessage");
                 });
@@ -1157,12 +2337,14 @@ namespace OnlineStore.Data.Migrations
                         .WithMany("Messages")
                         .HasForeignKey("ConversationId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_ChatMessages_Conversations");
 
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("SenderUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_ChatMessages_Users");
 
                     b.Navigation("Conversation");
                 });
@@ -1172,13 +2354,8 @@ namespace OnlineStore.Data.Migrations
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("ModeratedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
-                        .WithMany()
-                        .HasForeignKey("OrderItemId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasConstraintName("FK_Comments_Moderator");
 
                     b.HasOne("OnlineStore.Models.Product", "Product")
                         .WithMany()
@@ -1186,11 +2363,13 @@ namespace OnlineStore.Data.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("OnlineStore.Models.User", null)
+                    b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("OrderItemId", "UserId", "ProductId")
+                        .HasPrincipalKey("Id", "UserId", "ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Comments_OrderItems");
 
                     b.Navigation("OrderItem");
 
@@ -1199,29 +2378,28 @@ namespace OnlineStore.Data.Migrations
 
             modelBuilder.Entity("OnlineStore.Models.Conversation", b =>
                 {
-                    b.HasOne("OnlineStore.Models.Cart", null)
-                        .WithMany()
-                        .HasForeignKey("CartId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("ClaimedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Conversations_Agent");
 
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("CustomerUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Conversations_Customer");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Delivery", b =>
                 {
                     b.HasOne("OnlineStore.Models.Order", "Order")
                         .WithMany("Deliveries")
-                        .HasForeignKey("OrderId")
+                        .HasForeignKey("OrderId", "UserId")
+                        .HasPrincipalKey("Id", "UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Deliveries_Orders");
 
                     b.Navigation("Order");
                 });
@@ -1230,19 +2408,33 @@ namespace OnlineStore.Data.Migrations
                 {
                     b.HasOne("OnlineStore.Models.Delivery", "Delivery")
                         .WithMany("Items")
-                        .HasForeignKey("DeliveryId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DeliveryId", "OrderId")
+                        .HasPrincipalKey("Id", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_DeliveryItems_Deliveries");
 
                     b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
                         .WithMany()
-                        .HasForeignKey("OrderItemId")
+                        .HasForeignKey("OrderItemId", "OrderId")
+                        .HasPrincipalKey("Id", "OrderId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_DeliveryItems_OrderItems");
 
                     b.Navigation("Delivery");
 
                     b.Navigation("OrderItem");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.Discount", b =>
+                {
+                    b.HasOne("OnlineStore.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Discounts_Users");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.DiscountProduct", b =>
@@ -1250,14 +2442,16 @@ namespace OnlineStore.Data.Migrations
                     b.HasOne("OnlineStore.Models.Discount", "Discount")
                         .WithMany("Products")
                         .HasForeignKey("DiscountId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_DiscountProducts_Discounts");
 
                     b.HasOne("OnlineStore.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_DiscountProducts_Products");
 
                     b.Navigation("Discount");
 
@@ -1270,32 +2464,56 @@ namespace OnlineStore.Data.Migrations
                         .WithOne("Invoice")
                         .HasForeignKey("OnlineStore.Models.Invoice", "OrderId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Invoices_Orders");
 
                     b.Navigation("Order");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.InvoiceEmailDelivery", b =>
                 {
-                    b.HasOne("OnlineStore.Models.Order", null)
-                        .WithOne()
-                        .HasForeignKey("OnlineStore.Models.InvoiceEmailDelivery", "OrderId")
+                    b.HasOne("OnlineStore.Models.Invoice", "Invoice")
+                        .WithMany("EmailDeliveries")
+                        .HasForeignKey("InvoiceId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasConstraintName("FK_EmailOutbox_Invoices");
+
+                    b.HasOne("OnlineStore.Models.User", null)
+                        .WithMany()
+                        .HasForeignKey("RecipientUserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_EmailOutbox_Users");
+
+                    b.HasOne("OnlineStore.Models.Refund", null)
+                        .WithMany()
+                        .HasForeignKey("RefundId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_EmailOutbox_Refunds");
+
+                    b.Navigation("Invoice");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Notification", b =>
                 {
+                    b.HasOne("OnlineStore.Models.Discount", null)
+                        .WithMany()
+                        .HasForeignKey("DiscountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Notifications_Discounts");
+
                     b.HasOne("OnlineStore.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Notifications_Products");
 
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Notifications_Users");
 
                     b.Navigation("Product");
                 });
@@ -1305,13 +2523,15 @@ namespace OnlineStore.Data.Migrations
                     b.HasOne("OnlineStore.Models.Cart", null)
                         .WithMany()
                         .HasForeignKey("SourceCartId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Orders_Carts");
 
                     b.HasOne("OnlineStore.Models.User", "User")
                         .WithMany("Orders")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Orders_Users");
 
                     b.Navigation("User");
                 });
@@ -1321,19 +2541,23 @@ namespace OnlineStore.Data.Migrations
                     b.HasOne("OnlineStore.Models.Discount", "Discount")
                         .WithMany("OrderItems")
                         .HasForeignKey("DiscountId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("OnlineStore.Models.Order", "Order")
-                        .WithMany("OrderItems")
-                        .HasForeignKey("OrderId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_OrderItems_Discounts");
 
                     b.HasOne("OnlineStore.Models.Product", "Product")
                         .WithMany("OrderItems")
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_OrderItems_Products");
+
+                    b.HasOne("OnlineStore.Models.Order", "Order")
+                        .WithMany("OrderItems")
+                        .HasForeignKey("OrderId", "UserId")
+                        .HasPrincipalKey("Id", "UserId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_OrderItems_Orders");
 
                     b.Navigation("Discount");
 
@@ -1346,43 +2570,88 @@ namespace OnlineStore.Data.Migrations
                 {
                     b.HasOne("OnlineStore.Models.Order", "Order")
                         .WithMany("Payments")
-                        .HasForeignKey("OrderId")
+                        .HasForeignKey("OrderId", "UserId")
+                        .HasPrincipalKey("Id", "UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasConstraintName("FK_Payments_Orders");
 
                     b.Navigation("Order");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Product", b =>
                 {
+                    b.HasOne("OnlineStore.Models.Brand", "Brand")
+                        .WithMany()
+                        .HasForeignKey("BrandId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .HasConstraintName("FK_Products_Brands");
+
                     b.HasOne("OnlineStore.Models.Category", "Category")
                         .WithMany("Products")
                         .HasForeignKey("CategoryId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Products_Categories");
+
+                    b.HasOne("OnlineStore.Models.Distributor", "Distributor")
+                        .WithMany()
+                        .HasForeignKey("DistributorId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Products_Distributors");
+
+                    b.Navigation("Brand");
 
                     b.Navigation("Category");
+
+                    b.Navigation("Distributor");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.ProductAttributeValue", b =>
+                {
+                    b.HasOne("OnlineStore.Models.Product", null)
+                        .WithMany("Attributes")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ProductAttributeValues_Products");
+
+                    b.HasOne("OnlineStore.Models.AttributeDefinition", "Definition")
+                        .WithMany()
+                        .HasForeignKey("AttributeDefinitionId", "DataType")
+                        .HasPrincipalKey("Id", "DataType")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ProductAttributeValues_Definitions");
+
+                    b.Navigation("Definition");
+                });
+
+            modelBuilder.Entity("OnlineStore.Models.ProductImage", b =>
+                {
+                    b.HasOne("OnlineStore.Models.Product", null)
+                        .WithMany("Images")
+                        .HasForeignKey("ProductId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired()
+                        .HasConstraintName("FK_ProductImages_Products");
                 });
 
             modelBuilder.Entity("OnlineStore.Models.Rating", b =>
                 {
-                    b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
-                        .WithMany()
-                        .HasForeignKey("OrderItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("OnlineStore.Models.Product", "Product")
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
-                    b.HasOne("OnlineStore.Models.User", null)
+                    b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
                         .WithMany()
-                        .HasForeignKey("UserId")
+                        .HasForeignKey("OrderItemId", "UserId", "ProductId")
+                        .HasPrincipalKey("Id", "UserId", "ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Ratings_OrderItems");
 
                     b.Navigation("OrderItem");
 
@@ -1391,17 +2660,25 @@ namespace OnlineStore.Data.Migrations
 
             modelBuilder.Entity("OnlineStore.Models.Refund", b =>
                 {
+                    b.HasOne("OnlineStore.Models.Order", null)
+                        .WithOne()
+                        .HasForeignKey("OnlineStore.Models.Refund", "OrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_Refunds_Orders");
+
                     b.HasOne("OnlineStore.Models.Payment", "Payment")
                         .WithMany()
                         .HasForeignKey("PaymentId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_Refunds_Payments");
 
                     b.HasOne("OnlineStore.Models.ReturnRequest", "ReturnRequest")
                         .WithOne("Refund")
                         .HasForeignKey("OnlineStore.Models.Refund", "ReturnRequestId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasConstraintName("FK_Refunds_ReturnRequests");
 
                     b.Navigation("Payment");
 
@@ -1410,22 +2687,19 @@ namespace OnlineStore.Data.Migrations
 
             modelBuilder.Entity("OnlineStore.Models.ReturnRequest", b =>
                 {
-                    b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
-                        .WithMany()
-                        .HasForeignKey("OrderItemId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("ReviewedByUserId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
-                    b.HasOne("OnlineStore.Models.User", null)
-                        .WithMany()
-                        .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .HasConstraintName("FK_ReturnRequests_Reviewer");
+
+                    b.HasOne("OnlineStore.Models.OrderItem", "OrderItem")
+                        .WithMany()
+                        .HasForeignKey("OrderItemId", "UserId", "ProductId")
+                        .HasPrincipalKey("Id", "UserId", "ProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired()
+                        .HasConstraintName("FK_ReturnRequests_OrderItems");
 
                     b.Navigation("OrderItem");
                 });
@@ -1436,13 +2710,15 @@ namespace OnlineStore.Data.Migrations
                         .WithMany()
                         .HasForeignKey("ProductId")
                         .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_WishlistItems_Products");
 
                     b.HasOne("OnlineStore.Models.User", null)
                         .WithMany()
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .IsRequired()
+                        .HasConstraintName("FK_WishlistItems_Users");
 
                     b.Navigation("Product");
                 });
@@ -1479,6 +2755,11 @@ namespace OnlineStore.Data.Migrations
                     b.Navigation("Products");
                 });
 
+            modelBuilder.Entity("OnlineStore.Models.Invoice", b =>
+                {
+                    b.Navigation("EmailDeliveries");
+                });
+
             modelBuilder.Entity("OnlineStore.Models.Order", b =>
                 {
                     b.Navigation("Deliveries");
@@ -1492,6 +2773,10 @@ namespace OnlineStore.Data.Migrations
 
             modelBuilder.Entity("OnlineStore.Models.Product", b =>
                 {
+                    b.Navigation("Attributes");
+
+                    b.Navigation("Images");
+
                     b.Navigation("OrderItems");
                 });
 
@@ -1502,6 +2787,8 @@ namespace OnlineStore.Data.Migrations
 
             modelBuilder.Entity("OnlineStore.Models.User", b =>
                 {
+                    b.Navigation("Addresses");
+
                     b.Navigation("Orders");
                 });
 #pragma warning restore 612, 618

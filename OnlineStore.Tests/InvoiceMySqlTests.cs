@@ -111,7 +111,7 @@ public class InvoiceMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixtur
     public async Task MySql_ConcurrentRequests_IssueExactlyOneInvoice()
     {
         var users = await SeedAsync();
-        int orderId;
+        long orderId;
         await using (var setup = fixture.Create())
         {
             var product = await setup.Products.SingleAsync();

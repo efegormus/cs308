@@ -15,7 +15,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
 {
     private const decimal MaxMoney = 9999999999999999.99m;
 
-    public async Task<CheckoutQuote> QuoteAsync(int userId, CancellationToken ct)
+    public async Task<CheckoutQuote> QuoteAsync(long userId, CancellationToken ct)
     {
         var user = await db.Users.AsNoTracking().SingleAsync(user => user.Id == userId, ct);
         ValidateCustomer(user);
@@ -26,7 +26,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
         return (await BuildQuoteAsync(user, carts[0], clock.GetUtcNow().UtcDateTime, ct)).Quote;
     }
 
-    public async Task<CheckoutResult> CompleteAsync(int userId, CheckoutRequest input, CancellationToken ct)
+    public async Task<CheckoutResult> CompleteAsync(long userId, CheckoutRequest input, CancellationToken ct)
     {
         if (input.CartId <= 0 || !Guid.TryParseExact(input.IdempotencyKey, "D", out var key)
             || input.QuoteToken is not { Length: 64 })
@@ -44,7 +44,9 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
             .Include(payment => payment.Order).ThenInclude(order => order.Invoice).SingleOrDefaultAsync(ct);
         if (previous is not null)
         {
-            if (previous.Order.UserId != userId || previous.Order.SourceCartId != input.CartId)
+            if (previous.Status == PaymentStatus.Failed)
+                throw new PurchaseException(402, "The mock payment was declined. Use a new retry key for another attempt.");
+            if (previous.Order is null || previous.Order.UserId != userId || previous.Order.SourceCartId != input.CartId)
                 throw new PurchaseException(409, "This retry key belongs to a different checkout.");
             await transaction.CommitAsync(ct);
             return new CheckoutResult(PurchaseViews.Receipt(previous.Order), true);
@@ -71,7 +73,20 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
             throw new PurchaseException(409, "Your cart, profile or prices changed. Review the updated checkout.");
         if (input.Payment is null) throw new PurchaseException(400, "Mock payment details are required.");
         var approval = await payments.AuthorizeAsync(input.Payment, quote.Total, attemptKey, ct);
-        if (!approval.Approved) throw new PurchaseException(402, "The mock payment was declined. Your cart was kept.");
+        if (!approval.Approved)
+        {
+            await transaction.RollbackAsync(ct);
+            db.ChangeTracker.Clear();
+            db.Payments.Add(new Payment
+            {
+                UserId = userId, CartId = input.CartId, IdempotencyKey = attemptKey, Amount = quote.Total,
+                Status = PaymentStatus.Failed, FailureCode = "mock_declined", CardBrand = "Other",
+                CardLast4 = input.Payment.Number![^4..], CreatedAt = now
+            });
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateException e) when (e.InnerException is MySqlConnector.MySqlException { Number: 1062 }) { db.ChangeTracker.Clear(); }
+            throw new PurchaseException(402, "The mock payment was declined. Your cart was kept.");
+        }
         if (string.IsNullOrWhiteSpace(approval.Reference) || approval.Reference.Length > 100)
             throw new PurchaseException(503, "The payment service is temporarily unavailable.");
 
@@ -85,7 +100,11 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
         {
             var price = quote.Items.Single(item => item.ProductId == line.ProductId).UnitPrice;
             var snapshot = OrderItem.Snapshot(line.Product, line.Quantity, price);
-            snapshot.DiscountId = discounts.GetValueOrDefault(line.ProductId)?.Id;
+            var discount = discounts.GetValueOrDefault(line.ProductId);
+            snapshot.DiscountId = discount?.Id;
+            snapshot.DiscountRate = discount?.Rate;
+            snapshot.UserId = userId;
+            snapshot.DeliveryAllocatedQuantity = line.Quantity;
             order.OrderItems.Add(snapshot);
             // Defense in depth: the row lock AND the affected-row guard prevent overselling.
             var changed = await db.Products.Where(product => product.Id == line.ProductId
@@ -94,15 +113,20 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
                     product => product.StockQuantity - line.Quantity), ct);
             if (changed != 1) throw new PurchaseException(409, "Stock changed. Review your cart before trying again.");
         }
+        order.Subtotal = order.OrderItems.Sum(i => i.ListUnitPrice * i.Quantity);
+        order.GrandTotal = quote.Total;
+        order.DiscountTotal = order.Subtotal - order.GrandTotal;
         order.ConfirmPayment(now);
         order.Payments.Add(new Payment
         {
+            UserId = userId, CartId = cart.Id, CardBrand = "Other",
+            CardLast4 = new string(input.Payment.Number!.Where(char.IsDigit).ToArray())[^4..],
             IdempotencyKey = attemptKey, ProviderReference = approval.Reference,
             Amount = quote.Total, Status = PaymentStatus.Confirmed, CreatedAt = now, ConfirmedAt = now
         });
         order.Deliveries.Add(new Delivery
         {
-            AddressSnapshot = user.HomeAddress, CreatedAt = now,
+            UserId = userId, AddressSnapshot = user.HomeAddress, CreatedAt = now,
             Items = order.OrderItems.Select(line => new DeliveryItem
             {
                 OrderItem = line, Quantity = line.Quantity, TotalPriceSnapshot = line.UnitPrice * line.Quantity
@@ -117,7 +141,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
         return new CheckoutResult(PurchaseViews.Receipt(order), false);
     }
 
-    private async Task<(CheckoutQuote Quote, Dictionary<int, Discount> Discounts)> BuildQuoteAsync(
+    private async Task<(CheckoutQuote Quote, Dictionary<long, Discount> Discounts)> BuildQuoteAsync(
         User user, Cart cart, DateTime now, CancellationToken ct)
     {
         if (cart.Items.Count is 0 or > 100) throw new PurchaseException(409, "Use a cart with 1 to 100 product lines.");

@@ -18,20 +18,25 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
         new(db, new InvoiceService(db, new FileInvoiceStorage(root), clock), sender, clock,
             NullLogger<InvoiceEmailDispatcher>.Instance);
 
-    private async Task<int> SeedAsync()
+    private async Task<long> SeedAsync()
     {
         await fixture.ResetAsync();
         await using var db = fixture.Create();
         var buyer = new User { Name = "Buyer", Email = "current@example.com", TaxId = "TAX", HomeAddress = "Address", PasswordHash = "x" };
         var product = new Product { Sku = "MAIL", Name = "Phone", Price = 10, StockQuantity = 4, Category = new Category { Name = "Phones" } };
         CatalogFixture.CompleteDetails(product);
-        var order = new Order { User = buyer, EmailSnapshot = "purchase@example.com", CustomerNameSnapshot = "Buyer",
+        db.Users.Add(buyer); db.Products.Add(product);
+        await db.SaveChangesAsync();
+        var cart = new Cart { UserId = buyer.Id, State = CartState.CheckedOut };
+        db.Carts.Add(cart);
+        await db.SaveChangesAsync();
+        var order = new Order { User = buyer, SourceCartId = cart.Id, Subtotal = 10, GrandTotal = 10, EmailSnapshot = "purchase@example.com", CustomerNameSnapshot = "Buyer",
             TaxIdSnapshot = "TAX", AddressSnapshot = "Address", OrderItems = [OrderItem.Snapshot(product, 1)] };
         order.ConfirmPayment(clock.Now);
-        order.Payments.Add(new Payment { IdempotencyKey = new string('A', 64), Amount = 10, Status = PaymentStatus.Confirmed, ConfirmedAt = clock.Now });
+        order.Payments.Add(new Payment { UserId = buyer.Id, CartId = cart.Id, CardBrand = "Visa", CardLast4 = "4242", IdempotencyKey = new string('A', 64), Amount = 10, Status = PaymentStatus.Confirmed, ConfirmedAt = clock.Now });
         db.Orders.Add(order);
         await db.SaveChangesAsync();
-        await new InvoiceEmailOutbox(db, clock).EnqueueAsync(order.Id, default);
+        await new InvoiceEmailOutbox(db, clock, invoices: new InvoiceService(db, new FileInvoiceStorage(root), clock)).EnqueueAsync(order.Id, default);
         return order.Id;
     }
 
@@ -50,7 +55,7 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
         Assert.Equal(expected.Content, mail.Attachment.Content);
         var delivery = await db.InvoiceEmailDeliveries.AsNoTracking().SingleAsync();
         Assert.NotNull(delivery.SentAt);
-        Assert.Equal(delivery.SentAt, await db.Invoices.Select(x => x.EmailedAt).SingleAsync());
+        Assert.Equal(delivery.SentAt, await db.InvoiceEmailDeliveries.Select(x => x.SentAt).SingleAsync());
         Assert.Equal(1, delivery.AttemptCount);
     }
 
@@ -65,11 +70,11 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
         Assert.Equal(1, failed.AttemptCount);
         Assert.Equal("smtp_transient", failed.LastErrorCode);
         Assert.Null(failed.StoppedAt);
-        Assert.Equal("Retrying", failed.Status);
+        Assert.Equal("Pending", failed.Status);
         Assert.Equal(clock.Now.AddMinutes(1), failed.NextAttemptAt);
         Assert.Null(failed.SentAt);
         Assert.Null(failed.LeaseUntil);
-        Assert.Null(await db.Invoices.Select(x => x.EmailedAt).SingleAsync());
+        Assert.Null(await db.InvoiceEmailDeliveries.Select(x => x.SentAt).SingleAsync());
         Assert.Equal(PaymentStatus.Confirmed, await db.Orders.Select(x => x.PaymentStatus).SingleAsync());
         Assert.Equal(PaymentStatus.Confirmed, await db.Payments.Select(x => x.Status).SingleAsync());
         Assert.Equal(10m, await db.Payments.Select(x => x.Amount).SingleAsync());
@@ -92,7 +97,7 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
         await Task.WhenAll(Enumerable.Range(0, 5).Select(async _ =>
         {
             await using var db = fixture.Create();
-            await new InvoiceEmailOutbox(db, clock).EnqueueAsync(id, default);
+            await new InvoiceEmailOutbox(db, clock, invoices: new InvoiceService(db, new FileInvoiceStorage(root), clock)).EnqueueAsync(id, default);
         }));
         var sink = new LocalInvoiceEmailSender();
         await Task.WhenAll(Enumerable.Range(0, 5).Select(async _ =>
@@ -148,7 +153,7 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
             await using var db = fixture.Create();
             Assert.True(await Dispatcher(db, new ThrowingSender(errors[i])).DispatchOneAsync(default));
             var stopped = await db.InvoiceEmailDeliveries.AsNoTracking().SingleAsync();
-            Assert.Equal("Stopped", stopped.Status);
+            Assert.Equal("Failed", stopped.Status);
             Assert.NotNull(stopped.StoppedAt);
             Assert.Equal(codes[i], stopped.LastErrorCode);
             Assert.Null(stopped.LeaseUntil);
@@ -187,7 +192,7 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
     public async Task PoisonReconciliation_DoesNotBlockSubsequentEnqueueOrBackgroundDispatch()
     {
         var pendingId = await SeedAsync();
-        int validId;
+        long validId;
         await using (var db = fixture.Create())
         {
             var buyer = await db.Users.SingleAsync();
@@ -206,9 +211,9 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
             db.Orders.Add(valid);
             await db.SaveChangesAsync();
             validId = valid.Id;
-            await new InvoiceEmailOutbox(db, clock).ReconcileAsync(default);
-            Assert.True(await db.InvoiceEmailDeliveries.AnyAsync(x => x.OrderId == validId));
-            Assert.False(await db.InvoiceEmailDeliveries.AnyAsync(x => x.OrderId == poison.Id));
+            await new InvoiceEmailOutbox(db, clock, invoices: new InvoiceService(db, new FileInvoiceStorage(root), clock)).ReconcileAsync(default);
+            Assert.True(await db.InvoiceEmailDeliveries.AnyAsync(x => x.Invoice!.OrderId == validId));
+            Assert.False(await db.InvoiceEmailDeliveries.AnyAsync(x => x.Invoice!.OrderId == poison.Id));
         }
         var sink = new LocalInvoiceEmailSender();
         var services = new ServiceCollection();
@@ -239,16 +244,15 @@ public class InvoiceEmailMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlF
         var id = await SeedAsync();
         await using var db = fixture.Create();
         await new InvoiceService(db, new FileInvoiceStorage(root), clock).EnsureAsync(id, default);
-        await db.Invoices.ExecuteUpdateAsync(s => s.SetProperty(x => x.EmailedAt, clock.Now));
-        await db.InvoiceEmailDeliveries.ExecuteDeleteAsync();
-        var outbox = new InvoiceEmailOutbox(db, clock);
+        await db.InvoiceEmailDeliveries.ExecuteUpdateAsync(s => s.SetProperty(x => x.SentAt, clock.Now).SetProperty(x => x.Status, "Sent"));
+        var outbox = new InvoiceEmailOutbox(db, clock, invoices: new InvoiceService(db, new FileInvoiceStorage(root), clock));
         await outbox.EnqueueAsync(id, default);
         await outbox.ReconcileAsync(default);
         var sink = new LocalInvoiceEmailSender();
         Assert.False(await Dispatcher(db, sink).DispatchOneAsync(default));
         Assert.Empty(sink.Messages);
-        Assert.Empty(await db.InvoiceEmailDeliveries.ToListAsync());
-        Assert.Equal(clock.Now, await db.Invoices.Select(x => x.EmailedAt).SingleAsync());
+        Assert.Single(await db.InvoiceEmailDeliveries.ToListAsync());
+        Assert.Equal(clock.Now, await db.InvoiceEmailDeliveries.Select(x => x.SentAt).SingleAsync());
     }
 
     private sealed class ThrowingSender(Exception error) : IInvoiceEmailSender

@@ -1,10 +1,10 @@
 namespace OnlineStore.Models;
 
-public class OrderItem
+public partial class OrderItem
 {
-    public int Id { get; set; }
-    public int OrderId { get; set; }
-    public int ProductId { get; set; }
+    public long Id { get; set; }
+    public long OrderId { get; set; }
+    public long ProductId { get; set; }
 
     // Purchase-time snapshots; do not read historical values from Product.
     public required string ProductName { get; set; }
@@ -14,7 +14,7 @@ public class OrderItem
     public int Quantity { get; set; }
 
     // The discount applied when the product was bought, if any.
-    public int? DiscountId { get; set; }
+    public long? DiscountId { get; set; }
 
     public Order Order { get; set; } = null!;
     public Product Product { get; set; } = null!;
@@ -28,6 +28,7 @@ public class OrderItem
         return new OrderItem
         {
             Product = product, ProductId = product.Id, ProductName = product.Name,
+            Sku = product.Sku, ListUnitPrice = product.Price, LineTotal = price * quantity,
             UnitPrice = price, UnitCost = product.Cost ?? Math.Round(price * 0.5m, 2), Quantity = quantity
         };
     }
