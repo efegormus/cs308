@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router";
+import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
 import { loginHref } from "../lib/auth-utils.js";
@@ -45,6 +46,7 @@ function OrderCard({ order }) {
 function OrderHistory() {
   const location = useLocation();
   const read = useRequest();
+  useSessionExpiry(read.error);
   const [orders, setOrders] = useState([]);
   const [next, setNext] = useState(null);
   const [loaded, setLoaded] = useState(false);

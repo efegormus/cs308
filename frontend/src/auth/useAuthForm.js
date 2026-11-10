@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router";
 import { NETWORK_ERROR, loginErrorMessage, parseRetryAfter } from "../lib/auth-utils.js";
+import { postLoginPath } from "../lib/role-routes.js";
 import { useAuth } from "./AuthProvider.jsx";
 
 const REQUEST_TIMEOUT_MS = 15000;
@@ -58,8 +59,8 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
   // visitor who was already signed in goes straight to returnUrl.
   const alreadySignedIn = authReady && account !== null && buttonState === "idle";
   useEffect(() => {
-    if (alreadySignedIn) navigate(returnUrl, { replace: true });
-  }, [alreadySignedIn, navigate, returnUrl]);
+    if (alreadySignedIn) navigate(postLoginPath(account, returnUrl), { replace: true });
+  }, [alreadySignedIn, account, navigate, returnUrl]);
 
   // Never rejects. status is null for a network error or a timeout, data is null for a body that is not JSON.
   const post = useCallback(async (path, body) => {
@@ -131,7 +132,7 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
       if (!prefersReducedMotion()) await wait(CHECK_MS);
     }
     await Promise.all([playSuccess(), completeLogin(signedInAccount)]);
-    if (mounted.current) navigate(returnUrl, { replace: true });
+    if (mounted.current) navigate(postLoginPath(signedInAccount, returnUrl), { replace: true });
   }, [completeLogin, navigate, returnUrl]);
 
   // Spotlight position on the primary button, relative to the button. Only the style changes, so nothing re-renders.
