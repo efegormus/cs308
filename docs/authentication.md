@@ -118,6 +118,30 @@ same-site path starting with a single `/`, and otherwise falls back to `/`. It r
 - an encoded slash, backslash, dot, percent sign or control character in the path
 - the login page itself, which would redirect forever
 
+### Role landing page (React, SCRUM-130)
+
+After a login the React app sends the visitor to `postLoginPath(account, returnUrl)` in
+`frontend/src/lib/role-routes.js`. A safe `returnUrl` that the role may open is used;
+anything else (no `returnUrl`, an unsafe one, or a page for another role) goes to the
+landing page of the role:
+
+| Role | Landing page |
+| --- | --- |
+| Customer | `/` (home page; the signed-in name in the header opens `/dashboard`) |
+| ProductManager, SalesManager | `/manage` |
+| SupportAgent | `/support` |
+
+The same file lists which role may open which page (`canAccess`). It only chooses where
+the browser goes; the server still enforces every role. `PurchaseAccess` guards each
+private page: it waits for the first `/api/auth/me` check, sends a guest to
+`/login?returnUrl=…` and shows a message instead of the page to the wrong role.
+
+Session expiry: a page that makes private requests calls `useSessionExpiry(...errors)`.
+A 401 clears the account and the cart merge state, fetches a new CSRF token and sends
+the visitor to the login page; the page unmounts, which aborts its requests, so a late
+answer cannot bring back the previous user's data. A 403 is a wrong role and is not
+treated as an expired session. Logging out on a private page returns to `/`.
+
 ### Login errors
 
 | Response | What the page does |

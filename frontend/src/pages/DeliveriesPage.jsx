@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useAuth } from "../auth/AuthProvider.jsx";
+import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
 import { loginHref } from "../lib/auth-utils.js";
@@ -33,6 +34,7 @@ function Deliveries() {
   const location = useLocation();
   const read = useRequest();
   const mutation = useRequest();
+  useSessionExpiry(read.error, mutation.error);
   const [items, setItems] = useState([]);
   const [cursor, setCursor] = useState(null);
   const [loaded, setLoaded] = useState(false);

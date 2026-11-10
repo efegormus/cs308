@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
+import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import PurchaseLines from "../components/PurchaseLines.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
@@ -18,6 +19,7 @@ function Checkout({ account }) {
   const [attempts] = useState(() => browserAttemptStore(account.id));
   const read = useRequest();
   const payment = useRequest();
+  useSessionExpiry(read.error, payment.error);
   const form = useRef(null);
   const submitting = useRef(false);
   const [needsReview, setNeedsReview] = useState(false);
