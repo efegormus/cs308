@@ -96,6 +96,17 @@ public static class DemoSeedCommand
         await Purchase("DEMO-PROCESSING-001", "LAPTOPS-001", 1, OrderStatus.Processing);
         await Purchase("DEMO-INTRANSIT-001", "AUDIO-001", 1, OrderStatus.InTransit);
         var line = delivered.OrderItems.Single();
+        // Use a different delivered product for the moderation queue: comments
+        // are unique per customer/product, so the approved phone cannot be reused.
+        var pendingOrder = await Purchase("DEMO-REVIEW-001", "TABLET-001", 1, OrderStatus.Delivered);
+        var pendingLine = pendingOrder.OrderItems.Single();
+        if (!await db.Comments.AnyAsync(c => c.UserId == customer.Id && c.ProductId == pendingLine.ProductId))
+        {
+            db.Comments.Add(new Comment { UserId = customer.Id, ProductId = pendingLine.ProductId,
+                OrderItemId = pendingLine.Id, Body = "Demo: tablet delivered; awaiting moderation.",
+                ApprovalStatus = ApprovalStatus.Pending });
+            await db.SaveChangesAsync();
+        }
         if (!await db.Ratings.AnyAsync(r => r.UserId == customer.Id && r.ProductId == phone.Id))
         {
             db.Ratings.Add(new Rating { UserId = customer.Id, ProductId = phone.Id, OrderItemId = line.Id, Stars = 5 });
