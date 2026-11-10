@@ -116,6 +116,15 @@ export function AuthProvider({ children }) {
     setCartMergeConflicts([]);
   }, [csrfToken, refreshCsrf]);
 
+  // For a 401 from a private request: the session ended on the server, so forget the account. The pages that
+  // need it unmount (which aborts their requests) and the route guard sends the visitor to the login page.
+  const expireSession = useCallback(() => {
+    setAccount(null);
+    setCartMergeError(null);
+    setCartMergeConflicts([]);
+    void refreshCsrf();
+  }, [refreshCsrf]);
+
   // Returns a function that removes the hook, so a component can use it as an effect cleanup:
   // useEffect(() => onLogin(hook), [onLogin]). Without it, StrictMode would register the hook twice.
   const onLogin = useCallback(fn => {
@@ -138,8 +147,8 @@ export function AuthProvider({ children }) {
   }, [restoreGuestCart]);
 
   const value = useMemo(
-    () => ({ account, authReady, csrfToken, refreshCsrf, completeLogin, logout, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy }),
-    [account, authReady, csrfToken, refreshCsrf, completeLogin, logout, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy]
+    () => ({ account, authReady, csrfToken, refreshCsrf, completeLogin, logout, expireSession, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy }),
+    [account, authReady, csrfToken, refreshCsrf, completeLogin, logout, expireSession, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
