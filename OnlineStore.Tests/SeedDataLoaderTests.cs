@@ -155,17 +155,35 @@ public class SeedDataLoaderTests
     }
 
     [Fact]
-    public async Task Load_RealSeedFile_AddsEightCategoriesAndTwentyFiveProducts()
+    public async Task Load_RealSeedFile_AddsTenDepartmentsWithSubcategoriesAndFiftyFiveProducts()
     {
         var name = Guid.NewGuid().ToString();
         using (var db = OpenDb(name))
         {
             var result = await SeedDataLoader.LoadAsync(db, SeedCatalogReader.ReadFromFile(SeedFilePath));
-            Assert.Equal(new SeedResult(8, 25), result);
+            Assert.Equal(new SeedResult(20, 55), result);
         }
 
         using var check = OpenDb(name);
         Assert.Equal(5, await check.Products.CountAsync(p => p.Category.Name == "Phones"));
         Assert.Equal(5, await check.Products.CountAsync(p => p.Category.Name == "Tablets"));
+    }
+
+    [Fact]
+    public async Task Load_ExpandedHierarchy_PromotesLegacyDepartmentsWithoutChangingInventory()
+    {
+        using var db = OpenDb(Guid.NewGuid().ToString());
+        var catalog = SeedCatalogReader.ReadFromFile(SeedFilePath);
+        var oldRoot = new OnlineStore.Models.Category { Name = "Electronics", Slug = "electronics" };
+        db.Categories.Add(new OnlineStore.Models.Category { Name = "Phones", Slug = "phones", Parent = oldRoot });
+        await db.SaveChangesAsync();
+        await SeedDataLoader.LoadAsync(db, catalog);
+        Assert.Null((await db.Categories.SingleAsync(c => c.Name == "Phones")).ParentId);
+        var product = await db.Products.SingleAsync(p => p.Sku == "PHONE-001");
+        product.StockQuantity = 123;
+        await db.SaveChangesAsync();
+        Assert.Equal(new SeedResult(0, 0), await SeedDataLoader.LoadAsync(db, catalog));
+        Assert.Equal(123, product.StockQuantity);
+        Assert.Equal(55, await db.Products.CountAsync());
     }
 }

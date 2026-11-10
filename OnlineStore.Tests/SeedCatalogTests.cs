@@ -13,6 +13,25 @@ public class SeedCatalogTests
     private static SeedCatalog Load() => SeedCatalogReader.ReadFromFile(SeedFilePath);
 
     [Fact]
+    public void DemoCatalog_CoversDepartmentsSubcategoriesAndCompleteProducts()
+    {
+        var catalog = Load();
+        var roots = catalog.Categories.Where(c => c.ParentCode is null).ToList();
+        Assert.Equal(10, roots.Count);
+        Assert.All(roots, root => Assert.Contains(catalog.Categories, c => c.ParentCode == root.Code));
+        Assert.True(catalog.Products.Count >= 50);
+        Assert.Contains(catalog.Products, p => p.QuantityInStock == 0);
+        Assert.All(catalog.Products, p =>
+        {
+            Assert.False(string.IsNullOrWhiteSpace(p.Brand));
+            Assert.False(string.IsNullOrWhiteSpace(p.ImageUrl));
+            var image = Path.GetFullPath(Path.Combine(Path.GetDirectoryName(SeedFilePath)!,
+                "..", "frontend", "public", p.ImageUrl!.TrimStart('/')));
+            Assert.True(File.Exists(image), p.SeedKey + " image missing");
+        });
+    }
+
+    [Fact]
     public void SeedFile_CanBeRead() => Assert.NotNull(Load());
 
     [Fact]

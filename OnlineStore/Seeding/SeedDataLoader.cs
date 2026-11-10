@@ -39,8 +39,14 @@ public static class SeedDataLoader
             categoriesByCode[seedCategory.Code] = category;
         }
 
-        foreach (var seedCategory in catalog.Categories.Where(c => c.ParentCode is not null))
-            categoriesByCode[seedCategory.Code].Parent = categoriesByCode[seedCategory.ParentCode!];
+        // Reconcile the demo hierarchy too: the original seed placed every
+        // department under Electronics. Existing inventory remains untouched.
+        foreach (var seedCategory in catalog.Categories)
+        {
+            var category = categoriesByCode[seedCategory.Code];
+            category.Parent = seedCategory.ParentCode is null ? null : categoriesByCode[seedCategory.ParentCode];
+            if (seedCategory.ParentCode is null) category.ParentId = null;
+        }
         var distributors = await db.Distributors.ToDictionaryAsync(d => d.ContactInfo, cancellationToken);
         var brands = await db.Brands.ToDictionaryAsync(b => b.Name, cancellationToken);
         var definitions = await db.AttributeDefinitions.Include(d => d.Category).ToListAsync(cancellationToken);

@@ -32,7 +32,7 @@ python3 -m unittest discover -s scripts -p 'test_*.py'
 ```
 
 `check` queries database-backed categories/products, not only `/api/health`.
-After seeding a fresh database the sample has eight categories and 25 products,
+After seeding a fresh database the sample has 10 top-level departments, 10 subcategories and 55 products,
 including sold-out examples. A second seed run adds 0/0 and keeps existing rows.
 
 The helper creates independent random application/root passwords in ignored

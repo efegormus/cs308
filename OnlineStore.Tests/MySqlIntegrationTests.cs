@@ -102,14 +102,14 @@ public class MySqlIntegrationTests(MySqlFixture fixture) : IClassFixture<MySqlFi
         await fixture.ResetAsync();
         await using var db = fixture.Create();
         Assert.Empty(await db.Database.GetPendingMigrationsAsync());
-        Assert.Equal(new SeedResult(8, 25), await SeedDataLoader.LoadAsync(db, SampleCatalog()));
+        Assert.Equal(new SeedResult(20, 55), await SeedDataLoader.LoadAsync(db, SampleCatalog()));
         var product = await db.Products.FirstAsync();
         product.StockQuantity = 123;
         await db.SaveChangesAsync();
         Assert.Equal(new SeedResult(0, 0), await SeedDataLoader.LoadAsync(db, SampleCatalog()));
         Assert.Equal(123, await db.Products.Where(p => p.Id == product.Id).Select(p => p.StockQuantity).SingleAsync());
-        Assert.Equal(8, await db.Categories.CountAsync());
-        Assert.Equal(25, await db.Products.CountAsync());
+        Assert.Equal(20, await db.Categories.CountAsync());
+        Assert.Equal(55, await db.Products.CountAsync());
     }
 
     [MySqlFact]

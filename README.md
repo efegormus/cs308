@@ -173,9 +173,12 @@ dotnet run --project OnlineStore --launch-profile http -- --seed
 
 The command only runs in the Development environment, writes the sample categories
 and products, and exits without starting the website. It is safe to run again: a
-category with the same name or a product with the same SKU (the seed key) is skipped,
-so nothing is duplicated and existing rows are not overwritten. The sample data is
+category with the same name is reused and a product with the same SKU (the seed key) is skipped.
+The demo category hierarchy is reconciled, while existing product inventory and prices are preserved. The sample data is
 for development and demos only; it is never imported automatically at startup.
+
+For the full 55-product catalog plus four role accounts, orders and review fixtures,
+see [demo data setup](docs/demo-data.md).
 
 Run backend integration tests and the existing seed validation tests with:
 
