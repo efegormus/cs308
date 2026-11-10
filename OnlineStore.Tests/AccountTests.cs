@@ -80,6 +80,9 @@ public class AccountTests
         var beforeLogin = await client.GetAsync("/api/auth/me");
 
         Assert.Equal(HttpStatusCode.Unauthorized, beforeLogin.StatusCode);
+        var anonymousCurrent = await client.GetAsync("/api/me");
+        Assert.Equal(HttpStatusCode.Unauthorized, anonymousCurrent.StatusCode);
+        Assert.Equal("no-store", anonymousCurrent.Headers.CacheControl!.ToString());
 
         // 3. Şimdi doğru bilgilerle giriş yapıyoruz.
         var login = await PostAsync(
@@ -94,10 +97,23 @@ public class AccountTests
 
         Assert.Equal(HttpStatusCode.OK, afterLogin.StatusCode);
 
-        var account = await afterLogin.Content.ReadFromJsonAsync<AccountDto>();
+        var account = await afterLogin.Content.ReadFromJsonAsync<CurrentAccountDto>();
 
         Assert.NotNull(account);
         Assert.Equal(Registration.Email, account.Email);
+        Assert.Equal(["Customer"], account.Roles);
+
+        var current = await client.GetAsync("/api/me");
+        Assert.Equal(HttpStatusCode.OK, current.StatusCode);
+        Assert.Equal("no-store", current.Headers.CacheControl!.ToString());
+        var currentJson = await current.Content.ReadAsStringAsync();
+        using var currentDocument = JsonDocument.Parse(currentJson);
+        Assert.Equal(Registration.Email, currentDocument.RootElement.GetProperty("email").GetString());
+        Assert.Equal("Customer", currentDocument.RootElement.GetProperty("role").GetString());
+        Assert.Equal("Customer", currentDocument.RootElement.GetProperty("roles")[0].GetString());
+        Assert.DoesNotContain("passwordHash", currentJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("securityStamp", currentJson, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("taxId", currentJson, StringComparison.OrdinalIgnoreCase);
     }
 
 
@@ -201,7 +217,7 @@ public class AccountTests
         Assert.Equal(HttpStatusCode.OK, (await PostAsync(client, "/api/auth/login", new LoginRequest(Registration.Email, Password))).StatusCode);
         Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/api/management/session")).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await client.GetAsync("/api/customer/profile")).StatusCode);
-        Assert.Equal(role.ToString(), (await client.GetFromJsonAsync<AccountDto>("/api/auth/me"))!.Role);
+        Assert.Equal(role.ToString(), (await client.GetFromJsonAsync<CurrentAccountDto>("/api/auth/me"))!.Role);
     }
 
     [Fact]

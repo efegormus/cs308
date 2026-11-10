@@ -9,6 +9,7 @@ using OnlineStore.Purchasing;
 using OnlineStore.Shopping;
 using OnlineStore.Errors;
 using OnlineStore.Hosting;
+using OnlineStore.Dashboards;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -62,6 +63,7 @@ builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsN
 builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<InvoiceEmailOutbox>();
 builder.Services.AddScoped<InvoiceEmailDispatcher>();
+builder.Services.AddScoped<IDashboardService, DashboardService>();
 var emailTransport = builder.Configuration["Email:Transport"] ?? (builder.Environment.IsDevelopment() ? "Local" : "Smtp");
 if (emailTransport.Equals("Local", StringComparison.OrdinalIgnoreCase))
 {
@@ -100,6 +102,7 @@ if (args.Contains(SeedCommand.Flag))
 
 app.UseExceptionHandler();
 app.UseReactHosting();
+app.UsePrivateResponseNoStore();
 app.UseAuthentication();
 app.UseAuthorization();
 app.UseRateLimiter();
@@ -112,6 +115,7 @@ app.MapAccountEndpoints();
 app.MapPurchaseEndpoints();
 app.MapCartEndpoints();
 app.MapInvoiceEndpoints();
+app.MapDashboardEndpoints();
 
 app.Run();
 

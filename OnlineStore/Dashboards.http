@@ -1,0 +1,26 @@
+@baseUrl = http://localhost:5200
+@from = 2026-11-01T00:00:00Z
+@to = 2026-11-10T00:00:00Z
+
+# Authenticate first and keep the OnlineStore.Session cookie in the REST client.
+
+### Current account
+GET {{baseUrl}}/api/me
+
+### Customer dashboard
+GET {{baseUrl}}/api/customer/dashboard
+
+### Sales dashboard
+GET {{baseUrl}}/api/sales/dashboard?from={{from}}&to={{to}}
+
+### Product-management dashboard
+GET {{baseUrl}}/api/product-management/dashboard
+
+### Manager user listing
+GET {{baseUrl}}/api/management/users?page=1&pageSize=20&search=Ad
+
+### Invalid sales range (400)
+GET {{baseUrl}}/api/sales/dashboard?from={{to}}&to={{from}}
+
+### Invalid manager page size (400)
+GET {{baseUrl}}/api/management/users?pageSize=500

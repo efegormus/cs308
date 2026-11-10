@@ -44,7 +44,7 @@ All paths use the same origin as the site, JSON and camelCase properties.
 | GET /api/auth/csrf | Public | 200 `{ "token": "..." }`, plus CSRF cookie |
 | POST /api/auth/register | Public + CSRF | Name/email/taxId/homeAddress/password → 201 account; 400 invalid input; 409 duplicate |
 | POST /api/auth/login | Public + CSRF | Email/password → 200 account + session cookie; 401 bad credentials |
-| GET /api/auth/me | Authenticated | 200 id/name/email/role; 401 without valid session |
+| GET /api/auth/me, GET /api/me | Authenticated | 200 id/name/email/role/roles; 401 without valid session |
 | POST /api/auth/logout | Authenticated + CSRF | 204; revokes sessions and clears cookie |
 | GET /api/customer/profile | Customer only | Own id/name/email/taxId/homeAddress; 401/403 otherwise |
 | GET /api/management/session | Any of the three staff roles | 200 current role for management UI bootstrap; customer gets 403 |
@@ -53,6 +53,12 @@ Database failures inside account operations return generic 503. During session
 validation a database outage invalidates authentication for that request (401 on
 protected resources), never granting stale privileges. Cancellation still flows
 through CancellationToken. Catalog/health endpoints explicitly allow guests.
+
+`GET /api/me` is the canonical current-account path for new clients;
+`GET /api/auth/me` remains a compatibility alias to the same database-backed
+handler. Both return the current role in `role` and a one-element `roles` array.
+See the [dashboard API contract](api-contract-dashboards.md) for dashboard and
+manager-list endpoints.
 
 Every POST requires the CSRF cookie and X-CSRF-TOKEN header. Fetch a fresh token
 after login/logout because the token is bound to the current identity. Example:
