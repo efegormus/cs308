@@ -34,8 +34,9 @@ contribution, not artificial changes to meet counts.
 ## Corrections to the original design
 
 - The original five-table diagram was only the initial foundation. It was also
-  missing SCRUM-41's product fields. The [current schema](database-schema.md)
-  and [full target ER design](database-target.md) now serve different purposes.
+  missing SCRUM-41's product fields. The current 29-table design is described in
+  the [current schema](database-schema.md) and the
+  [redesign documentation](db-redesign/README.md).
 - Tax ID and home address belong on the existing user/customer record (71),
   rather than in an unrelated duplicate account table. A PasswordHash column
   alone does not implement secure authentication or role boundaries (48).
