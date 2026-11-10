@@ -48,25 +48,12 @@ must leave no permanent stock decrement or confirmed purchase.
 Cancellation after payment still needs the application cancellation/refund service
 to reverse financial/inventory effects; changing an enum alone is not a refund.
 
-## Migration compatibility
+## Schema history
 
-`AlignOrderLifecycle` upgrades the earlier combined status without deleting orders:
-
-| Old status | Fulfillment | Payment |
-| --- | --- | --- |
-| Pending | Processing | Pending |
-| Paid | Processing | Confirmed |
-| Shipped | InTransit | Confirmed |
-| Completed | Delivered | Confirmed |
-| Cancelled | Cancelled | Unknown |
-
-Old cancellation does not reveal whether money was collected, so the migration
-does not invent an answer. Old PurchasedAt/DeliveredAt/UnitCost remain null when
-the old schema did not store them. Reconcile these from trustworthy records
-before processing time-sensitive returns or claiming historical cost accuracy;
-do not substitute the delivery date, CreatedAt or today's product cost.
-
-The rollback maps known legacy fulfillment/payment combinations back to the
-old names. New timestamps and cost columns are removed by rollback; retain a
-backup if new purchases exist. The migration upgrade/rollback/upgrade is tested
-with all five legacy statuses and historical order-item references on MySQL.
+The earlier combined order status (Pending, Paid, Shipped, Completed, Cancelled)
+was split into fulfillment and payment status before the database redesign.
+The `AlignOrderLifecycle` migration is no longer part of the repository: the
+SCRUM-119 baseline `RedesignedStore` starts from an empty database and does not
+convert existing data. The previous migration chain is available in Git at
+`3acc716`. See [migration-notes.md](db-redesign/migration-notes.md) for the reset
+contract and the current column mappings.
