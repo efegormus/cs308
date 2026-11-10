@@ -13,9 +13,20 @@ namespace OnlineStore.Accounts;
 public sealed record RegisterRequest(string? Name, string? Email, string? TaxId, string? HomeAddress, string? Password);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record LoginRequest(string? Email, string? Password);
+/// <summary>Safe account information returned for the authenticated or newly created account.</summary>
 public sealed record AccountDto(long Id, string Name, string Email, string Role)
 {
     public static AccountDto FromUser(User user) => new(user.Id, user.Name, user.Email, user.Role.ToString());
+}
+
+/// <summary>Safe identity data for the current authenticated account.</summary>
+public sealed record CurrentAccountDto(long Id, string Name, string Email, string Role, IReadOnlyList<string> Roles)
+{
+    public static CurrentAccountDto FromUser(User user)
+    {
+        var role = user.Role.ToString();
+        return new CurrentAccountDto(user.Id, user.Name, user.Email, role, [role]);
+    }
 }
 
 public static class AccountEndpoints
@@ -79,12 +90,15 @@ public static class AccountEndpoints
             return Results.NoContent();
         }).RequireAuthorization().AddEndpointFilter<CsrfFilter>();
 
-        auth.MapGet("/me", async (ClaimsPrincipal principal, StoreDbContext db, CancellationToken ct) =>
-        {
-            var id = long.Parse(principal.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id, ct);
-            return user is null ? Results.Unauthorized() : Results.Ok(AccountDto.FromUser(user));
-        }).RequireAuthorization();
+        auth.MapGet("/me", CurrentAccount).RequireAuthorization()
+            .WithMetadata(PrivateResponseMetadata.Instance);
+
+        app.MapGet("/api/me", CurrentAccount)
+            .WithName("GetCurrentAccount")
+            .WithSummary("Get the authenticated account summary")
+            .RequireAuthorization()
+            .WithMetadata(PrivateResponseMetadata.Instance)
+            .AddEndpointFilter(PrivateRequest);
 
         // Read-only bootstrap for a management UI; business operations use the role-specific groups.
         app.MapGet("/api/management/session", (HttpContext context) =>
@@ -102,6 +116,14 @@ public static class AccountEndpoints
         });
     }
 
+    private static async Task<IResult> CurrentAccount(ClaimsPrincipal principal, StoreDbContext db, CancellationToken ct)
+    {
+        if (!long.TryParse(principal.FindFirstValue(ClaimTypes.NameIdentifier), out var id))
+            return Results.Unauthorized();
+        var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id, ct);
+        return user is null ? Results.Unauthorized() : Results.Ok(CurrentAccountDto.FromUser(user));
+    }
+
     private static async ValueTask<object?> PrivateRequest(EndpointFilterInvocationContext context, EndpointFilterDelegate next)
     {
         context.HttpContext.Response.Headers.CacheControl = "no-store";
@@ -111,4 +133,22 @@ public static class AccountEndpoints
 
     private static IResult Unavailable() => Results.Problem(statusCode: StatusCodes.Status503ServiceUnavailable,
         title: "The account service is temporarily unavailable.", detail: "Please try again shortly.");
+}
+
+public sealed class PrivateResponseMetadata
+{
+    public static PrivateResponseMetadata Instance { get; } = new();
+
+    private PrivateResponseMetadata() { }
+}
+
+public static class PrivateResponseMiddleware
+{
+    public static IApplicationBuilder UsePrivateResponseNoStore(this IApplicationBuilder app) =>
+        app.Use(async (context, next) =>
+        {
+            if (context.GetEndpoint()?.Metadata.GetMetadata<PrivateResponseMetadata>() is not null)
+                context.Response.Headers.CacheControl = "no-store";
+            await next(context);
+        });
 }

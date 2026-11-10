@@ -10,6 +10,7 @@ public static class RolePolicies
     public const string ProductManager = "ProductManager";
     public const string SupportAgent = "SupportAgent";
     public const string Staff = "Staff";
+    public const string Managers = "Managers";
 
     public static void Configure(AuthorizationOptions options)
     {
@@ -18,6 +19,8 @@ public static class RolePolicies
             options.AddPolicy(role, policy => policy.RequireAuthenticatedUser().RequireRole(role));
         options.AddPolicy(Staff, policy => policy.RequireAuthenticatedUser()
             .RequireRole(SalesManager, ProductManager, SupportAgent));
+        options.AddPolicy(Managers, policy => policy.RequireAuthenticatedUser()
+            .RequireRole(SalesManager, ProductManager));
     }
 
     // Feature owners attach their endpoints to these groups so each operation inherits its role guard.
@@ -29,4 +32,6 @@ public static class RolePolicies
         app.MapGroup("/api/product-management").RequireAuthorization(ProductManager);
     public static RouteGroupBuilder MapSupportAgentApi(this IEndpointRouteBuilder app) =>
         app.MapGroup("/api/support").RequireAuthorization(SupportAgent);
+    public static RouteGroupBuilder MapManagerApi(this IEndpointRouteBuilder app) =>
+        app.MapGroup("/api/management").RequireAuthorization(Managers);
 }
