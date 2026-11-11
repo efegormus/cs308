@@ -50,9 +50,9 @@ that way. Pages without the Google Fonts link show the header text in Arial.
 | `--header-fg` | Header text | `#222222` | `#ffffff` |
 | `--header-fg-soft` | Signed-in name | `#505966` | `#cfd5df` |
 | `--header-hover` | Logout hover | `#f6f7f9` | `rgba(255, 255, 255, 0.12)` |
-| `--footer` | Footer bar (not used yet) | `#1f2937` | `#0a0f17` |
-| `--footer-fg` | Footer text and links (not used yet) | `#ffffff` | `#ffffff` |
-| `--footer-fg-soft` | Footer secondary text (not used yet) | `#e5e7eb` | `#cfd5df` |
+| `--footer` | Footer bar | `#1f2937` | `#0a0f17` |
+| `--footer-fg` | Footer text and links | `#ffffff` | `#ffffff` |
+| `--footer-fg-soft` | Footer copyright line | `#e5e7eb` | `#cfd5df` |
 | `--fg` | Main text | `#222222` | `#e8ebf0` |
 | `--muted` | Secondary text | `#505966` | `#a4aebc` |
 | `--line` | Card and footer border | `#dce0e6` | `#2a3445` |
@@ -70,6 +70,7 @@ that way. Pages without the Google Fonts link show the header text in Arial.
 | `--sale-fg` | Discount badge text | `#ffffff` | same |
 | `--shadow` | Card shadow | `0 1px 3px rgba(31, 41, 55, 0.08)` | `0 1px 3px rgba(0, 0, 0, 0.4)` |
 | `--shadow-product` | `Card` (product card) shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | same, no dark value yet |
+| `--shadow-menu` | Account menu and category panel | `0 10px 28px rgba(31, 41, 55, 0.18)` | `0 10px 28px rgba(0, 0, 0, 0.55)` |
 | `--btn-glow` | Button spotlight | `rgba(255, 255, 255, 0.28)` | same |
 | `--ring-glow` | Button hover ring | `rgba(23, 74, 139, 0.22)` | `rgba(77, 132, 224, 0.35)` |
 
@@ -82,8 +83,8 @@ Dark values follow the visitor's system setting. Only pages with
 - Centered white card: max-width 420px, padding 36px 32px (28px 20px up to 480px wide),
   radius 10px, one column from top to bottom.
 - Page: header, then the card centered in the remaining height, then the footer.
-- Header padding 20px 32px, wrapping on small screens. There must be no sideways scroll
-  at 375px, which the catalog browser check enforces.
+- The header and footer are described under "Header and footer" below. There must be no
+  sideways scroll at 375px, which the catalog browser check enforces.
 - Vertical gap between fields: 18px. Label to input: 6px.
 
 ## Patterns
@@ -182,14 +183,33 @@ product count 0.9rem.
 ### Shared UI components
 
 `frontend/src/components/ui/` holds the shared parts from DESIGN.md. Each has its own CSS
-file next to it, and its classes start with `ui-`. No page uses them yet.
+file next to it, and its classes start with `ui-`. The header search uses `Button` and
+`Input` (with `hideLabel`); no page uses them yet.
 
 | Component | Rule |
 | --- | --- |
 | `Button` | Primary button: at least 44px high, 4px corners, `--accent`, Poppins 16px 500, not uppercase. Light hover and pressed fill `--accent-hover`; in the dark theme the fill stays `--accent` and a 4px `--ring-glow` ring shows. Focus 3px `--focus`, offset 2px. Disabled opacity 0.7 |
-| `Input` | Label, input and optional field error. 44px, 6px corners, 1px `--field-line`, 16px Open Sans, padding 0 12px, focus 3px `--focus` offset 2px. With `error`: `aria-invalid`, `aria-describedby`, 2px `--danger` border, 13px 600 message |
+| `Input` | Label, input and optional field error. 44px, 6px corners, 1px `--field-line`, 16px Open Sans, padding 0 12px, focus 3px `--focus` offset 2px. With `error`: `aria-invalid`, `aria-describedby`, 2px `--danger` border, 13px 600 message. `hideLabel` keeps the label for screen readers only |
 | `Card` | DESIGN.md's `card-product`: `--surface`, 16px corners, padding 20px, `--shadow-product`, flex column. `as` picks the element |
 | `Badge` | Discount badge: `--sale-bg`, `--sale-fg`, 3px corners, padding 4px 8px, Open Sans 14px 600 |
+
+### Header and footer
+
+`components/Header.jsx`, `components/CategoryMenu.jsx` and `styles/site-header.css`;
+`components/Footer.jsx` and `styles/site-footer.css` (SCRUM-123). DESIGN.md's Header and
+Footer sections hold the full rules.
+
+| Part | Rule |
+| --- | --- |
+| Layout | Two rows at every width: logo, search, account area and cart; then the category bar. Up to 768px the search moves under the logo row; the category bar wraps. Inner width 1280px, 32px sides (16px up to 480px), min-height 64px, 1px `--line` bottom |
+| Category bar | "All products" and the top-level categories of `GET /api/categories` (`parentId` null). With subcategories: a button with `aria-expanded` that opens a full-width panel ("All <category>" and its subcategories). Without `parentId` every category is a plain link to `/products#category-<id>` |
+| Mega menu input | Hover opens and leaving closes (mouse); tap toggles, tap outside closes (touch); Enter, Space or Down opens, Up and Down move, Escape closes and refocuses the button, Tab never opens (keyboard) |
+| Search | 200px `Input` and 44px `Button`, opens `/products?search=<text>`; the product list passes `search` to `useCatalog` |
+| Account area | Login, or the 44px profile icon with its menu and Logout (44px, 4px corners). Deliveries link for the product manager only |
+| Cart | 44px icon, count bubble in `--accent` (hidden at 0). Guests and customers only. Reloads on page change, login, logout and the `cart-changed` event that `cart-api.js` sends after every change |
+| Current page | 2px `--accent` line (inset shadow) and `aria-current="page"` |
+| Footer | `--footer` background, store name, Products / Cart / Orders (Cart and Orders for guests and customers), copyright in `--footer-fg-soft`. Links `--footer-fg`, underlined, 44px high. No support link until the customer chat exists |
+| Requests | The header and the page share one `GET /api/categories` when they load together (`fetchCategories`) |
 
 ### Loading, empty and error states
 

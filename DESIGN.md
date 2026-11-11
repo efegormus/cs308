@@ -499,6 +499,7 @@ load at once.
 | 2, card | 1px `--line` border and `--shadow` `0 1px 3px rgba(31, 41, 55, 0.08)` | Form card, coverflow row | [Proje] |
 | 2, product card | `0 2px 8px rgba(26, 26, 26, 0.08)` | `/products` product card | [HP] |
 | 3, front card | `--card-shadow` `0 22px 44px rgba(31, 41, 55, 0.18)` | Coverflow front card | [Proje] |
+| 3, menu | `--shadow-menu` `0 10px 28px rgba(31, 41, 55, 0.18)`; dark `0 10px 28px rgba(0, 0, 0, 0.55)` | Header account menu, category mega menu panel | [Uyarlandı] |
 
 The product card shadow is the token `--shadow-product`. It has no dark value yet, so the dark
 theme uses the same value; see Open questions. HP's modal level
@@ -572,17 +573,44 @@ From `cart.css`, `purchases.css` and `docs/ui-design.md`:
 
 ### Header [Uyarlandı]
 
-- White bar (`--header`), at least 64px high, 32px side padding, inner width up to 1280px, and a
-  1px `--line` line at the bottom.
-- Left: the logo (Poppins 23px 600, `--header-fg`).
-- Center: the category list, loaded from the API, opening a mega menu.
-- Right: search, the account link (Login, or the signed-in name and Logout) and the cart link with
-  an item count.
-- The current page's link has a 2px `--accent` underline. The `aria-current="page"` attribute
-  stays.
+The first draft put the categories in the middle of one bar. Ten category names, the logo, the
+search and the account area do not fit on one line at 1280px, so the header has two rows at every
+width (decided in SCRUM-123):
+
+- White bar (`--header`), at least 64px high, inner width up to 1280px with 32px side padding
+  (16px up to 480px), and a 1px `--line` line at the bottom.
+- Row 1: the logo on the left (Poppins 23px 600, `--header-fg`), then on the right the search, the
+  account area and the cart.
+- Row 2: the category bar: "All products", then every top-level category from
+  `GET /api/categories` (`parentId` null), in the API's order.
+- Up to 768px: row 1 holds the logo, the account area and the cart; the search takes the full
+  width under it; the category bar wraps onto as many lines as it needs (four at 375px).
+- **Search:** always open, a 200px `Input` (44px, hidden label "Search products") and a 44px
+  primary `Button` with a search icon. It opens `/products?search=<text>`, the same name as the API
+  parameter, and shows the current search on that page. At most 100 characters, as in the API.
+- **Account area:** Login for a guest; for a signed-in visitor the 44px profile icon with its
+  shortcut menu (SCRUM-130) and Logout (44px, 1px `--header-fg` border, 4px corners). A product
+  manager also gets a Deliveries link. Home is the logo and Checkout starts from the cart, so
+  neither is a header link.
+- **Cart:** a 44px icon link to `/cart` with the item count in an `--accent` bubble (hidden at 0;
+  the link's label says the count). Only guests and customers see it: the cart API answers 403 to
+  staff. The count reloads on every page change, login, logout and cart change.
+- **Mega menu:** a top-level category with subcategories is a button with a chevron and
+  `aria-expanded`; it opens a full-width panel under the header listing "All <category>" and
+  every category below it. A top-level category without subcategories is a plain link. All links
+  go to `/products#category-<id>`.
+  - Mouse: hovering opens the panel, leaving closes it. Touch: a tap opens it, a second tap or a
+    tap outside closes it.
+  - Keyboard: Enter, Space or Down arrow opens it (Down also moves into it); Tab alone never opens
+    a panel. Up and Down move between the panel's links; Escape closes it and returns focus to the
+    button; tabbing out closes it.
+  - Without `parentId` (an older server, a test fixture) every category is a plain link.
+- The current page's link has a 2px `--accent` line under it (an inset shadow, so the height does
+  not change) and keeps `aria-current="page"`. On `/products#category-<id>` the category's
+  top-level item is marked.
+- Every link and button in the header is at least 44px high.
 - No strip above the header.
-- No hamburger menu or drawer. Below the width where everything fits on one line, the items wrap
-  onto more lines and the bar grows. At 375px there is no sideways scroll; the browser check in CI
+- No hamburger menu or drawer. At 375px there is no sideways scroll; the browser check in CI
   enforces this.
 - Dark theme: today's dark header tokens [Proje].
 
@@ -591,7 +619,12 @@ From `cart.css`, `purchases.css` and `docs/ui-design.md`:
 - Dark bar: `--footer` background, `--footer-fg` text and links, `--footer-fg-soft` secondary
   text, 14px Open Sans, padding 24px 16px.
 - Links in the footer use `--footer-fg` with an underline, not `--link`, which is too dark on
-  `--footer`.
+  `--footer`. Each link is at least 44px high.
+- Content: the store name (`heading-sm`), the links Products, Cart and Orders (Cart and Orders only
+  for guests and customers; a guest is sent to login for Orders), and the copyright line in
+  `--footer-fg-soft`.
+- No support link until the customer chat (requirement 13) exists: `/support` is the agents'
+  panel.
 - No 5-column link grid or help band from HP.
 
 ### Home page [Proje]
@@ -694,6 +727,8 @@ Decision pending.
 - Every focusable element shows a 3px `--focus` outline with a 2px to 4px offset.
 - Status messages use `role="status"`, errors `role="alert"`.
 - The current page's nav link has `aria-current="page"`.
+- The category mega menu follows the disclosure pattern: buttons with `aria-expanded` and
+  `aria-controls`, opened by Enter, Space or Down arrow, closed by Escape (see Header).
 - Every page has a "Skip to content" link (`Layout.jsx`) that appears on focus.
 - Images have `alt` text; a missing image shows a text placeholder.
 - Text contrast is at least 4.5:1 and control contrast at least 3:1 (see Contrast).
@@ -802,10 +837,11 @@ Mistakes in it, corrected here:
 12. **Body line height.** 1.5 [Proje]; the login lead uses 1.55, the catalog 1.6, HP 1.38.
 13. **Breakpoints in the code.** The cart switches at 576px (36rem) and the product detail at
     700px. Move them to 480 / 768 or keep them.
-14. **Touch targets under 44px.** Logout (36px), cart quantity buttons (36px) and the sort select
-    (40px).
-15. **Header search and mega menu.** Search field size and the mega menu's layout are not
-    specified.
+14. **Touch targets under 44px.** Cart quantity buttons (36px) and the sort select (40px). Logout
+    and the profile icon are 44px since SCRUM-123.
+15. **Header search and mega menu.** Decided in SCRUM-123: two header rows, a 200px search field,
+    and a full-width panel per top-level category (see Header). The number stays so the numbers
+    below do not change.
 16. **Manrope.** Could be considered later; nothing planned.
 
 ## Migration status
@@ -813,8 +849,9 @@ Mistakes in it, corrected here:
 Target is this file. "Current" is what the code has on this branch. SCRUM-123 moved every token to
 `frontend/src/styles/design-system.css`, set the light tokens to their target values and added the
 type scale (`--type-*`), spacing (`--space-*`) and corner (`--radius-*`) tokens and the shared
-`Button`, `Input`, `Card` and `Badge` in `frontend/src/components/ui/`. No page uses those
-components or the new type, spacing and corner tokens yet.
+`Button`, `Input`, `Card` and `Badge` in `frontend/src/components/ui/`. Step 2 rebuilt the header
+and footer on those tokens; the header search uses `Button` and `Input`. No page uses the
+components or the type, spacing and corner tokens yet.
 
 ### Colors
 
@@ -833,17 +870,17 @@ components or the new type, spacing and corner tokens yet.
 | `--focus` | `#b66d00` | `#b66d00`; hard-coded in catalog and purchase rules | `design-system.css`; `products.css`, `purchases.css` |
 | `--danger` | `#a32b12` | `#a32b12`; hard-coded `#8a351e` (out of stock), `#7c231d`; fallback `#b00020` | `design-system.css`; `products.css`, `purchases.css`; `orders.css`, `add-to-cart.css` |
 | `--ok` | `#1a7f37` | `#1a7f37`; hard-coded `#24613b` (in stock) | `design-system.css`; `products.css` |
-| `--header` | `#ffffff` | `#ffffff`; hard-coded `#1f2937` | `design-system.css`; `products.css` |
-| `--header-fg` | `#222222` | `#222222`; hard-coded `white` | `design-system.css`; `products.css` |
+| `--header` | `#ffffff` | `#ffffff` | `design-system.css`, `site-header.css` |
+| `--header-fg` | `#222222` | `#222222` | `design-system.css`, `site-header.css` |
 | `--header-fg-soft` | `#505966` | `#505966` | `design-system.css` |
 | `--header-hover` | `#f6f7f9` | `#f6f7f9` | `design-system.css` |
-| `--footer` | `#1f2937` | `#1f2937`, not used yet; footer uses `--surface` / none | `design-system.css`; `auth.css`, `products.css` |
-| `--footer-fg` | `#ffffff` | `#ffffff`, not used yet; footer text uses `--muted` / `#505966` | `design-system.css`; `auth.css`, `products.css` |
-| `--footer-fg-soft` | `#e5e7eb` | `#e5e7eb`, not used yet | `design-system.css` |
+| `--footer` | `#1f2937` | `#1f2937` | `design-system.css`, `site-footer.css` |
+| `--footer-fg` | `#ffffff` | `#ffffff` | `design-system.css`, `site-footer.css` |
+| `--footer-fg-soft` | `#e5e7eb` | `#e5e7eb` | `design-system.css`, `site-footer.css` |
 | `--sale-bg` | `#b3262b` | `#b3262b`; used by `Badge`, which no page shows yet | `design-system.css`, `components/ui/Badge.css` |
 | `--sale-fg` | `#ffffff` | `#ffffff`; used by `Badge` | `design-system.css`, `components/ui/Badge.css` |
 | Dark tokens | Unchanged | As listed in Colors | `design-system.css`, `home.css` |
-| Dark `--footer`, `--footer-fg`, `--footer-fg-soft` | `#0a0f17`, `#ffffff`, `#cfd5df` | `#0a0f17`, `#ffffff`, `#cfd5df`, not used yet | `design-system.css` |
+| Dark `--footer`, `--footer-fg`, `--footer-fg-soft` | `#0a0f17`, `#ffffff`, `#cfd5df` | `#0a0f17`, `#ffffff`, `#cfd5df` | `design-system.css` |
 
 ### Typography
 
@@ -861,19 +898,19 @@ components or the new type, spacing and corner tokens yet.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Primary button height | 44px | `Button` 44px, used by no page yet; 48px (login); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
+| Primary button height | 44px | `Button` 44px, used by the header search; 48px (login); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
 | Primary button corners | 4px | `Button` 4px; 6px (login); 0.4rem (6.4px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login: ring glow and spotlight, fill unchanged | `components/ui/Button.css`; `auth.css` |
 | Secondary button | 44px, 4px corners | Padding 0.75rem 1rem, 0.4rem corners | `products.css` |
-| Header | White, at least 64px, 1px `--line` bottom | White through the tokens, no bottom line, padding 20px 32px; an unused `.catalog-page .site-header` rule in `products.css` still says `#1f2937` | `auth.css`, `products.css`, `Header.jsx` |
-| Header content | Logo, API categories with mega menu, search, account, cart count | Logo, Home / Products / Cart / Checkout / My orders / Deliveries, Login or name and Logout | `Header.jsx` |
-| Active nav link | 2px `--accent` underline | Text underline, offset 6px | `auth.css`, `products.css` |
-| Footer | `--footer` dark | `--surface` with a top border (auth); `#505966` text, no background (catalog) | `auth.css`, `products.css`, `Footer.jsx` |
+| Header | White, at least 64px, 1px `--line` bottom, two rows | Matches | `site-header.css`, `Header.jsx` |
+| Header content | Logo, API categories with mega menu, search, account, cart count | Matches | `Header.jsx`, `CategoryMenu.jsx` |
+| Active nav link | 2px `--accent` underline | Matches | `site-header.css` |
+| Footer | `--footer` dark | Matches | `site-footer.css`, `Footer.jsx` |
 | Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | `Card` has the frame (16px, 20px, `--shadow-product`) but `ProductCard.jsx` does not use it; 0.6rem corners, 1px `#dce0e6` border, no shadow, image 180px high, no CTA | `components/ui/Card.css`; `products.css`, `ProductCard.jsx` |
 | Product card spec row | One `body-sm` row | Description paragraph | `ProductCard.jsx` |
 | Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
-| Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by no page yet; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
+| Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by the header search; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Hard-coded `#e8f0fa`, `#ffebea`, `#7c231d` | `purchases.css` |
 
 ### Layout and responsive
@@ -881,6 +918,6 @@ components or the new type, spacing and corner tokens yet.
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 576 (cart), 700 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `home.css` |
-| Touch targets | 44px | Logout 36px; cart quantity buttons 2.25rem (36px); sort select 40px | `auth.css`, `cart.css`, `home.css` |
+| Touch targets | 44px | Header and footer 44px; cart quantity buttons 2.25rem (36px); sort select 40px | `cart.css`, `home.css` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
 | Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Token `--shadow-product`, used only by `Card`; product cards have none | `design-system.css`; `products.css` |
