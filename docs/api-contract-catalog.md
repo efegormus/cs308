@@ -221,6 +221,7 @@ Parameters: none. Response `200`: array of categories ordered by name.
 | `id` | integer | Use this value as `categoryId` in `GET /api/products`. |
 | `name` | string | Unique in the database. |
 | `description` | string or `null` | |
+| `parentId` | integer or `null` | Id of the parent category; `null` for a top-level category. Added in SCRUM-123 for the header's category menu. `GET /api/products?categoryId=` of a parent also returns the products of its subcategories. |
 
 ```http
 GET /api/categories HTTP/1.1
@@ -229,8 +230,9 @@ Accept: application/json
 
 ```json
 [
-  { "id": 1, "name": "Phones", "description": null },
-  { "id": 2, "name": "Tablets", "description": null }
+  { "id": 1, "name": "Phones", "description": null, "parentId": null },
+  { "id": 3, "name": "Smartphones", "description": null, "parentId": 1 },
+  { "id": 2, "name": "Tablets", "description": null, "parentId": null }
 ]
 ```
 

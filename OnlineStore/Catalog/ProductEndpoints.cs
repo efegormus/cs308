@@ -140,7 +140,7 @@ public static class ProductEndpoints
             }
         }).AllowAnonymous();
 
-        // Public: lists all categories so the site can group products.
+        // Public: lists all categories so the site can group products. parentId gives the category tree.
         app.MapGet("/api/categories", async (
             StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
         {
@@ -150,7 +150,7 @@ public static class ProductEndpoints
                     .AsNoTracking()
                     .OrderBy(category => category.Name)
                     .ThenBy(category => category.Id)
-                    .Select(category => new CategoryDto(category.Id, category.Name, category.Description))
+                    .Select(category => new CategoryDto(category.Id, category.Name, category.Description, category.ParentId))
                     .ToListAsync(cancellationToken);
 
                 return Results.Ok(categories);

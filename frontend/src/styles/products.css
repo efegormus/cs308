@@ -7,12 +7,6 @@
 .catalog-page a:focus-visible, .catalog-page button:focus-visible { outline: 3px solid #b66d00; outline-offset: 4px; }
 .catalog-page .skip-link { position: absolute; top: -5rem; left: 1rem; padding: 1rem; background: white; }
 .catalog-page .skip-link:focus { top: 1rem; }
-.catalog-page .site-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-  gap: 1rem; padding: 1.25rem max(1rem, calc((100% - 1152px) / 2)); background: #1f2937; }
-.catalog-page .site-header a { color: white; text-decoration: none; }
-.catalog-page .site-header nav { display: flex; gap: 1.5rem; }
-.catalog-page .site-header [aria-current] { text-decoration: underline; text-underline-offset: .35rem; }
-.catalog-page .logo { font-size: 1.4rem; font-weight: bold; }
 .catalog-page main { max-width: 1200px; margin: auto; padding: 2.5rem 1.5rem; min-height: 75vh; }
 .catalog-page h1 { margin: 0 0 .75rem; }
 .catalog-page .intro, .catalog-page .category-description { color: #505966; line-height: 1.6; }
@@ -35,7 +29,6 @@
 .catalog-page .price { margin: auto 0 .5rem; padding-top: 1rem; font-size: 1.2rem; font-weight: bold; }
 .catalog-page .stock { margin: 0; color: #24613b; }
 .catalog-page .out-of-stock { color: #8a351e; }
-.catalog-page footer { padding: 1.5rem; border-top: 1px solid #dce0e6; text-align: center; color: #505966; }
 @media (max-width: 480px) { .catalog-page main { padding: 2rem 1rem; } .catalog-page h1 { font-size: 1.8rem; } }
 
 /* Product detail page (SCRUM-45) */

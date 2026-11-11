@@ -132,6 +132,42 @@ test("an aborted request rejects with the abort error", async () => {
   await assert.rejects(pending, { name: "AbortError" });
 });
 
+test("callers that ask for the categories at the same time share one request", async () => {
+  const calls = mockFetch({ "/api/categories": [phones, tablets] });
+  const [first, second] = await Promise.all([fetchCategories(), fetchCategories()]);
+  assert.deepEqual(first, [phones, tablets]);
+  assert.deepEqual(second, [phones, tablets]);
+  assert.equal(calls.length, 1);
+  await fetchCategories();
+  assert.equal(calls.length, 2, "a later call sends a new request");
+});
+
+test("one caller aborting leaves the shared request to the others; the last one aborting cancels it", async () => {
+  let release;
+  const fetchSignals = [];
+  globalThis.fetch = (path, { signal }) => new Promise((resolve, reject) => {
+    fetchSignals.push(signal);
+    release = () => resolve(Response.json([phones]));
+    signal.addEventListener("abort", () => reject(signal.reason));
+  });
+  const header = new AbortController();
+  const page = new AbortController();
+  const fromHeader = fetchCategories({ signal: header.signal });
+  const fromPage = fetchCategories({ signal: page.signal });
+  header.abort();
+  await assert.rejects(fromHeader, { name: "AbortError" });
+  assert.equal(fetchSignals[0].aborted, false);
+  release();
+  assert.deepEqual(await fromPage, [phones]);
+
+  const only = new AbortController();
+  const lonely = fetchCategories({ signal: only.signal });
+  only.abort();
+  await assert.rejects(lonely, { name: "AbortError" });
+  assert.equal(fetchSignals[1].aborted, true);
+  await assert.rejects(fetchCategories({ signal: only.signal }), { name: "AbortError" });
+});
+
 test("fetchProduct returns a valid product", async () => {
   const calls = mockFetch({ "/api/products/10": pixel });
   assert.deepEqual(await fetchProduct(10), pixel);

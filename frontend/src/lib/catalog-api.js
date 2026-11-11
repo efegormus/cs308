@@ -46,8 +46,50 @@ export function isValidProduct(product) {
     && Number.isInteger(product.stockQuantity) && product.stockQuantity >= 0;
 }
 
-export async function fetchCategories({ signal } = {}) {
-  return fetchList("/api/categories", signal);
+// Callers that ask for the categories at the same time share one request: the header's category menu and the page
+// below it load together, so a page load sends one GET /api/categories, not two (SCRUM-123). Each caller keeps its own
+// signal; the shared request is cancelled only when every caller has aborted, so a retry never waits on a stuck one.
+let sharedCategories = null;
+
+function abortError(signal) {
+  return signal.reason ?? new DOMException("The request was aborted.", "AbortError");
+}
+
+export function fetchCategories({ signal } = {}) {
+  if (signal?.aborted) return Promise.reject(abortError(signal));
+  if (!sharedCategories) {
+    const controller = new AbortController();
+    const entry = { controller, users: 0 };
+    entry.promise = fetchList("/api/categories", controller.signal)
+      .finally(() => { if (sharedCategories === entry) sharedCategories = null; });
+    entry.promise.catch(() => {}); // Every caller handles the error; this only stops an "unhandled rejection".
+    sharedCategories = entry;
+  }
+  const entry = sharedCategories;
+  entry.users += 1;
+  return new Promise((resolve, reject) => {
+    let left = false;
+    const leave = () => {
+      if (left) return false;
+      left = true;
+      entry.users -= 1;
+      signal?.removeEventListener("abort", onAbort);
+      return true;
+    };
+    function onAbort() {
+      if (!leave()) return;
+      if (entry.users === 0) {
+        if (sharedCategories === entry) sharedCategories = null;
+        entry.controller.abort();
+      }
+      reject(abortError(signal));
+    }
+    signal?.addEventListener("abort", onAbort, { once: true });
+    entry.promise.then(
+      rows => { if (leave()) resolve(rows); },
+      error => { if (leave()) reject(error); }
+    );
+  });
 }
 
 // The products of GET /api/products. It accepts the same filters as productsPath.

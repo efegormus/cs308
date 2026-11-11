@@ -123,6 +123,25 @@ public class ProductEndpointsTests
         Assert.NotNull(categories);
         Assert.Equal(new[] { "Phones", "Tablets" }, categories.Select(category => category.Name));
         Assert.Equal("Smartphones", categories[0].Description);
+        Assert.All(categories, category => Assert.Null(category.ParentId));
+    }
+
+    [Fact]
+    public async Task Categories_ReturnParentIdOfSubcategories()
+    {
+        using var factory = new ProductApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(new[]
+        {
+            new Category { Id = 1, Name = "Phones" },
+            new Category { Id = 2, Name = "Smartphones", ParentId = 1 }
+        });
+
+        var categories = await client.GetFromJsonAsync<List<CategoryDto>>("/api/categories");
+
+        Assert.NotNull(categories);
+        Assert.Null(categories.Single(category => category.Name == "Phones").ParentId);
+        Assert.Equal(1, categories.Single(category => category.Name == "Smartphones").ParentId);
     }
 
     [Fact]
