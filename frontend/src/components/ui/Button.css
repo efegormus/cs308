@@ -1,0 +1,28 @@
+/* Primary button. Tokens: design-system.css; rules: DESIGN.md, Components > Buttons. */
+.ui-button {
+  box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; gap: var(--space-xs);
+  min-height: var(--touch-target); margin: 0; padding: 0 var(--space-lg);
+  border: 0; border-radius: var(--radius-button);
+  background: var(--accent); color: var(--accent-fg);
+  font: var(--type-button); letter-spacing: 0; text-transform: none; cursor: pointer;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+}
+/* Light theme: hover and pressed fill --accent-hover. */
+.ui-button:is(:hover, :active):not(:disabled) { background: var(--accent-hover); }
+.ui-button:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ui-button:disabled { opacity: 0.7; cursor: not-allowed; }
+
+/* Dark theme: the fill stays --accent, because white on the dark --accent-hover is only 3.70:1.
+   Hover and pressed show the --ring-glow ring instead. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .ui-button:is(:hover, :active):not(:disabled) {
+    background: var(--accent); box-shadow: 0 0 0 4px var(--ring-glow);
+  }
+}
+:root[data-theme="dark"] .ui-button:is(:hover, :active):not(:disabled) {
+  background: var(--accent); box-shadow: 0 0 0 4px var(--ring-glow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-button { transition: none; }
+}
