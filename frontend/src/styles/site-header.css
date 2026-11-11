@@ -1,0 +1,136 @@
+/* The site header and its category menu (SCRUM-123). Tokens: design-system.css; rules: DESIGN.md, Header.
+   Two rows at every width: logo, search, account area and cart, then the category bar. Every rule starts with
+   .site-header, because all CSS files load at once. */
+.site-header, .site-header * { box-sizing: border-box; }
+.site-header {
+  position: relative; z-index: 30; background: var(--header); color: var(--header-fg);
+  border-bottom: 1px solid var(--line); font: var(--type-body-md);
+}
+.site-header :is(a, button, input):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.site-header-inner { max-width: var(--page-max); margin: 0 auto; padding: 0 var(--space-xxl); }
+
+/* Row 1. Wide: logo | search | account and cart. Up to 768px: logo | account and cart, then the search. */
+.site-header-top {
+  display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "logo search actions";
+  align-items: center; gap: var(--space-sm) var(--space-xl); min-height: var(--header-height); padding: var(--space-sm) 0;
+}
+.site-header .site-logo {
+  grid-area: logo; justify-self: start; display: inline-flex; align-items: center; min-height: var(--touch-target);
+  font: var(--type-logo); color: var(--header-fg); text-decoration: none; white-space: nowrap;
+}
+.site-header .site-logo:hover { color: var(--header-fg); }
+
+.site-header .site-search { grid-area: search; justify-self: end; display: flex; align-items: flex-start; gap: var(--space-xxs); }
+.site-header .site-search-field { width: 200px; }
+.site-header .site-search-button { width: var(--touch-target); padding: 0; }
+
+.site-header .site-actions { grid-area: actions; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-xs); }
+.site-header .site-header-link {
+  display: inline-flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-xs);
+  font: var(--type-nav-link); color: var(--header-fg); text-decoration: none;
+}
+.site-header .site-header-link:hover { color: var(--header-fg); text-decoration: underline; text-underline-offset: 6px; }
+/* The current page: a 2px --accent line under the link. An inset shadow keeps the height the same. */
+.site-header :is(.site-header-link, .category-menu-link)[aria-current="page"],
+.site-header .category-menu-link.is-active { box-shadow: inset 0 -2px 0 var(--accent); }
+
+#user-name {
+  display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  font: var(--type-body-md); color: var(--header-fg-soft);
+}
+.site-header #logout {
+  min-height: var(--touch-target); padding: 0 var(--space-md); border: 1px solid var(--header-fg);
+  border-radius: var(--radius-button); background: transparent; color: var(--header-fg);
+  font: var(--type-button); font-size: 14px; cursor: pointer;
+}
+.site-header #logout:hover { background: var(--header-hover); }
+.site-header #logout:disabled { opacity: 0.7; cursor: progress; }
+
+/* The profile icon and its menu (SCRUM-130). The menu starts right under the icon with no gap, so the pointer can
+   move onto it. */
+.site-header .account-menu { position: relative; display: inline-flex; align-items: center; }
+.site-header a#user-name.account-icon {
+  display: inline-flex; align-items: center; justify-content: center; width: var(--touch-target); height: var(--touch-target);
+  max-width: none; overflow: visible; border: 1px solid var(--header-fg); border-radius: var(--radius-full);
+  color: var(--header-fg); text-decoration: none; transition: background-color 0.15s;
+}
+.site-header a#user-name.account-icon:hover, .site-header .account-menu:focus-within a#user-name.account-icon,
+.site-header a#user-name.account-icon[aria-current="page"] { background: var(--header-hover); }
+.site-header .account-menu-list {
+  position: absolute; top: 100%; right: 0; z-index: 40; min-width: 12rem; margin: 0; padding: var(--space-xxs) 0; list-style: none;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: var(--radius-tile);
+  box-shadow: var(--shadow-menu); visibility: hidden; opacity: 0;
+  transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
+}
+.site-header .account-menu:hover .account-menu-list,
+.site-header .account-menu:focus-within .account-menu-list { visibility: visible; opacity: 1; transform: none; }
+.site-header .account-menu-name {
+  padding: var(--space-xs) var(--space-md); margin-bottom: var(--space-xxs); border-bottom: 1px solid var(--line);
+  font: var(--type-label); overflow-wrap: anywhere;
+}
+.site-header .account-menu-list a {
+  display: flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-md);
+  font: var(--type-nav-link); color: var(--fg); text-decoration: none;
+}
+.site-header .account-menu-list a:hover, .site-header .account-menu-list a:focus-visible { background: var(--bg); color: var(--link); }
+
+.site-header .site-cart {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--touch-target); height: var(--touch-target); border-radius: var(--radius-button); color: var(--header-fg);
+}
+.site-header .site-cart:hover { background: var(--header-hover); }
+.site-header .site-cart-count {
+  position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--radius-full);
+  background: var(--accent); color: var(--accent-fg); font: var(--type-caption); line-height: 20px; text-align: center;
+}
+
+/* Row 2: the category bar. It wraps instead of scrolling sideways. */
+.site-header .category-menu-bar {
+  display: flex; flex-wrap: wrap; gap: 0 var(--space-xxs); margin: 0 calc(-1 * var(--space-xs)); padding: 0; list-style: none;
+}
+.site-header .category-menu-link {
+  display: inline-flex; align-items: center; gap: var(--space-xxs); min-height: var(--touch-target);
+  margin: 0; padding: 0 var(--space-xs); border: 0; background: transparent; color: var(--header-fg);
+  font: var(--type-nav-link); text-decoration: none; white-space: nowrap; cursor: pointer;
+}
+.site-header .category-menu-link:hover { color: var(--header-fg); text-decoration: underline; text-underline-offset: 6px; }
+.site-header .category-menu-chevron { transition: transform 0.15s; }
+.site-header .category-menu-link[aria-expanded="true"] .category-menu-chevron { transform: rotate(180deg); }
+
+/* The mega menu panel: the full width of the window, right under the header (the bar is its last row). Its content
+   lines up with the header content. */
+.site-header .category-menu-panel {
+  --panel-gutter: max(var(--space-xxl), calc((100% - var(--page-max)) / 2 + var(--space-xxl)));
+  position: absolute; top: 100%; left: 0; right: 0; z-index: 40;
+  padding: var(--space-md) var(--panel-gutter) var(--space-xl); background: var(--surface); color: var(--fg);
+  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-menu);
+}
+.site-header .category-menu-panel[hidden] { display: none; }
+.site-header .category-menu-panel-list {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 0 var(--space-xl);
+  margin: 0; padding: 0; list-style: none;
+}
+.site-header .category-menu-panel-list a {
+  display: flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-xs);
+  border-radius: var(--radius-button); font: var(--type-body-md); color: var(--fg); text-decoration: none;
+}
+.site-header .category-menu-panel-list a:hover { background: var(--bg); color: var(--link); text-decoration: underline; }
+.site-header .category-menu-panel-list a[aria-current="page"] { box-shadow: inset 2px 0 0 var(--accent); }
+.site-header .category-menu-panel-list .category-menu-all { font-weight: 600; }
+
+@media (max-width: 768px) {
+  .site-header-top { grid-template-columns: 1fr auto; grid-template-areas: "logo actions" "search search"; }
+  .site-header .site-search { justify-self: stretch; }
+  .site-header .site-search-field { flex: 1; width: auto; min-width: 0; }
+}
+@media (max-width: 480px) {
+  .site-header-inner { padding: 0 var(--space-md); }
+  .site-header .category-menu-panel { padding: var(--space-sm) var(--space-md) var(--space-md); }
+  /* Room for logo, profile icon, Logout and cart on one line at 375px. */
+  .site-header-top { column-gap: var(--space-sm); }
+  .site-header .site-actions { gap: var(--space-xxs); }
+  .site-header #logout { padding: 0 var(--space-sm); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .site-header .account-menu-list, .site-header a#user-name.account-icon, .site-header .category-menu-chevron { transition: none; }
+}

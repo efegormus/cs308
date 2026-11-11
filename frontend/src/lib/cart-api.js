@@ -4,6 +4,9 @@
 // The most one request may set, as in the API (CartEndpoints.MaxQuantityPerRequest).
 export const MAX_LINE_QUANTITY = 99;
 
+// Sent on window after every successful change to the cart, so the header's item count follows (SCRUM-123).
+export const CART_CHANGED_EVENT = "cart-changed";
+
 export class CartError extends Error {
   constructor(message, status) {
     super(message);
@@ -41,6 +44,7 @@ async function sendCartRequest(path, init, signal) {
   }
   const cart = parseCart(body);
   if (!cart) throw new CartError("Invalid cart response.");
+  if (init.method !== "GET") globalThis.window?.dispatchEvent(new Event(CART_CHANGED_EVENT));
   return cart;
 }
 

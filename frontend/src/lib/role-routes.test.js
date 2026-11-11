@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { accountPath, canAccess, isPublicPath, landingLabel, landingPath, postLoginPath, roleLinks } from "./role-routes.js";
+import { accountPath, canAccess, canUseCart, footerLinks, headerLinks, isPublicPath, landingLabel, landingPath, postLoginPath, roleLinks } from "./role-routes.js";
 
 const customer = { id: 1, role: "Customer" };
 const productManager = { id: 2, role: "ProductManager" };
@@ -105,4 +105,20 @@ test("each role gets shortcuts it may open, and an unknown role gets none", () =
       assert.ok(label && text, `${role} ${to} has a label and a description`);
     }
   }
+});
+
+test("only guests and customers get the cart; only the product manager gets a Deliveries link in the header", () => {
+  assert.equal(canUseCart(null), true);
+  assert.equal(canUseCart(undefined), true);
+  assert.equal(canUseCart("Customer"), true);
+  for (const role of ["ProductManager", "SalesManager", "SupportAgent", "Admin", ""]) assert.equal(canUseCart(role), false, role);
+  assert.deepEqual(headerLinks("ProductManager"), [["/deliveries", "Deliveries"]]);
+  for (const role of [null, "Customer", "SalesManager", "SupportAgent"]) assert.deepEqual(headerLinks(role), [], String(role));
+});
+
+test("the footer offers Cart and Orders only to guests and customers, and never a support link", () => {
+  const shopper = [["/products", "Products"], ["/cart", "Cart"], ["/orders", "Orders"]];
+  assert.deepEqual(footerLinks(null), shopper);
+  assert.deepEqual(footerLinks("Customer"), shopper);
+  for (const role of ["ProductManager", "SalesManager", "SupportAgent"]) assert.deepEqual(footerLinks(role), [["/products", "Products"]], role);
 });

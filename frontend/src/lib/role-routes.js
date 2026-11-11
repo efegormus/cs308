@@ -101,3 +101,21 @@ const ROLE_LINKS = {
 export function roleLinks(role) {
   return (ROLE_LINKS[role] ?? []).filter(([to]) => canAccess(role, to));
 }
+
+/** Guests and customers have a cart; the cart API answers 403 to staff. role is null for a guest. */
+export function canUseCart(role) {
+  return role === null || role === undefined || role === "Customer";
+}
+
+/**
+ * The text links in the header next to the account area (SCRUM-123). The logo is the home link, categories have
+ * their own bar and checkout starts from the cart, so only the product manager's Deliveries page is left here.
+ */
+export function headerLinks(role) {
+  return role === "ProductManager" ? [["/deliveries", "Deliveries"]] : [];
+}
+
+/** The footer links (SCRUM-123). Cart and Orders only for guests and customers; a guest is asked to log in for Orders. */
+export function footerLinks(role) {
+  return [["/products", "Products"], ...(canUseCart(role) ? [["/cart", "Cart"], ["/orders", "Orders"]] : [])];
+}

@@ -1,0 +1,18 @@
+/* The site footer (SCRUM-123). Tokens: design-system.css; rules: DESIGN.md, Footer. Footer links use --footer-fg
+   with an underline, not --link, which is too dark on --footer. */
+.site-footer, .site-footer * { box-sizing: border-box; }
+.site-footer { background: var(--footer); color: var(--footer-fg); font: var(--type-body-sm); padding: var(--space-xl) var(--space-md); }
+.site-footer-inner {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs) var(--space-xl);
+  max-width: var(--page-max); margin: 0 auto;
+}
+.site-footer p { margin: 0; }
+.site-footer .site-footer-brand { font: var(--type-heading-sm); }
+.site-footer .site-footer-links { display: flex; flex-wrap: wrap; gap: 0 var(--space-md); margin: 0; padding: 0; list-style: none; }
+.site-footer .site-footer-links a {
+  display: inline-flex; align-items: center; min-height: var(--touch-target);
+  color: var(--footer-fg); text-decoration: underline; text-underline-offset: 3px;
+}
+.site-footer .site-footer-links a:hover { color: var(--footer-fg-soft); }
+.site-footer a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.site-footer .site-footer-legal { color: var(--footer-fg-soft); }

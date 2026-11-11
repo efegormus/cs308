@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react";
-import { useLocation } from "react-router";
+import { useLocation, useSearchParams } from "react-router";
 import CategoryNav from "../components/CategoryNav.jsx";
 import CategorySection from "../components/CategorySection.jsx";
 import { useCatalog } from "../hooks/useCatalog.js";
@@ -7,9 +7,11 @@ import { catalogSummary, categoryAnchorId, categoryIdFromHash } from "../lib/cat
 
 // The product list, grouped by category (SCRUM-109). The home page links here as /products#category-<id>.
 export default function ProductsPage() {
-  // SCRUM-67: keep the search text and the sort choice in this component and pass them to useCatalog
-  // as { search, sort, order }. The catalog reloads when they change.
-  const { status, categories, retry } = useCatalog();
+  // The header's search form opens /products?search=<text> (SCRUM-123); the same name as the API parameter.
+  // SCRUM-67/126: add the sort choice the same way and pass { search, sort, order } to useCatalog.
+  const [searchParams] = useSearchParams();
+  const search = searchParams.get("search") ?? "";
+  const { status, categories, retry } = useCatalog({ search });
   const { hash } = useLocation();
   const scrolledTo = useRef(null);
 
