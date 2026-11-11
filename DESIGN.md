@@ -1,7 +1,7 @@
 ---
 version: alpha
 name: Online Store
-description: The CS 308 online store's design system. A light catalog UI on a pale gray page with white surfaces, one blue action color (#024ad8), Poppins for headings, buttons and the header, Open Sans for text and forms, and an unchanged dark theme. It adapts parts of an HP design analysis (docs/design/reference-hp-DESIGN.md) to the project's existing tokens; HP brand elements are not used. This file is the target. The code does not match it yet; see "Migration status".
+description: The CS 308 online store's design system. A light catalog UI on a pale gray page with white surfaces, one blue action color (#024ad8), Poppins for headings, buttons and the header, Open Sans for text and forms, and an unchanged dark theme. It adapts parts of an HP design analysis (docs/design/reference-hp-DESIGN.md) to the project's existing tokens; HP brand elements are not used. This file is the target. The code does not fully match it yet; see "Migration status".
 
 # Labels used in the comments below:
 #   [HP]         taken from the HP reference as is
@@ -31,9 +31,9 @@ colors:
   header-fg: "#222222"        # [Uyarlandı] = fg
   header-fg-soft: "#505966"   # [Uyarlandı] = muted; signed-in name
   header-hover: "#f6f7f9"     # [Uyarlandı] = bg; logout hover
-  footer: "#1f2937"           # [Uyarlandı] new; today's light --header value
-  footer-fg: "#ffffff"        # [Uyarlandı] new; today's light --header-fg value
-  footer-fg-soft: "#e5e7eb"   # [Uyarlandı] new; today's light --header-fg-soft value
+  footer: "#1f2937"           # [Uyarlandı] new; the old light --header value
+  footer-fg: "#ffffff"        # [Uyarlandı] new; the old light --header-fg value
+  footer-fg-soft: "#e5e7eb"   # [Uyarlandı] new; the old light --header-fg-soft value
   sale-bg: "#b3262b"          # [Uyarlandı] new; HP bloom-deep as the discount badge fill
   sale-fg: "#ffffff"          # [Uyarlandı] new; discount badge text
 
@@ -332,7 +332,7 @@ from borders and one light shadow, not from heavy elevation.
 | `--header-fg` | `#222222` | [Uyarlandı] | Header text, same as `--fg` |
 | `--header-fg-soft` | `#505966` | [Uyarlandı] | Signed-in name, same as `--muted` |
 | `--header-hover` | `#f6f7f9` | [Uyarlandı] | Logout hover, same as `--bg` |
-| `--footer` | `#1f2937` | [Uyarlandı] | New. Footer background (today's light `--header`) |
+| `--footer` | `#1f2937` | [Uyarlandı] | New. Footer background (the old light `--header`) |
 | `--footer-fg` | `#ffffff` | [Uyarlandı] | New. Footer text and links |
 | `--footer-fg-soft` | `#e5e7eb` | [Uyarlandı] | New. Footer secondary text |
 | `--sale-bg` | `#b3262b` | [Uyarlandı] | New. Discount badge fill (HP bloom-deep) |
@@ -344,8 +344,11 @@ and the home page's `--halo` are tints of the old accent `#174a8b`; see Open que
 
 ### Dark theme [Proje]
 
-The dark values in `frontend/src/styles/auth.css` stay as they are. As today, each dark value is
-written twice: in the `prefers-color-scheme: dark` block and in the `[data-theme="dark"]` block.
+The dark values stay as they are. They live in `frontend/src/styles/design-system.css` with every
+other token (moved from `auth.css` in SCRUM-123). Each dark value is written twice: in the
+`prefers-color-scheme: dark` block and in the `[data-theme="dark"]` block. `--header-hover` is now
+written in both dark blocks too, because its light value changed and the dark theme must keep
+`rgba(255, 255, 255, 0.12)`.
 
 | Token | Dark value | Label |
 | --- | --- | --- |
@@ -497,7 +500,8 @@ load at once.
 | 2, product card | `0 2px 8px rgba(26, 26, 26, 0.08)` | `/products` product card | [HP] |
 | 3, front card | `--card-shadow` `0 22px 44px rgba(31, 41, 55, 0.18)` | Coverflow front card | [Proje] |
 
-The product card shadow has no dark value yet; see Open questions. HP's modal level
+The product card shadow is the token `--shadow-product`. It has no dark value yet, so the dark
+theme uses the same value; see Open questions. HP's modal level
 (`0 8px 24px`) has no use in the store yet.
 
 ## Shapes
@@ -740,9 +744,13 @@ Decision pending.
 
 1. Change one component at a time.
 2. Name tokens and components as this file does (`--accent`, `card-product`); don't paraphrase
-   them into raw hex or px in code.
-3. A new color goes on `:root` in `auth.css` with its dark value in both dark blocks, then into
-   this file with its label and contrast ratio.
+   them into raw hex or px in code. In CSS, a color key is `--<key>`, a typography key
+   `--type-<key>` (for the `font` shorthand), a spacing key `--space-<key>` (except
+   `--header-height`, `--touch-target` and the three max widths, which keep their names) and a
+   rounded key `--radius-<key>`.
+3. A new token goes on `:root` in `frontend/src/styles/design-system.css`; a new color also gets
+   its dark value in both dark blocks there. Then it goes into this file with its label and, for a
+   color, its contrast ratio.
 4. When a [Belirsiz] item is decided, replace its "Decision pending" note and remove it from Open
    questions.
 5. When a row of "Migration status" is done, update its current value in the same PR.
@@ -802,37 +810,40 @@ Mistakes in it, corrected here:
 
 ## Migration status
 
-Target is this file. "Current" is what the code has on this branch. Nothing here has been changed
-yet.
+Target is this file. "Current" is what the code has on this branch. SCRUM-123 moved every token to
+`frontend/src/styles/design-system.css`, set the light tokens to their target values and added the
+type scale (`--type-*`), spacing (`--space-*`) and corner (`--radius-*`) tokens and the shared
+`Button`, `Input`, `Card` and `Badge` in `frontend/src/components/ui/`. No page uses those
+components or the new type, spacing and corner tokens yet.
 
 ### Colors
 
 | Token | Target (light) | Current (light) | File |
 | --- | --- | --- | --- |
-| `--accent` | `#024ad8` | `#174a8b`; hard-coded `#174a8b` in catalog and purchase rules; fallbacks `#174a8b`, `#1d4ed8` | `auth.css`; `products.css`, `purchases.css`; `cart.css`, `orders.css`, `add-to-cart.css` |
-| `--accent-hover` | `#0e3191` | `#0f3363` | `auth.css` |
-| `--accent-fg` | `#ffffff` | `#ffffff`; hard-coded `white`/`#fff` | `auth.css`; `purchases.css`, `add-to-cart.css` |
-| `--bg` | `#f6f7f9` | `#f6f7f9`; hard-coded in catalog | `auth.css`; `products.css` |
-| `--surface` | `#ffffff` | `#ffffff`; hard-coded `white` | `auth.css`; `products.css`, `purchases.css` |
-| `--fg` | `#222222` | `#222222`; hard-coded `#222` | `auth.css`; `products.css` |
-| `--muted` | `#505966` | `#505966`; hard-coded `#505966`; fallbacks `#5d6877` | `auth.css`; `products.css`; `cart.css`, `orders.css` |
-| `--line` | `#dce0e6` | `#dce0e6`; hard-coded `#dce0e6`, `#e3e7eb` | `auth.css`; `products.css`, `purchases.css` |
-| `--field-line` | `#6b7280` | `#6b7280`; hard-coded `#9ba9b9` (purchase inputs), `#b9c4d2` (catalog buttons) | `auth.css`; `purchases.css`, `products.css` |
-| `--link` | `#174a8b` | `#174a8b`; hard-coded in catalog | `auth.css`; `products.css` |
-| `--focus` | `#b66d00` | `#b66d00`; hard-coded in catalog and purchase rules | `auth.css`; `products.css`, `purchases.css` |
-| `--danger` | `#a32b12` | `#a32b12`; hard-coded `#8a351e` (out of stock), `#7c231d`; fallback `#b00020` | `auth.css`; `products.css`, `purchases.css`; `orders.css`, `add-to-cart.css` |
-| `--ok` | `#1a7f37` | `#1a7f37`; hard-coded `#24613b` (in stock) | `auth.css`; `products.css` |
-| `--header` | `#ffffff` | `#1f2937`; hard-coded `#1f2937` | `auth.css`; `products.css` |
-| `--header-fg` | `#222222` | `#ffffff`; hard-coded `white` | `auth.css`; `products.css` |
-| `--header-fg-soft` | `#505966` | `#e5e7eb` | `auth.css` |
-| `--header-hover` | `#f6f7f9` | `rgba(255, 255, 255, 0.12)` | `auth.css` |
-| `--footer` | `#1f2937` | Missing; footer uses `--surface` / none | `auth.css`, `products.css` |
-| `--footer-fg` | `#ffffff` | Missing; footer text uses `--muted` / `#505966` | `auth.css`, `products.css` |
-| `--footer-fg-soft` | `#e5e7eb` | Missing | — |
-| `--sale-bg` | `#b3262b` | Missing; no discount badge yet | — |
-| `--sale-fg` | `#ffffff` | Missing | — |
-| Dark tokens | Unchanged | As listed in Colors | `auth.css`, `home.css` |
-| Dark `--footer`, `--footer-fg`, `--footer-fg-soft` | `#0a0f17`, `#ffffff`, `#cfd5df` | Missing | — |
+| `--accent` | `#024ad8` | `#024ad8`; hard-coded `#174a8b` in catalog and purchase rules; fallbacks `#174a8b`, `#1d4ed8` | `design-system.css`; `products.css`, `purchases.css`; `cart.css`, `orders.css`, `add-to-cart.css` |
+| `--accent-hover` | `#0e3191` | `#0e3191` | `design-system.css` |
+| `--accent-fg` | `#ffffff` | `#ffffff`; hard-coded `white`/`#fff` | `design-system.css`; `purchases.css`, `add-to-cart.css` |
+| `--bg` | `#f6f7f9` | `#f6f7f9`; hard-coded in catalog | `design-system.css`; `products.css` |
+| `--surface` | `#ffffff` | `#ffffff`; hard-coded `white` | `design-system.css`; `products.css`, `purchases.css` |
+| `--fg` | `#222222` | `#222222`; hard-coded `#222` | `design-system.css`; `products.css` |
+| `--muted` | `#505966` | `#505966`; hard-coded `#505966`; fallbacks `#5d6877` | `design-system.css`; `products.css`; `cart.css`, `orders.css` |
+| `--line` | `#dce0e6` | `#dce0e6`; hard-coded `#dce0e6`, `#e3e7eb` | `design-system.css`; `products.css`, `purchases.css` |
+| `--field-line` | `#6b7280` | `#6b7280`; hard-coded `#9ba9b9` (purchase inputs), `#b9c4d2` (catalog buttons) | `design-system.css`; `purchases.css`, `products.css` |
+| `--link` | `#174a8b` | `#174a8b`; hard-coded in catalog | `design-system.css`; `products.css` |
+| `--focus` | `#b66d00` | `#b66d00`; hard-coded in catalog and purchase rules | `design-system.css`; `products.css`, `purchases.css` |
+| `--danger` | `#a32b12` | `#a32b12`; hard-coded `#8a351e` (out of stock), `#7c231d`; fallback `#b00020` | `design-system.css`; `products.css`, `purchases.css`; `orders.css`, `add-to-cart.css` |
+| `--ok` | `#1a7f37` | `#1a7f37`; hard-coded `#24613b` (in stock) | `design-system.css`; `products.css` |
+| `--header` | `#ffffff` | `#ffffff`; hard-coded `#1f2937` | `design-system.css`; `products.css` |
+| `--header-fg` | `#222222` | `#222222`; hard-coded `white` | `design-system.css`; `products.css` |
+| `--header-fg-soft` | `#505966` | `#505966` | `design-system.css` |
+| `--header-hover` | `#f6f7f9` | `#f6f7f9` | `design-system.css` |
+| `--footer` | `#1f2937` | `#1f2937`, not used yet; footer uses `--surface` / none | `design-system.css`; `auth.css`, `products.css` |
+| `--footer-fg` | `#ffffff` | `#ffffff`, not used yet; footer text uses `--muted` / `#505966` | `design-system.css`; `auth.css`, `products.css` |
+| `--footer-fg-soft` | `#e5e7eb` | `#e5e7eb`, not used yet | `design-system.css` |
+| `--sale-bg` | `#b3262b` | `#b3262b`; used by `Badge`, which no page shows yet | `design-system.css`, `components/ui/Badge.css` |
+| `--sale-fg` | `#ffffff` | `#ffffff`; used by `Badge` | `design-system.css`, `components/ui/Badge.css` |
+| Dark tokens | Unchanged | As listed in Colors | `design-system.css`, `home.css` |
+| Dark `--footer`, `--footer-fg`, `--footer-fg-soft` | `#0a0f17`, `#ffffff`, `#cfd5df` | `#0a0f17`, `#ffffff`, `#cfd5df`, not used yet | `design-system.css` |
 
 ### Typography
 
@@ -850,19 +861,19 @@ yet.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Primary button height | 44px | 48px (login); padding-based elsewhere (about 40px) | `auth.css`; `cart.css`, `add-to-cart.css` |
-| Primary button corners | 4px | 6px (login); 0.4rem (6.4px) | `auth.css`; `cart.css`, `add-to-cart.css` |
-| Primary button hover | Fill `--accent-hover` (light) | Ring glow and spotlight, fill unchanged | `auth.css` |
+| Primary button height | 44px | `Button` 44px, used by no page yet; 48px (login); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
+| Primary button corners | 4px | `Button` 4px; 6px (login); 0.4rem (6.4px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
+| Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login: ring glow and spotlight, fill unchanged | `components/ui/Button.css`; `auth.css` |
 | Secondary button | 44px, 4px corners | Padding 0.75rem 1rem, 0.4rem corners | `products.css` |
-| Header | White, at least 64px, 1px `--line` bottom | Dark `#1f2937`, padding 20px 32px | `auth.css`, `products.css`, `Header.jsx` |
+| Header | White, at least 64px, 1px `--line` bottom | White through the tokens, no bottom line, padding 20px 32px; an unused `.catalog-page .site-header` rule in `products.css` still says `#1f2937` | `auth.css`, `products.css`, `Header.jsx` |
 | Header content | Logo, API categories with mega menu, search, account, cart count | Logo, Home / Products / Cart / Checkout / My orders / Deliveries, Login or name and Logout | `Header.jsx` |
 | Active nav link | 2px `--accent` underline | Text underline, offset 6px | `auth.css`, `products.css` |
 | Footer | `--footer` dark | `--surface` with a top border (auth); `#505966` text, no background (catalog) | `auth.css`, `products.css`, `Footer.jsx` |
-| Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | 0.6rem corners, 1px `#dce0e6` border, no shadow, image 180px high, no CTA | `products.css`, `ProductCard.jsx` |
+| Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | `Card` has the frame (16px, 20px, `--shadow-product`) but `ProductCard.jsx` does not use it; 0.6rem corners, 1px `#dce0e6` border, no shadow, image 180px high, no CTA | `components/ui/Card.css`; `products.css`, `ProductCard.jsx` |
 | Product card spec row | One `body-sm` row | Description paragraph | `ProductCard.jsx` |
-| Discount badge | `--sale-bg`, 3px, 14px 600 | Missing | — |
+| Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
-| Purchase input | 44px, 6px, `--field-line` | Padding 0.75rem, 0.3rem, `#9ba9b9` | `purchases.css` |
+| Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by no page yet; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Hard-coded `#e8f0fa`, `#ffebea`, `#7c231d` | `purchases.css` |
 
 ### Layout and responsive
@@ -872,4 +883,4 @@ yet.
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 576 (cart), 700 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `home.css` |
 | Touch targets | 44px | Logout 36px; cart quantity buttons 2.25rem (36px); sort select 40px | `auth.css`, `cart.css`, `home.css` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
-| Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | None | `products.css` |
+| Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Token `--shadow-product`, used only by `Card`; product cards have none | `design-system.css`; `products.css` |
