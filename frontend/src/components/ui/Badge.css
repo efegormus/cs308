@@ -1,0 +1,7 @@
+/* Discount badge. Tokens: design-system.css; rules: DESIGN.md, Components > Discount badge.
+   White on --sale-bg is 6.50:1. On the dark surface the badge edge is 2.52:1 (Open questions 7). */
+.ui-badge {
+  box-sizing: border-box; display: inline-block; padding: var(--space-xxs) var(--space-xs);
+  border-radius: var(--radius-badge); background: var(--sale-bg); color: var(--sale-fg);
+  font: var(--type-badge); letter-spacing: 0; white-space: nowrap;
+}

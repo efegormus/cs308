@@ -1,0 +1,13 @@
+/* Text input. Tokens: design-system.css; rules: DESIGN.md, Inputs and forms and Validation errors. */
+.ui-field { display: flex; flex-direction: column; gap: var(--space-label-gap); }
+.ui-field-label { font: var(--type-label); color: var(--fg); }
+.ui-input {
+  box-sizing: border-box; width: 100%; height: var(--touch-target); margin: 0; padding: 0 var(--space-sm);
+  border: 1px solid var(--field-line); border-radius: var(--radius-field);
+  background: var(--surface); color: var(--fg); font: var(--type-body-md);
+}
+.ui-input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* The 2px error border takes 1px from the padding, so the text does not move. */
+.ui-input[aria-invalid="true"] { border: 2px solid var(--danger); padding: 0 calc(var(--space-sm) - 1px); }
+.ui-input:disabled { opacity: 0.7; cursor: not-allowed; }
+.ui-field-error { margin: 0; font: var(--type-field-error); color: var(--danger); }

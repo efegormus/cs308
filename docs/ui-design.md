@@ -6,10 +6,13 @@ same look. The login page (SCRUM-68) is the first page built with it. The source
 
 ## Change a color in one place
 
-Every color is a custom property on `:root` at the top of `auth.css`. Edit the value
-there and nothing else. A dark value appears twice, once in the
-`prefers-color-scheme: dark` block and once in the `[data-theme="dark"]` block, so
-change both. Never write a color directly in a rule.
+In the React frontend every token (colors, shadows, the type scale, spacing and corner
+radii) is a custom property on `:root` in `frontend/src/styles/design-system.css`, which
+`main.jsx` loads before every other stylesheet. Edit the value there and nothing else. A
+dark value appears twice, once in the `prefers-color-scheme: dark` block and once in the
+`[data-theme="dark"]` block, so change both. Never write a color directly in a rule.
+The target values and their reasons are in [DESIGN.md](../DESIGN.md). The old pages in
+`OnlineStore/wwwroot` keep their own copy at the top of `wwwroot/css/auth.css`.
 
 ## Add the login header to a new page
 
@@ -43,16 +46,19 @@ that way. Pages without the Google Fonts link show the header text in Arial.
 | --- | --- | --- | --- |
 | `--bg` | Page background | `#f6f7f9` | `#0e131a` |
 | `--surface` | Card, input, footer | `#ffffff` | `#18202c` |
-| `--header` | Header bar | `#1f2937` | `#0a0f17` |
-| `--header-fg` | Header text | `#ffffff` | `#ffffff` |
-| `--header-fg-soft` | Signed-in name | `#e5e7eb` | `#cfd5df` |
-| `--header-hover` | Logout hover | `rgba(255, 255, 255, 0.12)` | same |
+| `--header` | Header bar | `#ffffff` | `#0a0f17` |
+| `--header-fg` | Header text | `#222222` | `#ffffff` |
+| `--header-fg-soft` | Signed-in name | `#505966` | `#cfd5df` |
+| `--header-hover` | Logout hover | `#f6f7f9` | `rgba(255, 255, 255, 0.12)` |
+| `--footer` | Footer bar (not used yet) | `#1f2937` | `#0a0f17` |
+| `--footer-fg` | Footer text and links (not used yet) | `#ffffff` | `#ffffff` |
+| `--footer-fg-soft` | Footer secondary text (not used yet) | `#e5e7eb` | `#cfd5df` |
 | `--fg` | Main text | `#222222` | `#e8ebf0` |
 | `--muted` | Secondary text | `#505966` | `#a4aebc` |
 | `--line` | Card and footer border | `#dce0e6` | `#2a3445` |
 | `--field-line` | Input border | `#6b7280` | `#7b8799` |
-| `--accent` | Primary button | `#174a8b` | `#2d6bcf` |
-| `--accent-hover` | Link hover | `#0f3363` | `#4a84e0` |
+| `--accent` | Primary button | `#024ad8` | `#2d6bcf` |
+| `--accent-hover` | Link hover, light primary button hover | `#0e3191` | `#4a84e0` |
 | `--accent-fg` | Primary button text | `#ffffff` | `#ffffff` |
 | `--link` | Links | `#174a8b` | `#8db9ff` |
 | `--focus` | Focus ring | `#b66d00` | `#f0a64a` |
@@ -60,7 +66,10 @@ that way. Pages without the Google Fonts link show the header text in Arial.
 | `--danger-bg` | Error banner background | `#fdecea` | `#3a1c17` |
 | `--danger-fg` | Error banner text | `#7a1f0d` | `#ffd1c7` |
 | `--ok` | Success fill | `#1a7f37` | `#238636` |
+| `--sale-bg` | Discount badge | `#b3262b` | same |
+| `--sale-fg` | Discount badge text | `#ffffff` | same |
 | `--shadow` | Card shadow | `0 1px 3px rgba(31, 41, 55, 0.08)` | `0 1px 3px rgba(0, 0, 0, 0.4)` |
+| `--shadow-product` | `Card` (product card) shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | same, no dark value yet |
 | `--btn-glow` | Button spotlight | `rgba(255, 255, 255, 0.28)` | same |
 | `--ring-glow` | Button hover ring | `rgba(23, 74, 139, 0.22)` | `rgba(77, 132, 224, 0.35)` |
 
@@ -169,6 +178,18 @@ product count 0.9rem.
 | Purchase input | Padding 0.75rem, radius 0.3rem, 1px `#9ba9b9` border |
 | Home sort dropdown | Height 40px, min-width 190px, radius 8px, 1px `--field-line` border, 14px text |
 | Focus ring | 3px outline, `--focus` (`#b66d00` on catalog and purchase pages). Offset 2px on login and purchase inputs, 3px on home, cart and request states, 4px on catalog links and buttons |
+
+### Shared UI components
+
+`frontend/src/components/ui/` holds the shared parts from DESIGN.md. Each has its own CSS
+file next to it, and its classes start with `ui-`. No page uses them yet.
+
+| Component | Rule |
+| --- | --- |
+| `Button` | Primary button: at least 44px high, 4px corners, `--accent`, Poppins 16px 500, not uppercase. Light hover and pressed fill `--accent-hover`; in the dark theme the fill stays `--accent` and a 4px `--ring-glow` ring shows. Focus 3px `--focus`, offset 2px. Disabled opacity 0.7 |
+| `Input` | Label, input and optional field error. 44px, 6px corners, 1px `--field-line`, 16px Open Sans, padding 0 12px, focus 3px `--focus` offset 2px. With `error`: `aria-invalid`, `aria-describedby`, 2px `--danger` border, 13px 600 message |
+| `Card` | DESIGN.md's `card-product`: `--surface`, 16px corners, padding 20px, `--shadow-product`, flex column. `as` picks the element |
+| `Badge` | Discount badge: `--sale-bg`, `--sale-fg`, 3px corners, padding 4px 8px, Open Sans 14px 600 |
 
 ### Loading, empty and error states
 

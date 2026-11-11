@@ -1,0 +1,102 @@
+/* Design tokens for the whole store. The target and the reasons are in DESIGN.md; docs/ui-design.md records
+   what is built. Every value the pages and components share lives here, so a change is a one-place edit.
+   Only custom properties sit on :root, so this file is safe to load before every other stylesheet.
+   A dark value is written twice, in the prefers-color-scheme block and in the [data-theme="dark"] block. */
+:root {
+  /* Fonts. index.html loads Poppins 500/600 and Open Sans 400/600; use only those weights. */
+  --font-display: 'Poppins', Arial, sans-serif;
+  --font-body: 'Open Sans', Arial, sans-serif;
+
+  /* Colors, light theme. */
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --header: #ffffff;
+  --header-fg: #222222;
+  --header-fg-soft: #505966;
+  --header-hover: #f6f7f9;
+  --footer: #1f2937;
+  --footer-fg: #ffffff;
+  --footer-fg-soft: #e5e7eb;
+  --fg: #222222;
+  --muted: #505966;
+  --line: #dce0e6;
+  --field-line: #6b7280;
+  --accent: #024ad8;
+  --accent-hover: #0e3191;
+  --accent-fg: #ffffff;
+  --link: #174a8b;
+  --focus: #b66d00;
+  --danger: #a32b12;
+  --danger-bg: #fdecea;
+  --danger-fg: #7a1f0d;
+  --ok: #1a7f37;
+  --sale-bg: #b3262b;
+  --sale-fg: #ffffff;
+
+  /* Shadows and glows. --ring-glow is still a tint of the old accent #174a8b (DESIGN.md, Open questions 5).
+     --shadow-product has no dark value yet (Open questions 7), so the dark theme uses the same one. */
+  --shadow: 0 1px 3px rgba(31, 41, 55, 0.08);
+  --shadow-product: 0 2px 8px rgba(26, 26, 26, 0.08);
+  --btn-glow: rgba(255, 255, 255, 0.28);
+  --ring-glow: rgba(23, 74, 139, 0.22);
+
+  /* Type scale, for the font shorthand: font: var(--type-heading-lg). Letter spacing is always 0. */
+  --type-heading-lg: 600 32px/1.2 var(--font-display);
+  --type-heading-md: 600 24px/1.2 var(--font-display);
+  --type-heading-sm: 600 20px/1.2 var(--font-display);
+  --type-body-md: 400 16px/1.5 var(--font-body);
+  --type-body-sm: 400 14px/1.5 var(--font-body);
+  --type-label: 600 14px/1.5 var(--font-body);
+  --type-caption: 600 12px/1.5 var(--font-body);
+  --type-field-error: 600 13px/1.5 var(--font-body);
+  --type-logo: 600 23px/1.2 var(--font-display);
+  --type-nav-link: 500 16px/1.5 var(--font-display);
+  --type-button: 500 16px/1.2 var(--font-display);
+  --type-price: 500 24px/1.2 var(--font-display);
+  --type-badge: 600 14px/1.2 var(--font-body);
+
+  /* Spacing and sizes. */
+  --space-xxs: 4px;
+  --space-label-gap: 6px;
+  --space-xs: 8px;
+  --space-sm: 12px;
+  --space-md: 16px;
+  --space-field-gap: 18px;
+  --space-lg: 20px;
+  --space-xl: 24px;
+  --space-xxl: 32px;
+  --space-form-card-y: 36px;
+  --header-height: 64px;
+  --touch-target: 44px;
+  --form-max: 420px;
+  --catalog-max: 1200px;
+  --page-max: 1280px;
+
+  /* Corner radii. */
+  --radius-badge: 3px;
+  --radius-button: 4px;
+  --radius-field: 6px;
+  --radius-tile: 8px;
+  --radius-card: 10px;
+  --radius-panel: 12px;
+  --radius-product: 16px;
+  --radius-full: 9999px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff; --header-fg-soft: #cfd5df;
+    --header-hover: rgba(255, 255, 255, 0.12); --footer: #0a0f17; --footer-fg: #ffffff; --footer-fg-soft: #cfd5df;
+    --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+    --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
+    --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636; --sale-bg: #b3262b; --sale-fg: #ffffff;
+    --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e131a; --surface: #18202c; --header: #0a0f17; --header-fg: #ffffff; --header-fg-soft: #cfd5df;
+  --header-hover: rgba(255, 255, 255, 0.12); --footer: #0a0f17; --footer-fg: #ffffff; --footer-fg-soft: #cfd5df;
+  --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
+  --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
+  --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636; --sale-bg: #b3262b; --sale-fg: #ffffff;
+  --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
+}
