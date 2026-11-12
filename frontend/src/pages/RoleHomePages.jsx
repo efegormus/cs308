@@ -1,5 +1,5 @@
-// Landing pages after login (SCRUM-130). They are deliberately small: SCRUM-125 (customer dashboard) and
-// SCRUM-124 (admin panel) replace the content by swapping the element of the route in App.jsx.
+// Landing pages of the staff roles after login (SCRUM-130). They are deliberately small: SCRUM-124 (admin panel)
+// replaces the content by swapping the element of the route in App.jsx. The customer's page is DashboardPage.jsx.
 // The role check and the loading, login-redirect and wrong-role states come from PurchaseAccess.
 import { Link } from "react-router";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
@@ -36,10 +36,6 @@ function RoleHome({ title, role }) {
       </>}</PurchaseAccess>
     </main>
   </div>;
-}
-
-export function DashboardPage() {
-  return <RoleHome title="My account" role="Customer" />;
 }
 
 export function ManagePage() {

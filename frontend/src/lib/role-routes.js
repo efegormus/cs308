@@ -57,6 +57,18 @@ export function landingLabel(role) {
   return LANDING_LABEL[role] ?? null;
 }
 
+// The text of the account menu's first entry (SCRUM-125), the link to accountPath(role).
+const ACCOUNT_LABEL = {
+  Customer: "My account",
+  ProductManager: "Management",
+  SalesManager: "Management",
+  SupportAgent: "Support"
+};
+
+export function accountLabel(role) {
+  return ACCOUNT_LABEL[role] ?? null;
+}
+
 /** True for a page that anyone, signed in or not, may open. */
 export function isPublicPath(url) {
   return rulesFor(url) === null;
