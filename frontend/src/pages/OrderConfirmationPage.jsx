@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react";
 import { Link, useLocation, useSearchParams } from "react-router";
+import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import PurchaseLines from "../components/PurchaseLines.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
@@ -13,6 +14,7 @@ const date = value => value ? new Date(value).toLocaleString() : "Unknown";
 function Receipt({ orderId }) {
   const { status, data, error, run, cancel } = useRequest();
   const location = useLocation();
+  useSessionExpiry(error);
   const load = useCallback(() => run(({ signal }) => fetchReceipt(orderId, { signal })), [orderId, run]);
   useEffect(() => { void load(); return cancel; }, [load, cancel]);
   return <>
