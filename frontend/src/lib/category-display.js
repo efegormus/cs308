@@ -16,10 +16,20 @@ export function productCountLabel(count) {
   return `${count} ${count === 1 ? "product" : "products"}`;
 }
 
+export function visibleCategories(categories, search) {
+  return typeof search === "string" && search.trim()
+    ? categories.filter(category => category.products.length > 0)
+    : categories;
+}
+
 // The line under the heading of the list, which a screen reader announces after loading.
-export function catalogSummary(categories) {
+export function catalogSummary(categories, search) {
   const count = categories.reduce((total, category) => total + category.products.length, 0);
-  if (count === 0) return "No products available yet. Please check back soon.";
+  if (count === 0) {
+    return typeof search === "string" && search.trim()
+      ? "No products found."
+      : "No products available yet. Please check back soon.";
+  }
   const categoryCount = categories.length;
   return `${productCountLabel(count)} in ${categoryCount} ${categoryCount === 1 ? "category" : "categories"}.`;
 }
