@@ -73,6 +73,14 @@
   font: var(--type-nav-link); color: var(--fg); text-decoration: none;
 }
 .site-header .account-menu-list a:hover, .site-header .account-menu-list a:focus-visible { background: var(--bg); color: var(--link); }
+/* The logout entry of the menu (SCRUM-125) looks like the links above it. */
+.site-header .account-menu-list .account-menu-logout {
+  display: flex; align-items: center; width: 100%; min-height: var(--touch-target); padding: 0 var(--space-md);
+  border: 0; border-top: 1px solid var(--line); margin-top: var(--space-xxs); background: none; cursor: pointer;
+  font: var(--type-nav-link); color: var(--fg); text-align: left;
+}
+.site-header .account-menu-list .account-menu-logout:hover, .site-header .account-menu-list .account-menu-logout:focus-visible { background: var(--bg); color: var(--link); }
+.site-header .account-menu-list .account-menu-logout:disabled { opacity: 0.7; cursor: progress; }
 
 .site-header .site-cart {
   position: relative; display: inline-flex; align-items: center; justify-content: center;

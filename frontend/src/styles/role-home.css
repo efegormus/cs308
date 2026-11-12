@@ -23,3 +23,28 @@
 .role-home-page .role-home-card-title { font-size: 1.1rem; font-weight: 700; color: var(--link, #174a8b); }
 .role-home-page .role-home-card-text { color: var(--muted, #505966); line-height: 1.45; }
 @media (prefers-reduced-motion: reduce) { .role-home-page .role-home-card { transition: none; } .role-home-page .role-home-card:hover { transform: none; } }
+
+/* The customer dashboard (SCRUM-125): recent orders and the profile summary side by side, one column on a phone. */
+.role-home-page .dash-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin: 0 0 1.5rem; }
+.role-home-page .dash-section {
+  padding: 1.25rem; box-sizing: border-box; background: var(--surface, #fff);
+  border: 1px solid var(--field-line, #dce0e6); border-radius: .75rem;
+}
+.role-home-page .dash-section a { color: var(--link, #174a8b); }
+.role-home-page .dash-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
+.role-home-page .dash-section-head h2 { margin: 0; font-size: 1.15rem; }
+.role-home-page .dash-orders { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
+.role-home-page .dash-order { padding-bottom: .75rem; border-bottom: 1px solid var(--field-line, #dce0e6); }
+.role-home-page .dash-order:last-child { padding-bottom: 0; border-bottom: 0; }
+.role-home-page .dash-order p { margin: .25rem 0; color: var(--muted, #505966); }
+.role-home-page .dash-order-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
+.role-home-page .dash-status {
+  padding: .15rem .65rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
+  border: 1px solid var(--field-line, #7b8799);
+}
+.role-home-page .dash-status--delivered { border-color: var(--ok, #238636); }
+.role-home-page .dash-status--cancelled { border-color: var(--danger, #b00020); color: var(--danger, #b00020); }
+.role-home-page .dash-profile { display: grid; gap: .6rem; margin: 0; }
+.role-home-page .dash-profile dt { font-size: .85rem; color: var(--muted, #505966); }
+.role-home-page .dash-profile dd { margin: 0; overflow-wrap: anywhere; }
+.role-home-page .dash-section .request-state { margin: 0; }

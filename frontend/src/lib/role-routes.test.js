@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { accountPath, canAccess, canUseCart, footerLinks, headerLinks, isPublicPath, landingLabel, landingPath, postLoginPath, roleLinks } from "./role-routes.js";
+import { accountLabel, accountPath, canAccess, canUseCart, footerLinks, headerLinks, isPublicPath, landingLabel, landingPath, postLoginPath, roleLinks } from "./role-routes.js";
 
 const customer = { id: 1, role: "Customer" };
 const productManager = { id: 2, role: "ProductManager" };
@@ -121,4 +121,12 @@ test("the footer offers Cart and Orders only to guests and customers, and never 
   assert.deepEqual(footerLinks(null), shopper);
   assert.deepEqual(footerLinks("Customer"), shopper);
   for (const role of ["ProductManager", "SalesManager", "SupportAgent"]) assert.deepEqual(footerLinks(role), [["/products", "Products"]], role);
+});
+
+test("the account menu's first entry is named after the page it opens", () => {
+  assert.equal(accountLabel("Customer"), "My account");
+  assert.equal(accountLabel("ProductManager"), "Management");
+  assert.equal(accountLabel("SalesManager"), "Management");
+  assert.equal(accountLabel("SupportAgent"), "Support");
+  assert.equal(accountLabel("Nobody"), null);
 });

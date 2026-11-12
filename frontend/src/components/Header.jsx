@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation, useNavigate } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { useCartCount } from "../hooks/useCartCount.js";
 import { loginHref } from "../lib/auth-utils.js";
-import { accountPath, canUseCart, headerLinks, isPublicPath, landingLabel, roleLinks } from "../lib/role-routes.js";
+import { accountLabel, accountPath, canUseCart, headerLinks, isPublicPath, landingLabel, roleLinks } from "../lib/role-routes.js";
 import CategoryMenu from "./CategoryMenu.jsx";
 import Button from "./ui/Button.jsx";
 import Input from "./ui/Input.jsx";
@@ -101,7 +101,9 @@ export default function Header() {
                     </NavLink>
                     <ul className="account-menu-list" aria-label="Account shortcuts">
                       <li className="account-menu-name">{account.name}</li>
+                      <li><Link to={accountPath(account.role)}>{accountLabel(account.role)}</Link></li>
                       {roleLinks(account.role).map(([to, label]) => <li key={to}><Link to={to}>{label}</Link></li>)}
+                      <li><button type="button" className="account-menu-logout" disabled={loggingOut} onClick={handleLogout}>Logout</button></li>
                     </ul>
                   </div>
                   : <span id="user-name" title={account.name}>{account.name}</span>}

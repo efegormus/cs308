@@ -11,7 +11,8 @@ import ProductPage from "./pages/ProductPage.jsx";
 import ProductsPage from "./pages/ProductsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import WishlistPage from "./pages/WishlistPage.jsx";
-import { DashboardPage, ManagePage, SupportPage } from "./pages/RoleHomePages.jsx";
+import DashboardPage from "./pages/DashboardPage.jsx";
+import { ManagePage, SupportPage } from "./pages/RoleHomePages.jsx";
 
 export default function App() {
   return (
