@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
+using MySqlConnector;
 using OnlineStore.Accounts;
 using OnlineStore.Dashboards;
 using OnlineStore.Data;
@@ -23,6 +24,18 @@ public class DashboardApiTests
 {
     private static readonly DateTimeOffset FixedNow = new(2026, 11, 10, 12, 0, 0, TimeSpan.Zero);
     private static readonly DateTime PurchasedAt = new(2026, 11, 9, 12, 0, 0, DateTimeKind.Utc);
+
+    [Fact]
+    public void MySqlConnectionString_PreservesCarriageReturnFromExistingCrlfSecret()
+    {
+        var password = new string('a', 64) + "\r";
+        var connectionString =
+            $"Server=127.0.0.1;Port=33306;Database=onlinestore;User ID=onlinestore;Password=\"{password}\"";
+
+        var parsed = new MySqlConnectionStringBuilder(connectionString);
+
+        Assert.True(parsed.Password.EndsWith('\r'));
+    }
 
     [Fact]
     public async Task DashboardEndpoints_Return401And403ForEveryRoleGuard()
@@ -128,6 +141,35 @@ public class DashboardApiTests
     }
 
     [Fact]
+    public async Task CustomerDashboard_ReturnsFiveNewestOrdersInStableOrder()
+    {
+        await using var server = await DashboardTestServer.CreateAsync();
+        long[] orderIds;
+        await using (var scope = server.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
+            var customer = await db.Users.SingleAsync(user => user.Id == server.CustomerId);
+            var product = NewProduct("ORDER-LIMIT", 10m, 20);
+            db.Products.Add(product);
+            await db.SaveChangesAsync();
+
+            var orders = Enumerable.Range(1, 7)
+                .Select(index => PaidOrder(customer, product, 1, index * 10m))
+                .ToArray();
+            db.Orders.AddRange(orders);
+            await db.SaveChangesAsync();
+            orderIds = orders.Select(order => order.Id).OrderDescending().Take(5).ToArray();
+        }
+
+        using var response = await server.GetAsync(
+            "/api/customer/dashboard", RolePolicies.Customer, server.CustomerId);
+        var dashboard = (await response.Content.ReadFromJsonAsync<CustomerDashboardResponse>())!;
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        Assert.Equal(orderIds, dashboard.RecentConfirmedOrders.Select(order => order.OrderId));
+        Assert.All(dashboard.RecentConfirmedOrders, order => Assert.Equal(1, order.ItemCount));
+    }
+
+    [Fact]
     public async Task SalesDashboard_CalculatesCapturedRevenueLessCompletedRefunds()
     {
         await using var server = await DashboardTestServer.CreateAsync();
@@ -185,6 +227,67 @@ public class DashboardApiTests
         Assert.Equal("TRY", dashboard.CurrencyCode);
         Assert.Equal("INV-2026-000001", dashboard.RecentInvoices.Single().InvoiceNumber);
         Assert.Equal(["Current"], dashboard.ActiveDiscounts.Select(discount => discount.Name));
+    }
+
+    [Fact]
+    public async Task SalesDashboard_UsesCapturedAmountAndPartialRefundsWithoutOrderLineJoinDuplication()
+    {
+        await using var server = await DashboardTestServer.CreateAsync();
+        var from = new DateTime(2026, 11, 9, 0, 0, 0, DateTimeKind.Utc);
+        var to = from.AddDays(3);
+        await using (var scope = server.App.Services.CreateAsyncScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
+            var customer = await db.Users.SingleAsync(user => user.Id == server.CustomerId);
+            var firstProduct = NewProduct("HISTORY-ONE", 50m, 5);
+            var secondProduct = NewProduct("HISTORY-TWO", 70m, 5);
+            db.Products.AddRange(firstProduct, secondProduct);
+            await db.SaveChangesAsync();
+
+            var order = NewOrder(customer, 120m);
+            order.OrderItems.Add(OrderItem.Snapshot(firstProduct, 1));
+            order.OrderItems.Add(OrderItem.Snapshot(secondProduct, 1));
+            Assert.True(order.ConfirmPayment(from.AddHours(1)));
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+
+            var payment = new Payment
+            {
+                OrderId = order.Id, Order = order, UserId = customer.Id, CartId = 1,
+                IdempotencyKey = new string('C', 64), Amount = 120m, Status = PaymentStatus.Confirmed,
+                CreatedAt = from, ConfirmedAt = from.AddHours(1), CardBrand = "Visa", CardLast4 = "1234"
+            };
+            var boundaryOrder = NewOrder(customer, 20m);
+            boundaryOrder.OrderItems.Add(OrderItem.Snapshot(firstProduct, 1, 20m));
+            Assert.True(boundaryOrder.ConfirmPayment(from.AddHours(2)));
+            db.Orders.Add(boundaryOrder);
+            await db.SaveChangesAsync();
+            var boundaryPayment = new Payment
+            {
+                OrderId = boundaryOrder.Id, Order = boundaryOrder, UserId = customer.Id, CartId = 1,
+                IdempotencyKey = new string('D', 64), Amount = 20m, Status = PaymentStatus.Confirmed,
+                CreatedAt = to.AddTicks(-1), ConfirmedAt = to.AddTicks(-1), CardBrand = "Visa", CardLast4 = "1234"
+            };
+            db.Payments.Add(payment);
+            db.Payments.Add(boundaryPayment);
+            await db.SaveChangesAsync();
+
+            db.Refunds.AddRange(
+                NewRefund(order, payment, 10m, "Completed", from),
+                NewRefund(boundaryOrder, boundaryPayment, 20m, "Completed", to));
+            firstProduct.Price = 500m;
+            secondProduct.Price = 700m;
+            await db.SaveChangesAsync();
+        }
+
+        using var response = await server.GetAsync(
+            "/api/sales/dashboard?from=2026-11-09T00:00:00Z&to=2026-11-12T00:00:00Z",
+            RolePolicies.SalesManager, server.CustomerId);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        var dashboard = (await response.Content.ReadFromJsonAsync<SalesDashboardResponse>())!;
+        Assert.Equal(140m, dashboard.GrossRevenue);
+        Assert.Equal(10m, dashboard.Refunds);
+        Assert.Equal(130m, dashboard.NetRevenue);
     }
 
     [Fact]
@@ -291,18 +394,45 @@ public class DashboardApiTests
 
             var order = PaidOrder(customer, scarce, 1, 100m);
             Assert.True(order.TransitionTo(OrderStatus.InTransit, PurchasedAt.AddDays(1)));
-            db.Orders.Add(order);
+            var processingOrder = PaidOrder(customer, scarce, 1, 100m);
+            var deliveredOrder = PaidOrder(customer, scarce, 1, 100m);
+            Assert.True(deliveredOrder.TransitionTo(OrderStatus.InTransit, PurchasedAt.AddDays(1)));
+            Assert.True(deliveredOrder.TransitionTo(OrderStatus.Delivered, PurchasedAt.AddDays(2)));
+            var cancelledOrder = PaidOrder(customer, scarce, 1, 100m);
+            Assert.True(cancelledOrder.TransitionTo(OrderStatus.Cancelled, PurchasedAt.AddDays(1)));
+            db.Orders.AddRange(order, processingOrder, deliveredOrder, cancelledOrder);
             await db.SaveChangesAsync();
             var line = order.OrderItems.Single();
-            db.Deliveries.Add(new Delivery
-            {
-                OrderId = order.Id, UserId = customer.Id, Order = order, AddressSnapshot = "Snapshot",
-                Status = OrderStatus.InTransit, CreatedAt = PurchasedAt.AddDays(1)
-            });
+            db.Deliveries.AddRange(
+                new Delivery
+                {
+                    OrderId = order.Id, UserId = customer.Id, Order = order, AddressSnapshot = "Snapshot",
+                    Status = OrderStatus.InTransit, CreatedAt = PurchasedAt.AddDays(1)
+                },
+                new Delivery
+                {
+                    OrderId = processingOrder.Id, UserId = customer.Id, Order = processingOrder, AddressSnapshot = "Snapshot",
+                    Status = OrderStatus.Processing, CreatedAt = PurchasedAt.AddDays(2)
+                },
+                new Delivery
+                {
+                    OrderId = deliveredOrder.Id, UserId = customer.Id, Order = deliveredOrder, AddressSnapshot = "Snapshot",
+                    Status = OrderStatus.Delivered, CreatedAt = PurchasedAt.AddDays(3)
+                },
+                new Delivery
+                {
+                    OrderId = cancelledOrder.Id, UserId = customer.Id, Order = cancelledOrder, AddressSnapshot = "Snapshot",
+                    Status = OrderStatus.Cancelled, CreatedAt = PurchasedAt.AddDays(4)
+                });
             db.Comments.Add(new Comment
             {
                 UserId = customer.Id, ProductId = scarce.Id, OrderItemId = line.Id, Product = scarce,
                 OrderItem = line, Body = "Waiting for review", CreatedAt = PurchasedAt.AddDays(1)
+            });
+            db.Comments.Add(new Comment
+            {
+                UserId = customer.Id, ProductId = scarce.Id, OrderItemId = line.Id, Product = scarce,
+                OrderItem = line, Body = new string('x', 1001), CreatedAt = PurchasedAt.AddDays(2)
             });
             db.Comments.Add(new Comment
             {
@@ -317,8 +447,9 @@ public class DashboardApiTests
         Assert.Equal(HttpStatusCode.OK, response.StatusCode);
         var dashboard = (await response.Content.ReadFromJsonAsync<ProductManagementDashboardResponse>())!;
         Assert.Equal(["SCARCE"], dashboard.LowStockProducts.Select(product => product.Sku));
-        Assert.Equal(["InTransit"], dashboard.PendingDeliveries.Select(delivery => delivery.Status));
-        Assert.Equal(["Waiting for review"], dashboard.CommentsWaitingForApproval.Select(comment => comment.Body));
+        Assert.Equal(["Processing", "InTransit"], dashboard.PendingDeliveries.Select(delivery => delivery.Status));
+        Assert.Equal(["Waiting for review", new string('x', 1000)],
+            dashboard.CommentsWaitingForApproval.Select(comment => comment.Body));
     }
 
     [Fact]
@@ -363,12 +494,24 @@ public class DashboardApiTests
     [Theory]
     [InlineData("/api/sales/dashboard")]
     [InlineData("/api/sales/dashboard?from=2026-11-10T00:00:00Z&to=2026-11-09T00:00:00Z")]
+    [InlineData("/api/sales/dashboard?from=2026-11-09T00:00:00Z&to=2026-11-09T00:00:00Z")]
+    [InlineData("/api/sales/dashboard?from=2026-11-09T00:00:00&to=2026-11-10T00:00:00")]
     [InlineData("/api/sales/dashboard?from=2025-11-01T00:00:00Z&to=2026-11-10T00:00:00Z")]
     public async Task SalesDashboard_RejectsMissingOrInvalidDateRanges(string path)
     {
         await using var server = await DashboardTestServer.CreateAsync();
         using var response = await server.GetAsync(path, RolePolicies.SalesManager, server.CustomerId);
         Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task SalesDashboard_AcceptsTheMaximumDateRange()
+    {
+        await using var server = await DashboardTestServer.CreateAsync();
+        using var response = await server.GetAsync(
+            "/api/sales/dashboard?from=2025-11-09T00:00:00Z&to=2026-11-10T00:00:00Z",
+            RolePolicies.SalesManager, server.CustomerId);
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
     }
 
     [Theory]

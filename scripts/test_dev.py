@@ -1,6 +1,7 @@
 import contextlib
 import io
 import json
+import os
 import tempfile
 import unittest
 from pathlib import Path
@@ -19,10 +20,26 @@ class LocalConfigurationTests(unittest.TestCase):
             root_password = (root / '.local/mysql-root-password').read_text().strip()
             self.assertNotEqual(password, root_password)
             self.assertNotIn(password, output.getvalue())
-            self.assertEqual((root / '.local/mysql-password').stat().st_mode & 0o777, 0o600)
+            if os.name == 'posix':
+                self.assertEqual((root / '.local/mysql-password').stat().st_mode & 0o777, 0o600)
             env = development_environment(root)
             self.assertIn('Port=33306;', env['ConnectionStrings__DefaultConnection'])
+            self.assertTrue(env['ConnectionStrings__DefaultConnection'].endswith('Password=' + password))
             self.assertEqual(env['ASPNETCORE_ENVIRONMENT'], 'Development')
+            self.assertTrue((root / '.local/mysql-password').read_bytes().endswith(b'\n'))
+            self.assertFalse((root / '.local/mysql-password').read_bytes().endswith(b'\r\n'))
+
+    def test_connection_preserves_carriage_return_from_existing_crlf_secret(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            init_config(33306, root)
+            password_path = root / '.local/mysql-password'
+            password = password_path.read_bytes().rstrip(b'\n')
+            password_path.write_bytes(password + b'\r\n')
+
+            connection = development_environment(root)['ConnectionStrings__DefaultConnection']
+
+            self.assertTrue(connection.endswith('Password="' + password.decode('ascii') + '\r"'))
 
     def test_repeated_initialization_keeps_database_credentials(self):
         with tempfile.TemporaryDirectory() as directory:

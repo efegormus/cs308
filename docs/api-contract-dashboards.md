@@ -167,3 +167,11 @@ The session is checked against the database, including active account, role, and
 security stamp. Customer dashboard ownership comes only from the session's
 user ID. No endpoint accepts a customer ID, and manager listings are limited to
 the two manager roles above.
+
+## Support-agent dashboard placeholder
+
+`SupportAgent` has no dashboard endpoint in this contract. The role is
+intentionally denied access to customer, sales, product-management, and manager
+dashboards and to the manager user list. Support-agent workflows are outside
+SCRUM-131; this placeholder does not introduce an endpoint or grant dashboard
+data access.

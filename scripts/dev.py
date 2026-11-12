@@ -31,8 +31,8 @@ def init_config(port, root=ROOT):
     contents = [json.dumps({"mysqlPort": port, "serverVersion": "8.4.13"}, indent=2) + "\n",
                 secrets.token_hex(32) + "\n", secrets.token_hex(32) + "\n"]
     for path, content in zip(paths, contents):
-        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "w") as stream:
-            stream.write(content)
+        with os.fdopen(os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600), "wb") as stream:
+            stream.write(content.encode("ascii"))
     print("Created .local configuration and random database passwords. No passwords are printed.")
 
 
@@ -41,18 +41,22 @@ def development_environment(root=ROOT):
     if not (local / "dev.json").is_file():
         raise ValueError("Run python3 scripts/dev.py init first.")
     config = json.loads((local / "dev.json").read_text())
-    password = (local / "mysql-password").read_text().strip()
+    try:
+        password = (local / "mysql-password").read_bytes().decode("ascii").rstrip("\n")
+    except UnicodeDecodeError as error:
+        raise ValueError("Invalid local database configuration.") from error
     port = int(config["mysqlPort"])
-    # Only generated hex secrets are accepted; delimiters must never alter a connection string.
-    if len(password) != 64 or any(char not in "0123456789abcdef" for char in password) or not 1 <= port <= 65535:
+    hex_password = password[:-1] if password.endswith("\r") else password
+    if len(hex_password) != 64 or any(char not in "0123456789abcdef" for char in hex_password) or not 1 <= port <= 65535:
         raise ValueError("Invalid local database configuration.")
+    connection_password = f'"{password}"' if password.endswith("\r") else password
     env = os.environ.copy()
     env.update({
         "ASPNETCORE_ENVIRONMENT": "Development",
         "MYSQL_PORT": str(port),
         "MySql__ServerVersion": config["serverVersion"],
         "ConnectionStrings__DefaultConnection":
-            f"Server=127.0.0.1;Port={port};Database=onlinestore;User ID=onlinestore;Password={password}",
+            f"Server=127.0.0.1;Port={port};Database=onlinestore;User ID=onlinestore;Password={connection_password}",
     })
     return env
 
