@@ -78,45 +78,38 @@ There are no browser-stored bearer tokens and no wildcard credentialed CORS.
 
 ## Frontend contract
 
-`js/auth.js` is the shared client for this API. Load it on every page; see
-[Add the login header to a new page](ui-design.md#add-the-login-header-to-a-new-page).
-A guest gets 401 from `/api/auth/me` on every page. That is normal: it shows no error.
+`AuthProvider` in `frontend/src/auth/AuthProvider.jsx` is the shared client for this
+API. It wraps the whole React app, so a component reads it with `useAuth()`. It checks
+`/api/auth/me` once per page load; a guest gets 401, which is normal and shows no error.
 
 ```js
-window.StoreAuth = {
-  getAccount(),  // current { id, name, email, role }, or null (also null before the first /me check)
-  csrfToken(),   // Promise<string> with the latest token; rejects if it cannot be fetched
-  onLogin(fn)    // fn(account) may return a Promise; runs on the login page before the redirect
-};
+const {
+  account,    // current { id, name, email, role }, or null (also null before the first /me check)
+  authReady,  // true after the first /me check, whatever its result
+  csrfToken,  // () => Promise<string> with the latest token; rejects if it cannot be fetched
+  onLogin     // (fn) => remove; fn(account) may return a Promise; runs after login, before the redirect
+} = useAuth();
 ```
 
-`auth:changed` is a `window` event fired after the first `/me` check on every page,
-and after login and logout:
-
-```js
-window.addEventListener("auth:changed", event => {
-  const { authenticated, account } = event.detail; // account is null when signed out
-});
-```
-
+A component re-renders when `account` changes after login, logout or an expired session.
 Send the token as `X-CSRF-TOKEN` on every POST. `csrfToken()` already returns a new
 token after login and logout, so do not keep your own copy.
 
 ### onLogin hooks (for SCRUM-100)
 
-- A hook only runs if its script is loaded on `login.html`. Load it as a module after
-  `/js/auth.js`, so `window.StoreAuth` exists.
-- Hooks run after the session and the new CSRF token are ready, so a hook can POST
-  straight away with `await StoreAuth.csrfToken()`.
-- `login.js` waits for all hooks, for at most 5 seconds in total, and then redirects.
+- Register a hook in an effect, `useEffect(() => onLogin(hook), [onLogin])`, so the
+  returned function removes it again when the component unmounts.
+- Hooks run after the session and the new CSRF token are ready, and after a Customer's
+  guest cart is merged, so a hook can POST straight away with `await csrfToken()`.
+- The login waits for all hooks, for at most 5 seconds in total, and then redirects.
   A hook that fails or is too slow never blocks the login, and the redirect may cut
   off its request. A hook's server work must therefore be safe to repeat.
 
 ### returnUrl
 
-`/login.html?returnUrl=<URL-encoded path>` sends the visitor there after login, and
+`/login?returnUrl=<URL-encoded path>` sends the visitor there after login, and
 also straight away if they are already signed in. The header's Login link carries the
-current path, query and hash. `safeReturnUrl` in `js/auth-utils.js` accepts only a
+current path, query and hash. `safeReturnUrl` in `frontend/src/lib/auth-utils.js` accepts only a
 same-site path starting with a single `/`, and otherwise falls back to `/`. It rejects:
 
 - `//…`, backslashes and any scheme (`https:`, `javascript:` …)
@@ -196,5 +189,4 @@ No demo staff passwords or real account credentials are seeded or committed.
 `AuthProvider` restores the signed-in Customer's guest cart using the fresh
 identity's CSRF token before allowing checkout. It exposes merge errors, conflicts
 and an explicit retry; the React cart refreshes when the merge completes.
-`/login` currently redirects to the retained working `/login.html` form with the
-validated React return URL. See [React hosting](react-hosting.md).
+See [React hosting](react-hosting.md).

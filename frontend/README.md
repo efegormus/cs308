@@ -62,9 +62,6 @@ motion are described in [UI design](../docs/ui-design.md).
   selector in these files with it.
 - `layout.css` holds the page frame.
 
-Until the old pages are removed, `OnlineStore/wwwroot/css/auth.css` is a second copy of
-`auth.css`. A change to a color has to go in both.
-
 ## ASP.NET hosting and purchasing
 
 `npm run build` creates `dist/`; ASP.NET serves it on port 5200, with deep-link

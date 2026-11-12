@@ -1,16 +1,16 @@
 # Catalog integration (SCRUM-54)
 
 The catalog now reads SCRUM-43's `/api/categories` and `/api/products` directly.
-`wwwroot/js/catalog-api.js` loads both lists from the same origin and groups them
+`frontend/src/lib/catalog-api.js` loads both lists from the same origin and groups them
 using integer category IDs, preserving empty categories and server ordering.
 Description is an additive nullable product DTO field so existing cards keep
 their description without a second live inventory source. `/api/catalog` remains
 available for compatible clients.
 
-Homepage phone/tablet links resolve the actual category IDs and open the matching
-catalog anchor. They fall back to the working catalog page if the categories
-request fails; no sample inventory is embedded in the page. Both pages are served
-by ASP.NET Core, so no configurable external API host or CORS allowance is needed.
+The home page and the header's category bar link to the matching catalog anchor,
+`/products#category-<id>`, using the real category IDs; no sample inventory is
+embedded in the page. The React app is served by ASP.NET Core from the same origin,
+so no configurable external API host or CORS allowance is needed.
 
 The page has loading/empty/error/retry states, a 15-second request timeout, and
 clears partial results if either request fails. If concurrent category changes

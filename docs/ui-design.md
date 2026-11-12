@@ -2,7 +2,7 @@
 
 This records the SCRUM-56 design decisions, so cart, catalog and later pages use the
 same look. The login page (SCRUM-68) is the first page built with it. The source is
-`OnlineStore/wwwroot/css/auth.css`.
+`frontend/src/styles/`.
 
 ## Change a color in one place
 
@@ -11,27 +11,15 @@ radii) is a custom property on `:root` in `frontend/src/styles/design-system.css
 `main.jsx` loads before every other stylesheet. Edit the value there and nothing else. A
 dark value appears twice, once in the `prefers-color-scheme: dark` block and once in the
 `[data-theme="dark"]` block, so change both. Never write a color directly in a rule.
-The target values and their reasons are in [DESIGN.md](../DESIGN.md). The old pages in
-`OnlineStore/wwwroot` keep their own copy at the top of `wwwroot/css/auth.css`.
+The target values and their reasons are in [DESIGN.md](../DESIGN.md).
 
-## Add the login header to a new page
+## Add a new page
 
-Put the first two lines in `<head>` and the block at the end of the page's `<nav>`:
-
-```html
-<link rel="stylesheet" href="/css/auth.css">
-<script type="module" src="/js/auth.js"></script>
-
-<a id="auth-link" href="/login.html">Login</a><span id="user-name" hidden></span><button id="logout" type="button" hidden>Logout</button>
-```
-
-`auth.js` then handles the signed-in state, the return link and logout. The nav must be
-a flex container, as it is on the existing pages. A page that needs the signed-in
-account uses the [frontend contract](authentication.md#frontend-contract).
-
-`auth.css` is safe on any page: only custom properties sit on `:root`, and every other
-rule is scoped to `#auth-link`, `#user-name`, `#logout` or `body.auth-page`. Keep it
-that way. Pages without the Google Fonts link show the header text in Arial.
+Add its `<Route>` inside the `Layout` route in `frontend/src/App.jsx`. `Layout` renders the
+shared header and footer, so the page gets the Login link, the signed-in state, the return
+link and logout without extra code (see [Header and footer](#header-and-footer)). A page
+that needs the signed-in account uses the [frontend contract](authentication.md#frontend-contract).
+Give the page its wrapper class, as described in [Shared rules](#shared-rules).
 
 ## Fonts
 
@@ -74,9 +62,9 @@ that way. Pages without the Google Fonts link show the header text in Arial.
 | `--btn-glow` | Button spotlight | `rgba(255, 255, 255, 0.28)` | same |
 | `--ring-glow` | Button hover ring | `rgba(23, 74, 139, 0.22)` | `rgba(77, 132, 224, 0.35)` |
 
-Dark values follow the visitor's system setting. Only pages with
-`<body class="auth-page">` and the React home page use the dark background;
-`index.html` and `products.html` have no dark theme yet.
+Dark values follow the visitor's system setting. The login and register pages
+(`.auth-page`), the home page and the cart page use the dark background; the catalog
+and purchase pages (`products.css`, `purchases.css`) have no dark theme yet.
 
 ## Layout and spacing
 

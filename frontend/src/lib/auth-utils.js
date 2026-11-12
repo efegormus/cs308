@@ -7,7 +7,7 @@ const MAX_RETRY_SECONDS = 3600;
 
 export function isLoginPath(pathname) {
   const path = String(pathname).toLowerCase();
-  return path === LOGIN_PATH || path === "/login.html"; // The old page counts until SCRUM-112 removes it.
+  return path === LOGIN_PATH;
 }
 
 // Accepts only a same-site relative path. Anything else falls back to the home page.

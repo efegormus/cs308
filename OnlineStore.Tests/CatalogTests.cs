@@ -89,18 +89,15 @@ public class CatalogTests
         Assert.DoesNotContain("MySql", body, StringComparison.OrdinalIgnoreCase);
     }
 
+    // SCRUM-133 removed the old wwwroot pages; their addresses must not come back.
     [Theory]
-    [InlineData("/index.html", "Browse products by category")]
-    [InlineData("/products.html", "Shop by category")]
-    [InlineData("/js/products.js", "fetchCatalog")]
-    [InlineData("/js/catalog-api.js", "/api/products")]
-    [InlineData("/js/home-categories.js", "data-category-name")]
-    [InlineData("/css/products.css", ".product-grid")]
-    public async Task Catalog_PageAndAssetsAreServed(string path, string expected)
+    [InlineData("/products.html")]
+    [InlineData("/login.html")]
+    public async Task LegacyPageAddresses_Return404(string path)
     {
         using var factory = new CatalogApplication();
         using var client = factory.CreateClient();
-        Assert.Contains(expected, await client.GetStringAsync(path));
+        Assert.Equal(HttpStatusCode.NotFound, (await client.GetAsync(path)).StatusCode);
     }
 
     private sealed class CatalogApplication(bool useDatabase = false) : WebApplicationFactory<Program>

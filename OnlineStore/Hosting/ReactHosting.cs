@@ -29,9 +29,7 @@ public static class ReactHosting
                         ? "no-cache" : "public,max-age=3600";
                 }
             };
-            // Keep the explicit legacy /index.html URL; only navigation fallback uses React's index.
-            app.UseWhen(context => !context.Request.Path.Equals("/index.html", StringComparison.OrdinalIgnoreCase),
-                branch => branch.UseStaticFiles(options));
+            app.UseStaticFiles(options);
             app.MapFallbackToFile("/{*path:nonfile:spa}", "index.html", options).AllowAnonymous();
         }
         else
@@ -41,8 +39,7 @@ public static class ReactHosting
                 title: "The storefront is temporarily unavailable.")).AllowAnonymous();
         }
 
-        // Keep legacy pages usable until their individual React migrations are complete.
-        // There is deliberately no UseDefaultFiles: / must use the React fallback, not legacy index.html.
+        // There is deliberately no UseDefaultFiles: / must use the React fallback.
         app.UseStaticFiles();
         app.UseRouting();
         app.Use(async (context, next) =>

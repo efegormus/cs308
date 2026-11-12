@@ -16,7 +16,7 @@ OnlineStore/          ASP.NET Core project
   Program.cs          application entry point
   Models/             domain entities for the 29-table SCRUM-119 schema
   Data/               StoreDbContext, entity mappings, and migrations
-  wwwroot/            legacy pages retained during the React migration
+  wwwroot/            empty in the repo; publishing puts the React build in wwwroot/spa
 frontend/             React routes, components, tests and Vite build
 .config/              repository-local EF Core CLI tool
 docs/                 database schema documentation
@@ -155,7 +155,7 @@ calling `/api/health` does not validate them.
 
 ## Product catalog (SCRUM-44)
 
-Open `/products.html` or follow **Browse products by category** from the home page.
+Open `/products` or pick a category in the header's category bar.
 The page loads `GET /api/categories` and `GET /api/products` from SCRUM-43 and
 groups active MySQL products by category ID. Both lists are ordered by name.
 `GET /api/catalog` remains available for compatible clients. Each category has an anchor link, and each
