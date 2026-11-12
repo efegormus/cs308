@@ -145,6 +145,35 @@ public class ProductEndpointsTests
     }
 
     [Fact]
+    public async Task CatalogEndpoints_HideInactiveCategoriesAndTheirProducts()
+    {
+        using var factory = new ProductApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(
+            new Category
+            {
+                Id = 1, Name = "Active", Products = new List<Product>
+                {
+                    new() { Id = 1, Sku = "ACTIVE", Name = "Active phone", Price = 100, StockQuantity = 1 }
+                }
+            },
+            new Category
+            {
+                Id = 2, Name = "Hidden", IsActive = false, Products = new List<Product>
+                {
+                    new() { Id = 2, Sku = "HIDDEN", Name = "Hidden phone", Price = 100, StockQuantity = 1 }
+                }
+            });
+
+        var categories = await client.GetFromJsonAsync<List<CategoryDto>>("/api/categories");
+        var products = await client.GetFromJsonAsync<List<ProductListItemDto>>("/api/products");
+        Assert.NotNull(categories);
+        Assert.NotNull(products);
+        Assert.Equal("Active", Assert.Single(categories).Name);
+        Assert.Equal("Active phone", Assert.Single(products).Name);
+    }
+
+    [Fact]
     public async Task Categories_UnreachableDatabase_ReturnsSafeError()
     {
         using var factory = new ProductApplication(useDatabase: true);
@@ -163,7 +192,13 @@ public class ProductEndpointsTests
             Products = new List<Product>
             {
                 new() { Id = 20, Sku = "PIXEL-9", Name = "Google Pixel 9",
-                    Description = "A smartphone", Price = 43000.50m, StockQuantity = 12, Cost = 20000 },
+                    Description = "A smartphone", Price = 43000.50m, StockQuantity = 12, Cost = 20000,
+                    Brand = new Brand { Id = 1, Name = "Google" },
+                    Images = new List<ProductImage>
+                    {
+                        new() { Id = 1, StorageKey = "/images/pixel-main.jpg", AltText = "Front view", IsPrimary = true, SortOrder = 0 },
+                        new() { Id = 2, StorageKey = "/images/pixel-back.jpg", AltText = "Back view", SortOrder = 1 }
+                    } },
                 new() { Id = 21, Sku = "SOLD-OUT", Name = "Sold Out Phone", Price = 10, StockQuantity = 0 },
                 new() { Id = 22, Sku = "HIDDEN", Name = "Hidden Phone", Price = 10, StockQuantity = 5, IsActive = false }
             }
@@ -190,6 +225,9 @@ public class ProductEndpointsTests
         Assert.Equal("Phones", product.CategoryName);
         Assert.Equal("Test warranty", product.WarrantyStatus);
         Assert.Equal("Test distributor", product.DistributorInformation);
+        Assert.Equal("Google", product.BrandName);
+        Assert.Equal(new[] { "Front view", "Back view" }, product.Images!.Select(image => image.AltText));
+        Assert.Equal(new[] { "/images/pixel-main.jpg", "/images/pixel-back.jpg" }, product.Images!.Select(image => image.Url));
     }
 
     [Fact]

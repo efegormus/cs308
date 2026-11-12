@@ -30,9 +30,10 @@ test runner.
 | `src/App.jsx` | The routes |
 | `src/components/` | `Layout`, `Header` and `Footer`, and the product list parts `ProductCard`, `CategorySection` and `CategoryNav` |
 | `src/auth/AuthProvider.jsx` | `AuthProvider` and the `useAuth()` hook |
-| `src/hooks/useCatalog.js` | `useCatalog()`, which loads the categories and products and takes the search and sort values |
+| `src/hooks/useCatalog.js` | `useCatalog()`, which loads categories, brands and the filtered product page |
 | `src/lib/auth-utils.js` | Pure helpers such as `safeReturnUrl` and `loginHref` |
-| `src/lib/catalog-api.js` | The catalog API client: `fetchCatalog`, `fetchProducts`, `fetchCategories` and `fetchProduct` |
+| `src/lib/catalog-api.js` | The catalog API client: category, brand, product-list, paged-list and detail requests |
+| `src/lib/wishlist-api.js` | Authenticated wishlist reads and CSRF-protected updates |
 | `src/lib/product-display.js`, `src/lib/category-display.js` | Pure helpers for prices, image URLs, stock text, category ids and count labels |
 | `src/pages/` | One component per route |
 | `src/styles/` | The CSS |
@@ -40,15 +41,24 @@ test runner.
 ## The product list
 
 `/products` shows the products grouped by category. A link such as `/products#category-3` scrolls to that
-category. The page calls `useCatalog()`, and the catalog loads again whenever the values it receives change:
+category. Search, category, brand, inclusive price range, sorting and page state are synchronized with the URL.
+The page calls `useCatalog()`, and the catalog loads again whenever those query values change:
 
 ```js
-useCatalog({ search: "pixel", sort: "price", order: "desc", categoryId: 2 });
+useCatalog({
+  search: "pixel", sort: "price", order: "desc", categoryId: 2,
+  brandId: 4, minPrice: 100, maxPrice: 500, page: 1, pageSize: 24
+});
 ```
 
-`sort` is `price` or `popularity` and `order` is `asc` or `desc`, as in `GET /api/products`. The search bar and the
-sort dropdown (SCRUM-67) go where `ProductsPage` marks them. The API client throws a `CatalogError` with the HTTP
-status when a request fails. Out-of-stock products stay in the list with an Out of stock label.
+`sort` is `price` or `popularity` and `order` is `asc` or `desc`, as in `GET /api/products`.
+The React client opts into a bounded paginated response; callers that omit `page` and `pageSize` still receive the
+legacy product array. The API client throws a `CatalogError` with the HTTP status when a request fails.
+Out-of-stock products stay in the list with an Out of stock label.
+
+Product detail pages use the public detail response, including active brand names and ordered product images.
+Customers can add products to `/wishlist`; the wishlist page uses owner-scoped customer APIs and requires login.
+Order history is also backed by the customer API and is paged with its existing `beforeId` cursor.
 
 ## Styles
 

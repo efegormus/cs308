@@ -1,7 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  CatalogError, ORDER_OPTIONS, SORT_OPTIONS, fetchCatalog, fetchCategories, fetchProduct, fetchProducts, productsPath
+  CatalogError, ORDER_OPTIONS, SORT_OPTIONS, fetchBrands, fetchCatalog, fetchCatalogPage, fetchCategories,
+  fetchProduct, fetchProductPage, fetchProducts, productsPath
 } from "./catalog-api.js";
 
 const phones = { id: 1, name: "Phones" };
@@ -37,6 +38,13 @@ test("productsPath sends every filter", () => {
     "/api/products?categoryId=2&search=pixel&sort=price&order=desc");
 });
 
+test("productsPath includes brand, price bounds and pagination in stable URL order", () => {
+  assert.equal(productsPath({
+    categoryId: 2, brandId: 4, minPrice: 10, maxPrice: 90, search: "pixel",
+    sort: "price", order: "desc", page: 3, pageSize: 12
+  }), "/api/products?categoryId=2&brandId=4&minPrice=10&maxPrice=90&search=pixel&sort=price&order=desc&page=3&pageSize=12");
+});
+
 test("productsPath trims the search text and encodes it", () => {
   assert.equal(productsPath({ search: "  pixel 9  " }), "/api/products?search=pixel+9");
   assert.equal(productsPath({ search: "50% & more=1" }), "/api/products?search=50%25+%26+more%3D1");
@@ -65,6 +73,35 @@ test("fetchProducts sends the filters to the products API and passes the signal 
   const rows = await fetchProducts({ search: "pixel", sort: "popularity", signal: controller.signal });
   assert.deepEqual(rows, [pixel]);
   assert.equal(calls[0].init.signal, controller.signal);
+});
+
+test("fetchProductPage requests the paged contract and validates its envelope", async () => {
+  const response = { items: [pixel], totalCount: 27, page: 2, pageSize: 24, totalPages: 2 };
+  mockFetch({ "/api/products?page=2&pageSize=24": response });
+  assert.deepEqual(await fetchProductPage({ page: 2 }), response);
+  mockFetch({ "/api/products?page=1&pageSize=24": { ...response, items: null } });
+  await assert.rejects(fetchProductPage(), CatalogError);
+});
+
+test("fetchBrands validates and returns the available brand options", async () => {
+  const brands = [{ id: 1, name: "Google" }];
+  mockFetch({ "/api/brands": brands });
+  assert.deepEqual(await fetchBrands(), brands);
+  mockFetch({ "/api/brands": [{ id: "1", name: "Google" }] });
+  await assert.rejects(fetchBrands(), CatalogError);
+});
+
+test("fetchCatalogPage groups page results without changing the array catalog contract", async () => {
+  mockFetch({
+    "/api/categories": [phones, tablets],
+    "/api/brands": [],
+    "/api/products?page=1&pageSize=24": {
+      items: [pixel], totalCount: 1, page: 1, pageSize: 24, totalPages: 1
+    }
+  });
+  const page = await fetchCatalogPage();
+  assert.equal(page.totalCount, 1);
+  assert.deepEqual(page.categories.map(category => category.products.length), [1, 0]);
 });
 
 test("fetchCatalog groups the products by category, keeping empty categories", async () => {

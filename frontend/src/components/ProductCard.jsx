@@ -19,6 +19,7 @@ export default function ProductCard({ product }) {
           <div className="image-placeholder">No image available</div>
         )}
         <h3><Link to={`/product?id=${product.id}`}>{product.name}</Link></h3>
+        {product.brandName && <p className="product-brand">{product.brandName}</p>}
         {product.description && <p className="product-description">{product.description}</p>}
         <p className="price">{formatPrice(product.price)}</p>
         <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>

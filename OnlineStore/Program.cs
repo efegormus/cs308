@@ -114,6 +114,7 @@ app.MapProductEndpoints();
 app.MapAccountEndpoints();
 app.MapPurchaseEndpoints();
 app.MapCartEndpoints();
+app.MapWishlistEndpoints();
 app.MapInvoiceEndpoints();
 app.MapDashboardEndpoints();
 

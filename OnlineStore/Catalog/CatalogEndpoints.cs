@@ -15,6 +15,7 @@ public static class CatalogEndpoints
             {
                 var categories = await db.Categories
                     .AsNoTracking()
+                    .Where(category => category.IsActive)
                     .OrderBy(category => category.Name)
                     .ThenBy(category => category.Id)
                     .Select(category => new CategoryListing(
@@ -22,7 +23,7 @@ public static class CatalogEndpoints
                         category.Name,
                         category.Description,
                         category.Products
-                            .Where(product => product.IsActive)
+                            .Where(product => product.IsActive && product.Category.IsActive)
                             .OrderBy(product => product.Name)
                             .ThenBy(product => product.Id)
                             .Select(product => new ProductListing(
