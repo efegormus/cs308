@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using OnlineStore.Data;
+using OnlineStore.Catalog;
 using OnlineStore.Dtos;
 using OnlineStore.Models;
 
@@ -207,6 +208,54 @@ public class ProductSearchSortTests
         Assert.Equal(new[] { "Alpha Zero" }, await NamesAsync(client, "?categoryId=1&search=zero&sort=price"));
     }
 
+    [Fact]
+    public async Task CombinedFilters_AndOptInPagination_ReturnDeterministicCounts()
+    {
+        using var factory = new SearchApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(SampleCatalog());
+        await factory.AddBrandsAsync();
+
+        var combined = await client.GetFromJsonAsync<List<ProductListItemDto>>(
+        "/api/products?categoryId=1&brandId=1&minPrice=20000&maxPrice=45000&search=smartphone");
+        Assert.NotNull(combined);
+        Assert.Equal("Google Pixel 9", Assert.Single(combined).Name);
+        Assert.Equal("Google", combined[0].BrandName);
+        var brands = await client.GetFromJsonAsync<List<BrandListing>>("/api/brands");
+        Assert.NotNull(brands);
+        Assert.Equal("Google", Assert.Single(brands).Name);
+
+        var first = await client.GetFromJsonAsync<ProductPageDto>("/api/products?sort=price&page=1&pageSize=2");
+        var second = await client.GetFromJsonAsync<ProductPageDto>("/api/products?sort=price&page=2&pageSize=2");
+        Assert.NotNull(first);
+        Assert.NotNull(second);
+        Assert.Equal(4, first.TotalCount);
+        Assert.Equal(2, first.TotalPages);
+        Assert.Equal(new[] { "Alpha Zero", "Test Tablet" }, first.Items.Select(item => item.Name));
+        Assert.Equal(new[] { "Google Pixel 9", "Samsung Galaxy S25" }, second.Items.Select(item => item.Name));
+
+        var legacy = await client.GetAsync("/api/products");
+        Assert.Equal("application/json", legacy.Content.Headers.ContentType?.MediaType);
+        Assert.StartsWith("[", await legacy.Content.ReadAsStringAsync());
+    }
+
+    [Theory]
+    [InlineData("?page=0")]
+    [InlineData("?pageSize=101")]
+    [InlineData("?minPrice=20&maxPrice=10")]
+    [InlineData("?brandId=0")]
+    public async Task InvalidCatalogRangesAndPagination_ReturnProblemJson(string query)
+    {
+        using var factory = new SearchApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(SampleCatalog());
+
+        using var response = await client.GetAsync("/api/products" + query);
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+    }
+
     [Theory]
     [InlineData("?sort=rating")]
     [InlineData("?sort=price&order=sideways")]
@@ -265,6 +314,17 @@ public class ProductSearchSortTests
             var db = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
             await PopularityOrders.AddAsync(db, topId: 4, middleId: 2, unsoldId: 3);
         }
+
+        public async Task AddBrandsAsync()
+        {
+            using var scope = Services.CreateScope();
+            var db = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
+            var brand = new Brand { Id = 1, Name = "Google" };
+            db.Brands.Add(brand);
+            var pixel = await db.Products.SingleAsync(product => product.Id == 3);
+            pixel.Brand = brand;
+            await db.SaveChangesAsync();
+        }
     }
 }
 
@@ -304,6 +364,52 @@ internal static class PopularityOrders
 [Collection("MySql")]
 public class ProductSearchSortMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture>
 {
+    [MySqlFact]
+    public async Task MySql_CombinedFiltersPaginationAndProductImages_UseRedesignedSchema()
+    {
+        await fixture.ResetAsync();
+        long brandId, expectedProductId;
+        await using (var db = fixture.Create())
+        {
+            var category = new Category { Name = "Phones" };
+            var brand = new Brand { Name = "Google" };
+            var first = NewProduct("GOOGLE-A", "Pixel Phone", "Smartphone");
+            first.Price = 200;
+            first.Brand = brand;
+            first.Images.Add(new ProductImage { StorageKey = "/images/pixel-front.jpg", AltText = "Front", IsPrimary = true, SortOrder = 0 });
+            var second = NewProduct("GOOGLE-B", "Pixel Pro Phone", "Smartphone");
+            second.Price = 300;
+            second.Brand = brand;
+            second.Images.Add(new ProductImage { StorageKey = "/images/pixel-pro.jpg", AltText = "Pro", IsPrimary = true, SortOrder = 0 });
+            var third = NewProduct("OTHER", "Tablet", "Large screen");
+            third.Price = 250;
+            category.Products.Add(first);
+            category.Products.Add(second);
+            category.Products.Add(third);
+            db.Brands.Add(brand);
+            db.Categories.Add(category);
+            await db.SaveChangesAsync();
+            (brandId, expectedProductId) = (brand.Id, second.Id);
+        }
+
+        using var factory = new MySqlSearchApplication(fixture);
+        using var client = factory.CreateClient();
+        var page = await client.GetFromJsonAsync<ProductPageDto>(
+            $"/api/products?brandId={brandId}&minPrice=100&maxPrice=350&search=smartphone&sort=price&order=desc&page=1&pageSize=1");
+        Assert.NotNull(page);
+        Assert.Equal(2, page.TotalCount);
+        Assert.Equal(2, page.TotalPages);
+        Assert.Equal("Pixel Pro Phone", Assert.Single(page.Items).Name);
+
+        var detail = await client.GetFromJsonAsync<ProductDetailDto>($"/api/products/{expectedProductId}");
+        Assert.NotNull(detail);
+        Assert.Equal("Google", detail.BrandName);
+        Assert.Equal("/images/pixel-pro.jpg", Assert.Single(detail.Images!).Url);
+
+        using var legacy = await client.GetAsync("/api/products");
+        Assert.StartsWith("[", await legacy.Content.ReadAsStringAsync());
+    }
+
     [MySqlFact]
     public async Task MySql_PopularityAndSearch_CountConfirmedOrdersAndEscapeWildcards()
     {

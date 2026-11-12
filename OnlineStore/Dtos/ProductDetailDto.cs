@@ -17,7 +17,9 @@ public record ProductDetailDto(
     long CategoryId,
     string CategoryName,
     string WarrantyStatus,
-    string DistributorInformation)
+    string DistributorInformation,
+    string? BrandName = null,
+    IReadOnlyList<ProductImageDto>? Images = null)
 {
     // An Expression so EF Core translates it into SQL and selects only these columns.
     public static readonly Expression<Func<Product, ProductDetailDto>> FromProduct =
@@ -29,9 +31,15 @@ public record ProductDetailDto(
             product.Price,
             product.StockQuantity,
             product.StockQuantity > 0,
-            product.Images.Where(image => image.IsPrimary).Select(image => image.StorageKey).FirstOrDefault(),
+            product.Images.Where(image => image.IsPrimary).OrderBy(image => image.SortOrder).ThenBy(image => image.Id)
+                .Select(image => image.StorageKey).FirstOrDefault(),
             product.CategoryId,
             product.Category.Name,
             product.WarrantyStatus,
-            product.Distributor.ContactInfo);
+            product.Distributor.ContactInfo,
+            product.Brand != null && product.Brand.IsActive ? product.Brand.Name : null,
+            product.Images.OrderBy(image => image.SortOrder).ThenBy(image => image.Id)
+                .Select(image => new ProductImageDto(image.StorageKey, image.AltText)).ToList());
 }
+
+public sealed record ProductImageDto(string Url, string? AltText);

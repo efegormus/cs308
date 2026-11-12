@@ -13,7 +13,8 @@ public record ProductListItemDto(
     string? ImageUrl,
     long CategoryId,
     string CategoryName,
-    string? Description = null)
+    string? Description = null,
+    string? BrandName = null)
 {
     // Kept as an Expression so EF Core can translate it into SQL
     // (only the needed columns are selected) and tests can still Compile() it.
@@ -27,5 +28,6 @@ public record ProductListItemDto(
             product.Images.Where(image => image.IsPrimary).Select(image => image.StorageKey).FirstOrDefault(),
             product.CategoryId,
             product.Category.Name,
-            product.Description);
+            product.Description,
+            product.Brand != null && product.Brand.IsActive ? product.Brand.Name : null);
 }

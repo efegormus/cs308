@@ -111,7 +111,8 @@ public static class AccountEndpoints
         {
             context.Response.Headers.CacheControl = "no-store";
             var id = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
-            var user = await db.Users.AsNoTracking().SingleOrDefaultAsync(user => user.Id == id, ct);
+            var user = await db.Users.AsNoTracking().Include(user => user.Addresses)
+                .SingleOrDefaultAsync(user => user.Id == id, ct);
             return user is null ? Results.Unauthorized() : Results.Ok(CustomerProfileDto.FromUser(user));
         });
     }

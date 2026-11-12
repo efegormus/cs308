@@ -13,13 +13,18 @@ export class CatalogError extends Error {
 }
 
 // The query for GET /api/products. Empty values are left out, so a blank search means no search, as on the server.
-export function productsPath({ categoryId, search, sort, order } = {}) {
+export function productsPath({ categoryId, brandId, minPrice, maxPrice, search, sort, order, page, pageSize } = {}) {
   const query = new URLSearchParams();
   if (categoryId !== undefined && categoryId !== null) query.set("categoryId", String(categoryId));
+  if (brandId !== undefined && brandId !== null && brandId !== "") query.set("brandId", String(brandId));
+  if (minPrice !== undefined && minPrice !== null && minPrice !== "") query.set("minPrice", String(minPrice));
+  if (maxPrice !== undefined && maxPrice !== null && maxPrice !== "") query.set("maxPrice", String(maxPrice));
   const text = typeof search === "string" ? search.trim() : "";
   if (text) query.set("search", text);
   if (sort) query.set("sort", sort);
   if (order) query.set("order", order);
+  if (page !== undefined && page !== null) query.set("page", String(page));
+  if (pageSize !== undefined && pageSize !== null) query.set("pageSize", String(pageSize));
   const queryString = query.toString();
   return queryString ? `/api/products?${queryString}` : "/api/products";
 }
@@ -95,6 +100,44 @@ export function fetchCategories({ signal } = {}) {
 // The products of GET /api/products. It accepts the same filters as productsPath.
 export async function fetchProducts({ signal, ...filters } = {}) {
   return fetchList(productsPath(filters), signal);
+}
+
+export async function fetchProductPage({ signal, ...filters } = {}) {
+  const data = await fetchJson(productsPath({ page: 1, pageSize: 24, ...filters }), signal);
+  if (!data || !Array.isArray(data.items) || !Number.isInteger(data.totalCount) || data.totalCount < 0
+    || !Number.isInteger(data.page) || data.page < 1 || !Number.isInteger(data.pageSize) || data.pageSize < 1
+    || !Number.isInteger(data.totalPages) || data.totalPages < 0
+    || data.totalPages !== (data.totalCount === 0 ? 0 : Math.ceil(data.totalCount / data.pageSize))
+    || data.items.length > data.pageSize
+    || !data.items.every(isValidProduct)) {
+    throw new CatalogError("Invalid catalog response.");
+  }
+  return data;
+}
+
+export async function fetchBrands({ signal } = {}) {
+  const brands = await fetchList("/api/brands", signal);
+  if (!brands.every(brand => Number.isInteger(brand?.id) && typeof brand.name === "string"))
+    throw new CatalogError("Invalid brand response.");
+  return brands;
+}
+
+export async function fetchCatalogPage({ signal, ...filters } = {}) {
+  const [categories, page] = await Promise.all([
+    fetchCategories({ signal }), fetchProductPage({ ...filters, signal })
+  ]);
+  const grouped = new Map();
+  for (const category of categories) {
+    if (!Number.isInteger(category?.id) || typeof category.name !== "string" || grouped.has(category.id))
+      throw new CatalogError("Invalid category response.");
+    grouped.set(category.id, { ...category, products: [] });
+  }
+  for (const product of page.items) {
+    const category = grouped.get(product.categoryId);
+    if (!category) throw new CatalogError("Invalid product response.");
+    category.products.push(product);
+  }
+  return { categories: [...grouped.values()], ...page };
 }
 
 // Every category with its products. With filters, categories without a match stay in the list with no products.
