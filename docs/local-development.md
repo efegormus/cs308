@@ -40,6 +40,10 @@ The helper creates independent random application/root passwords in ignored
 string through the child environment; it never prints secrets or places them
 in command arguments. `init` is idempotent and refuses partial/mismatched
 configuration instead of overwriting credentials for an existing database.
+New files use LF endings. For existing CRLF application-password files, the
+helper preserves the trailing carriage return used by the MySQL image when it
+reads the secret; do not normalize or replace a secret for a database that
+already has data.
 
 Compose pins `mysql:8.4.13`, uses file-backed secrets, waits for an authenticated
 SELECT 1 health check, binds only 127.0.0.1 and persists data in `mysql-data`.

@@ -31,15 +31,17 @@ public static class DashboardEndpoints
             .WithMetadata(PrivateResponseMetadata.Instance);
 
         var sales = app.MapSalesManagerApi().AddEndpointFilter<DashboardErrorFilter>();
-        sales.MapGet("/dashboard", async (DateTimeOffset? from, DateTimeOffset? to,
+        sales.MapGet("/dashboard", async (DateTimeOffset? from, DateTimeOffset? to, HttpRequest request,
             IDashboardService dashboards, CancellationToken cancellationToken) =>
         {
             if (from is null || to is null || from.Value >= to.Value
-                || to.Value - from.Value > MaximumSalesRange)
+                || to.Value - from.Value > MaximumSalesRange
+                || !HasExplicitOffset(request.Query["from"].ToString())
+                || !HasExplicitOffset(request.Query["to"].ToString()))
             {
                 return Results.ValidationProblem(new Dictionary<string, string[]>
                 {
-                    ["dateRange"] = [$"Provide from and to with from < to and a range no greater than {MaximumSalesRange.TotalDays:0} days."]
+                    ["dateRange"] = [$"Provide from and to with explicit UTC offsets, from < to, and a range no greater than {MaximumSalesRange.TotalDays:0} days."]
                 });
             }
 
@@ -95,6 +97,21 @@ public static class DashboardEndpoints
             .Produces(StatusCodes.Status403Forbidden)
             .Produces(StatusCodes.Status503ServiceUnavailable)
             .WithMetadata(PrivateResponseMetadata.Instance);
+    }
+
+    private static bool HasExplicitOffset(string value)
+    {
+        value = value.Trim();
+        if (value.EndsWith('Z') || value.EndsWith('z')) return true;
+
+        var offsetStart = value.Length - 6;
+        return offsetStart >= 0
+            && value[offsetStart] is '+' or '-'
+            && value[offsetStart + 1] is >= '0' and <= '9'
+            && value[offsetStart + 2] is >= '0' and <= '9'
+            && value[offsetStart + 3] == ':'
+            && value[offsetStart + 4] is >= '0' and <= '9'
+            && value[offsetStart + 5] is >= '0' and <= '9';
     }
 }
 
