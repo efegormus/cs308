@@ -232,31 +232,6 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: JavaScript syntax check
-        run: |
-          shopt -s globstar nullglob
-          files=(OnlineStore/wwwroot/**/*.js)
-          [ "${#files[@]}" -gt 0 ] || { echo "No JavaScript files found." >&2; exit 1; }
-          for file in "${files[@]}"; do
-            echo "Checking $file"
-            node --check "$file"
-          done
-
-      # The rules live in .htmlvalidate.json. The version is pinned so new releases cannot break CI.
-      - name: HTML validation
-        run: npx --yes html-validate@11.18.0 "OnlineStore/wwwroot/**/*.html"
-
-      # Browser-side unit tests (for example js/validators.test.js) run with Node's built-in test runner.
-      - name: JavaScript unit tests
-        run: |
-          shopt -s globstar nullglob
-          tests=(OnlineStore/wwwroot/**/*.test.js)
-          if [ "${#tests[@]}" -eq 0 ]; then
-            echo "No *.test.js files yet."
-          else
-            node --test "${tests[@]}"
-          fi
-
       - name: Python script tests
         run: python3 -I -m unittest discover -s scripts -p 'test_*.py'
 

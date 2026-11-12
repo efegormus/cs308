@@ -289,7 +289,7 @@ are merged.
 
 ### 5.1 `GET /api/products/{id}` (SCRUM-45, implemented)
 
-This endpoint is now in the code and used by `product.html`; the behavior below is what it does.
+This endpoint is now in the code and used by the React product page (`/product`); the behavior below is what it does.
 
 - `{id}` must be an integer. Unknown or inactive product: `404`. Database failure: `503`.
 - Response fields: `id`, `name`, `model`, `description`, `price`,

@@ -62,15 +62,16 @@ test("safeReturnUrl handles empty, missing and too long values", () => {
 });
 
 test("safeReturnUrl never returns to the login page, which would redirect forever", () => {
-  for (const value of ["/login.html", "/LOGIN.HTML", "/login", "/login.html?returnUrl=/", "/login.html#x", "/a/../login.html", "/./login.html"]) {
+  for (const value of ["/login", "/LOGIN", "/Login", "/login?returnUrl=/", "/login#x", "/a/../login", "/./login"]) {
     assert.equal(safeReturnUrl(value), "/", value);
   }
 });
 
 test("isLoginPath matches only the login page", () => {
-  assert.equal(isLoginPath("/login.html"), true);
-  assert.equal(isLoginPath("/Login.html"), true);
-  assert.equal(isLoginPath("/products.html"), false);
+  assert.equal(isLoginPath("/login"), true);
+  assert.equal(isLoginPath("/Login"), true);
+  assert.equal(isLoginPath("/login.html"), false); // The old page was removed in SCRUM-133.
+  assert.equal(isLoginPath("/products"), false);
   assert.equal(isLoginPath("/"), false);
 });
 

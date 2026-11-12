@@ -17,7 +17,7 @@ python3 scripts/dev.py run
 
 # Optional second terminal for React hot reload
 python3 scripts/dev.py frontend
-# Open http://localhost:5173 (API and legacy login assets are proxied to 5200)
+# Open http://localhost:5173 (/api is proxied to 5200)
 
 # Self-contained web content in a normal framework-dependent .NET publication
 dotnet publish OnlineStore -c Release -o .local/publish
@@ -35,10 +35,10 @@ directory; it must contain only public frontend files.
 Unknown `/api` paths and missing assets return 404, never an HTML success or the
 SPA shell. Existing API endpoints retain their role/auth/CSRF policies. Private
 order/customer data is always fetched through those endpoints. Invoice PDFs stay
-outside the static web root. Legacy `.html`, JavaScript and CSS files are retained;
-`/index.html` is still the old home page but `/` is React. `/login` bridges to the
-working legacy login form until that form's React migration is complete. Its
-return URL is validated by the existing same-site helper.
+outside the static web root. Every page, `/login` and `/register` included, is a
+React route; the old `.html` pages were removed in SCRUM-133, so addresses such as
+`/products.html` return 404. `/index.html` is React's entry file. The login return
+URL is validated by the same-site helper in `frontend/src/lib/auth-utils.js`.
 
 ## Purchasing behavior
 
@@ -66,8 +66,8 @@ return URL is validated by the existing same-site helper.
 ## Verification
 
 `ReactHostingTests` proves navigation, refresh, asset MIME types, missing build,
-API isolation and role guards without a database or Node build. The retained
-legacy page checks still verify `/index.html` and legacy catalog assets.
+API isolation and role guards without a database or Node build.
+`CatalogTests.LegacyPageAddresses_Return404` checks that the removed `.html` addresses stay gone.
 
 Frontend tests cover response validation, owner-separated retry storage, blocked
 storage, preserved uncertain keys, whitelisted checkout payloads, delivery versions

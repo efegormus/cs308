@@ -133,8 +133,8 @@ from the README. Never copy actual `.local` secrets into issues or commits.
 
 For hot reload, keep the backend on port 5200 in one terminal and run
 `python3 scripts/dev.py frontend` in a second after installing frontend dependencies.
-Open http://localhost:5173. Vite proxies `/api` and the temporary legacy login
-assets to ASP.NET, preserving same-origin session/CSRF cookies.
+Open http://localhost:5173. Vite proxies `/api` to ASP.NET, preserving same-origin
+session/CSRF cookies.
 
 For a demo with one server, run `python3 scripts/dev.py frontend-build` then
 `python3 scripts/dev.py run` and use port 5200. Rebuild/restart after changing
@@ -146,6 +146,5 @@ directory with your normal environment configuration. Node is needed at build
 time, not on the runtime host. CI can reuse an already built frontend with
 `/p:SkipFrontendBuild=true`; missing `dist/index.html` then fails publishing.
 
-Legacy HTML files remain accessible during migration, including the working
-login form used by `/login`. They are no longer the default home page. Without
-a React build, API endpoints still work and storefront routes return a safe 503.
+Every page, including `/login`, is a React route. Without a React build, API
+endpoints still work and storefront routes return a safe 503.

@@ -25,7 +25,7 @@ Move to a newer image only together with a Playwright version that supports it.
 | `Backend build and test` | The solution compiles and the xUnit suite passes (EF Core in-memory database). | compile error or failing test | Yes |
 | `MySQL integration tests` | Migrations, constraints, foreign keys, seed loader and the schema tests work on a real MySQL 8.4.13. | failing test, **or any MySQL test skipped**, or no test ran | Yes |
 | `Browser end-to-end` | The published ASP.NET app serves the built React catalog and purchasing pages against seeded MySQL in Chromium, including protected PDF and lost-response recovery. | migration/seed/start-up error, API check or any browser assertion fails | Yes |
-| `Frontend and script checks` | React unit tests/build, `node --check` on every `wwwroot/**/*.js`, `html-validate` on every `wwwroot/**/*.html`, `*.test.js` unit tests (Node test runner), `scripts/test_*.py`, and `actionlint` on the workflows. | syntax error, invalid HTML, failing test, bad workflow file | Yes |
+| `Frontend and script checks` | React unit tests (`*.test.js` under `frontend/src`, Node test runner) and build, `scripts/test_*.py`, and `actionlint` on the workflows. | build error, failing test, bad workflow file | Yes |
 | `Security hygiene` | `gitleaks` scan of the git history and a report of vulnerable NuGet packages. | a secret or vulnerable package is found | No (report only, `continue-on-error`) |
 
 On a pull request the checks are listed as `CI / <job name>`.
@@ -78,14 +78,12 @@ python3 scripts/verify_catalog_browser.py --expect-seeded
 python3 scripts/verify_purchasing_browser.py --operator-assembly <published-app>/OnlineStore.dll
 
 # Frontend and scripts
-shopt -s globstar; for f in OnlineStore/wwwroot/**/*.js; do node --check "$f"; done
-npx html-validate@11.18.0 "OnlineStore/wwwroot/**/*.html"
+(cd frontend && npm ci && npm test && npm run build)
 python3 -I -m unittest discover -s scripts -p 'test_*.py'
 ```
 
-HTML rules are configured in `.htmlvalidate.json` (`html-validate:recommended`). Put browser
-unit tests next to the code as `OnlineStore/wwwroot/js/<name>.test.js`; the workflow picks
-them up automatically.
+Put frontend unit tests next to the code as `frontend/src/<folder>/<name>.test.js`;
+`npm test` (Node test runner) picks them up automatically.
 
 ## Secrets
 
