@@ -206,7 +206,7 @@
       "name": "Xiaomi 14",
       "model": "Xiaomi 14",
       "serialNumber": "DEMO-SERIAL-PHONE-004",
-      "description": "A graphite smartphone from Xiaomi, model Xiaomi 14. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A black smartphone from Xiaomi, model Xiaomi 14. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 18,
       "price": 32000,
       "cost": 16000.0,
@@ -214,13 +214,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Xiaomi",
-      "imageUrl": "/assets/catalog/products/phone-004.svg",
+      "imageUrl": "/assets/catalog/products/phone-004.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Black"
         },
         {
           "code": "wireless",

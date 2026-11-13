@@ -21,6 +21,7 @@ is published or used for anything else.
 | `phone-001.jpg` | iPhone 16 (PHONE-001) |
 | `phone-002.jpg` | Samsung Galaxy S25 (PHONE-002) |
 | `phone-003.jpg` | Google Pixel 9 (PHONE-003) |
+| `phone-004.jpg` | Xiaomi 14 (PHONE-004) |
 | `phone-005.jpg` | iPhone 15 (PHONE-005) |
 | `tablet-001.jpg` | iPad Air (TABLET-001) |
 | `tablet-002.jpg` | iPad Pro (TABLET-002) |
@@ -28,5 +29,4 @@ is published or used for anything else.
 | `tablet-004.jpg` | Xiaomi Pad 7 (TABLET-004) |
 | `tablet-005.jpg` | Lenovo Tab P12 (TABLET-005) |
 
-The colour and description of these products in the seed follow their photos. Xiaomi 14 (PHONE-004) still has an
-illustration until a photo of that exact model is available.
+The colour and description of these products in the seed follow their photos.
