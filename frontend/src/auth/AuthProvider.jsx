@@ -125,6 +125,13 @@ export function AuthProvider({ children }) {
     void refreshCsrf();
   }, [refreshCsrf]);
 
+  // After the customer saves a new name on /profile (SCRUM-103), so the header shows it without a reload.
+  // Only the name of the same account changes; the server stays the source of the role and the email.
+  const renameAccount = useCallback((id, name) => {
+    if (typeof name !== "string" || !name) return;
+    setAccount(current => (current && current.id === id && current.name !== name ? { ...current, name } : current));
+  }, []);
+
   // Returns a function that removes the hook, so a component can use it as an effect cleanup:
   // useEffect(() => onLogin(hook), [onLogin]). Without it, StrictMode would register the hook twice.
   const onLogin = useCallback(fn => {
@@ -147,8 +154,8 @@ export function AuthProvider({ children }) {
   }, [restoreGuestCart]);
 
   const value = useMemo(
-    () => ({ account, authReady, csrfToken, refreshCsrf, completeLogin, logout, expireSession, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy }),
-    [account, authReady, csrfToken, refreshCsrf, completeLogin, logout, expireSession, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy]
+    () => ({ account, authReady, csrfToken, refreshCsrf, completeLogin, logout, expireSession, renameAccount, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy }),
+    [account, authReady, csrfToken, refreshCsrf, completeLogin, logout, expireSession, renameAccount, onLogin, restoreGuestCart, cartMergeError, cartMergeConflicts, cartMergeVersion, cartMergeBusy]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

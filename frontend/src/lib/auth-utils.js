@@ -155,6 +155,12 @@ export function parseAccount(data) {
   return { id: data.id, name: data.name, email: data.email, role: data.role };
 }
 
+// The button after a successful save (profile page): the green fill, the check with "Saved" for holdMs, then ready
+// again. With reduced motion the fill is skipped and the check shows at once.
+export function saveSuccessSteps({ reduced, fillMs, holdMs }) {
+  return [...(reduced ? [] : [{ state: "fill", ms: fillMs }]), { state: "ok", ms: holdMs }, { state: "idle", ms: 0 }];
+}
+
 // Waits for every hook, for at most timeoutMs in total. A hook that fails or is too slow never blocks the caller.
 export async function runHooks(hooks, account, timeoutMs) {
   const work = Promise.allSettled(hooks.map(async hook => hook(account))).then(results => {
