@@ -4,9 +4,16 @@ The development seed contains 55 products across 10 top-level departments and
 10 subcategories. It includes sold-out stock, brands, images, typed specifications,
 prices, costs, serial numbers, model names, warranty and distributor details.
 The 30 added Nova products are explicitly fictional demo models; none of their
-prices/specifications are retail claims. Bundled category SVGs keep demos offline.
-Onur's separate SCRUM-127 task can replace these illustrations and descriptions
-with the final approved product assets.
+prices/specifications are retail claims.
+
+Product pictures and descriptions (SCRUM-127): every product has its own original 512x512 SVG
+in `frontend/public/assets/catalog/products/`, named after its seed key (no real brand marks,
+no downloaded photos), and a written description. The product card shows the picture at 1:1,
+and the pictures work offline. `scripts/test_seed_catalog.py` checks that each image exists,
+is square and is not shared, and that each description is written for its product.
+The seed skips SKUs that already exist, so a database seeded earlier keeps its old pictures
+and descriptions. To load the new ones, start from an empty database (this deletes the demo
+data in it): `docker compose down -v`, then run the database, migrate and seed commands again.
 
 ## Initialize
 
