@@ -317,6 +317,50 @@ public class PurchasingMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFix
         Assert.Equal("InTransit", updated!.Status);
     }
 
+    [MySqlFact]
+    public async Task MySql_LegacyBlankProfile_CompletedThroughProfileApi_CanCheckOut()
+    {
+        var g = await SeedAsync();
+        await using (var legacy = fixture.Create())
+        {
+            // A legacy account (SCRUM-103): blank tax ID and no default address row.
+            var user = await legacy.Users.Include(u => u.Addresses).SingleAsync(u => u.Id == g.Buyer.Id);
+            user.TaxId = "";
+            legacy.Addresses.RemoveRange(user.Addresses);
+            await legacy.SaveChangesAsync();
+        }
+        using var app = new PurchaseApplication(fixture);
+        using var buyer = app.CreateClient();
+        await Login(buyer, g.Buyer.Email);
+        var blocked = await buyer.GetAsync("/api/customer/checkout");
+        Assert.Equal(HttpStatusCode.Conflict, blocked.StatusCode);
+        Assert.Contains("Complete your customer profile", await blocked.Content.ReadAsStringAsync());
+
+        var csrf = await buyer.GetFromJsonAsync<JsonElement>("/api/auth/csrf");
+        using var put = new HttpRequestMessage(HttpMethod.Put, "/api/customer/profile")
+            { Content = JsonContent.Create(new { name = " Buyer ", taxId = " 10000000146 ", homeAddress = " Completed address " }) };
+        put.Headers.Add("X-CSRF-TOKEN", csrf.GetProperty("token").GetString());
+        var saved = await buyer.SendAsync(put);
+        Assert.Equal(HttpStatusCode.OK, saved.StatusCode);
+
+        var quote = (await buyer.GetFromJsonAsync<CheckoutQuote>("/api/customer/checkout"))!;
+        Assert.Equal("10000000146", quote.TaxId);
+        Assert.Equal("Completed address", quote.Address);
+        var purchased = await Post(buyer, "/api/customer/checkout", Request(quote));
+        Assert.Equal(HttpStatusCode.Created, purchased.StatusCode);
+        var receipt = (await purchased.Content.ReadFromJsonAsync<PurchaseReceipt>())!;
+        Assert.Equal("10000000146", receipt.TaxId);
+        Assert.Equal("Completed address", receipt.Address);
+
+        await using var check = fixture.Create();
+        var stored = await check.Users.Include(u => u.Addresses).SingleAsync(u => u.Id == g.Buyer.Id);
+        Assert.Equal(g.Buyer.Email, stored.Email);
+        Assert.Single(stored.Addresses, address => address.IsDefault && address.IsActive);
+        // AES-GCM columns: the stored bytes are not the plain text.
+        var raw = await check.Database.SqlQuery<byte[]>($"SELECT TaxIdEnc AS Value FROM Users WHERE Id = {g.Buyer.Id}").SingleAsync();
+        Assert.DoesNotContain("10000000146", System.Text.Encoding.UTF8.GetString(raw));
+    }
+
     private async Task AssertUnchangedAsync(int stock, bool failedPayment = false)
     {
         await using var check = fixture.Create();

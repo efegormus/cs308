@@ -7,7 +7,8 @@ import PurchaseLines from "../components/PurchaseLines.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
 import { loginHref } from "../lib/auth-utils.js";
 import { browserAttemptStore } from "../lib/checkout-attempt.js";
-import { fetchQuote, recoverPurchase, submitCheckout } from "../lib/purchase-api.js";
+import { profileHref } from "../lib/profile-form.js";
+import { fetchQuote, needsCompleteProfile, recoverPurchase, submitCheckout } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
 import { useRequest } from "../lib/useRequest.js";
 import "../styles/request-states.css";
@@ -33,16 +34,25 @@ function Checkout({ account }) {
         const receipt = await recoverPurchase(previous.key, { signal });
         if (receipt) return { receipt };
       }
-      const quote = await fetchQuote({ signal });
+      let quote;
+      try {
+        quote = await fetchQuote({ signal });
+      } catch (failure) {
+        if (needsCompleteProfile(failure)) return { profileIncomplete: true };
+        throw failure;
+      }
       signal.throwIfAborted();
       attempts.forQuote(quote);
       return { quote };
     });
-    if (result.status === "success" && result.data.receipt) {
+    if (result.status === "success" && result.data.profileIncomplete) {
+      // A legacy account without tax ID or address: complete it first, then come back here (SCRUM-103).
+      navigate(profileHref(`${location.pathname}${location.search}`), { replace: true });
+    } else if (result.status === "success" && result.data.receipt) {
       attempts.clear();
       navigate(`/order-confirmation?orderId=${result.data.receipt.orderId}`, { replace: true });
     }
-  }, [attempts, navigate, read.run]);
+  }, [attempts, location.pathname, location.search, navigate, read.run]);
   useEffect(() => { void load(); return read.cancel; }, [load, read.cancel]);
 
   async function purchase(event) {
@@ -58,9 +68,18 @@ function Checkout({ account }) {
     try {
       const result = await payment.run(async ({ signal }) => {
         const token = await csrfToken();
-        return submitCheckout(attempt, card, token, { signal });
+        try {
+          return await submitCheckout(attempt, card, token, { signal });
+        } catch (failure) {
+          // The profile lost its tax ID or address after the quote (a 409 is definite: nothing was charged).
+          if (needsCompleteProfile(failure)) return { profileIncomplete: true };
+          throw failure;
+        }
       });
-      if (result.status === "success") {
+      if (result.status === "success" && result.data.profileIncomplete) {
+        attempts.clear();
+        navigate(profileHref(`${location.pathname}${location.search}`));
+      } else if (result.status === "success") {
         attempts.clear();
         navigate(`/order-confirmation?orderId=${result.data.orderId}`);
       } else if (result.status === "error") {

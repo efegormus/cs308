@@ -26,6 +26,7 @@ const LANDING_LABEL = {
 // Pages that need a signed-in visitor with one of these roles. A path that is not listed is public.
 const PROTECTED = [
   ["/dashboard", ["Customer"]],
+  ["/profile", ["Customer"]],
   ["/checkout", ["Customer"]],
   ["/orders", ["Customer"]],
   ["/order-confirmation", ["Customer"]],

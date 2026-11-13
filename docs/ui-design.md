@@ -265,6 +265,35 @@ With reduced motion the KPI value is final at once, the tick and green show at o
 800ms later without a fade. When the removed row held the focus, it moves to the next row's Approve
 button, or to the heading when the list is empty.
 
+## Customer profile
+
+`pages/ProfilePage.jsx`, `components/ProfileStates.js`, `lib/profile-form.js`, `lib/customer-profile-api.js` and
+`styles/profile.css` (SCRUM-103). The page has both `auth-page` and `profile-page`, so `auth.css` and
+`auth-textarea.css` style its fields, errors, banner and button unchanged; `profile.css` only adds the column, the
+two cards, the read-only email and the note. DESIGN.md's Customer profile section holds the rules.
+
+| Part | Rule |
+| --- | --- |
+| Route | `/profile`, customers only (`PurchaseAccess`, `role-routes.js`). A guest goes to `/login?returnUrl=…`; another role gets the role message, as on `/dashboard`. The dashboard's "Your details" has an "Edit details" link here; the header's profile icon is unchanged |
+| Data | `GET /api/customer/profile`, then `PUT` with `{ name, taxId, homeAddress }` (trimmed) through `saveCustomerProfile`, which renews a refused CSRF token once (`withCsrfRetry`). The email is shown read-only and never sent |
+| Form | "My profile", "These details appear on your invoice and delivery.", card "Account" (Full name, Email), card "Invoice and delivery" (Tax ID (TC kimlik no), Home address, 3 rows), "Save changes". `useAuthForm` with `redirectSignedIn: false` and the labels "Saving…" and "Saved" |
+| Validation | Empty or too long: name 100, tax ID 64, address 1000 characters after trimming. The register page's TC kimlik check digits are not applied, so an older tax ID does not block a name change. Messages sit under the field with `role="alert"`, `aria-invalid` and `aria-describedby`; the fields shake and the first one gets focus, after `flushSync` renders the messages. A 400 from the server is mapped to its field; only the backend's known messages are shown, anything else reads "Check this field." |
+| States | "Loading your profile…" (`role="status"`), a load error with "Try again", 401 back to login (`useSessionExpiry`/`expireSession`), 429, 503 and network errors in `useAuthForm`'s banner, 409 "Your profile was changed somewhere else at the same time. Please try again." |
+| Incomplete profile | With a blank tax ID or address the note "Add your tax ID and home address before you pay." (`role="status"`) is shown and those fields stay empty |
+| After a save | `role="status"` "Your changes are saved."; with a safe `returnUrl` (`safeReturnUrl`, not `/` or `/profile`) a link to it, "Continue to checkout" for `/checkout`, which takes the focus. The header's name follows at once (`renameAccount`) |
+| Checkout | When `GET` or `POST /api/customer/checkout` answers 409 "Complete your customer profile before checkout.", checkout opens `/profile?returnUrl=%2Fcheckout`. The title is only compared (`needsCompleteProfile` in `purchase-api.js`), never shown; other 409s keep "Review your cart" |
+
+### Profile motion
+
+| Effect | Duration | Delay | Curve |
+| --- | --- | --- | --- |
+| Title, text, note, card titles, fields, button: `auth-reveal-up` in their masks | 0.85s | 120ms + i × 110ms | `cubic-bezier(0.22, 1, 0.36, 1)` |
+| Card `profile-card-in`: 24px from below, opacity 0 to 1 | 0.85s | 120ms + card × 140ms | `cubic-bezier(0.22, 1, 0.36, 1)` |
+| Shake, spotlight, spinner | As on login | — | — |
+| Save: `--ok` fill, then the check and "Saved" | 0.95s, then 1.8s | — | As on login |
+
+With reduced motion nothing animates, the masks come off and the check shows at once without the fill.
+
 ## Home page coverflow
 
 The home page (SCRUM-56) stacks one row per category, and each row sorts on its own. The

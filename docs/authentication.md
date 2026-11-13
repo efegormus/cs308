@@ -47,7 +47,18 @@ All paths use the same origin as the site, JSON and camelCase properties.
 | GET /api/auth/me, GET /api/me | Authenticated | 200 id/name/email/role/roles; 401 without valid session |
 | POST /api/auth/logout | Authenticated + CSRF | 204; revokes sessions and clears cookie |
 | GET /api/customer/profile | Customer only | Own id/name/email/taxId/homeAddress; 401/403 otherwise |
+| PUT /api/customer/profile | Customer only + CSRF | Name/taxId/homeAddress → 200 own profile (same shape as GET); 400 invalid input or unknown property (`email`, `id`, `role` …); 409 changed at the same time; 401/403 otherwise |
 | GET /api/management/session | Any of the three staff roles | 200 current role for management UI bootstrap; customer gets 403 |
+
+`PUT /api/customer/profile` (SCRUM-103) takes exactly `{ "name", "taxId", "homeAddress" }`. The account is
+the session's; an ID in the query is ignored and one in the body is an unknown property (400). The email is not
+editable: the handler validates the stored email together with the new values through
+`CustomerProfileValidation`, so the field limits live in one place, and trims each value as registration does.
+A 400 has the same `ValidationProblem` shape as register (`errors.name`, `errors.taxId`, `errors.homeAddress`).
+The tax ID and the default address stay in their AES-GCM columns (`Users.TaxIdEnc`, `Addresses.AddressEnc`);
+a legacy account without a default address gets one. Checkout answers 409 "Complete your customer profile
+before checkout." until name, tax ID and address are valid; the React checkout then opens
+`/profile?returnUrl=/checkout`.
 
 Database failures inside account operations return generic 503. During session
 validation a database outage invalidates authentication for that request (401 on
@@ -60,7 +71,7 @@ handler. Both return the current role in `role` and a one-element `roles` array.
 See the [dashboard API contract](api-contract-dashboards.md) for dashboard and
 manager-list endpoints.
 
-Every POST requires the CSRF cookie and X-CSRF-TOKEN header. Fetch a fresh token
+Every POST and PUT requires the CSRF cookie and X-CSRF-TOKEN header. Fetch a fresh token
 after login/logout because the token is bound to the current identity. Example:
 
 ```js

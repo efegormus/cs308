@@ -65,7 +65,10 @@ function ProfileSummary() {
   const { data, error, loading, retry } = useSection(fetchCustomerProfile);
   return (
     <section className="dash-section" aria-labelledby="profile-title">
-      <div className="dash-section-head"><h2 id="profile-title">Your details</h2></div>
+      <div className="dash-section-head">
+        <h2 id="profile-title">Your details</h2>
+        <Link to="/profile">Edit details</Link>
+      </div>
       {loading && !data && <LoadingState label="Loading your details…" />}
       <ErrorState error={error} onRetry={retry} retrying={loading} />
       {data && (

@@ -37,6 +37,24 @@ function isPage(value) {
     && (value.nextAfterId === null || id(value.nextAfterId));
 }
 
+// The checkout's 409 for a legacy account without tax ID or address (CheckoutService.ValidateCustomer, SCRUM-103).
+// The title is only compared, never shown; other 409s (cart changed, empty cart) keep their current handling.
+export const PROFILE_INCOMPLETE_TITLE = "Complete your customer profile before checkout.";
+
+async function problemTitle(response) {
+  try {
+    const problem = await response.json();
+    return typeof problem?.title === "string" ? problem.title : null;
+  } catch {
+    return null;
+  }
+}
+
+/** True for a checkout failure that needs the customer to complete their profile first. */
+export function needsCompleteProfile(failure) {
+  return failure?.status === 409 && failure.reason === "profile-incomplete";
+}
+
 async function request(path, { body, token, signal, missing = false } = {}, validate) {
   signal?.throwIfAborted();
   const response = await fetch(path, {
@@ -45,6 +63,8 @@ async function request(path, { body, token, signal, missing = false } = {}, vali
     ...(body === undefined ? {} : { body: JSON.stringify(body) })
   });
   if (missing && response.status === 404) return null;
+  if (response.status === 409 && await problemTitle(response) === PROFILE_INCOMPLETE_TITLE)
+    throw { status: 409, headers: response.headers, reason: "profile-incomplete" };
   if (!response.ok) throw { status: response.status, headers: response.headers };
   let data;
   try { data = await response.json(); } catch { throw { kind: "invalid-response" }; }

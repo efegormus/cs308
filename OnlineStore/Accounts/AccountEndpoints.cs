@@ -13,6 +13,9 @@ namespace OnlineStore.Accounts;
 public sealed record RegisterRequest(string? Name, string? Email, string? TaxId, string? HomeAddress, string? Password);
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record LoginRequest(string? Email, string? Password);
+/// <summary>The editable part of a customer profile. Email, role and IDs are not accepted.</summary>
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record UpdateCustomerProfileRequest(string? Name, string? TaxId, string? HomeAddress);
 /// <summary>Safe account information returned for the authenticated or newly created account.</summary>
 public sealed record AccountDto(long Id, string Name, string Email, string Role)
 {
@@ -107,7 +110,8 @@ public static class AccountEndpoints
             return Results.Ok(new { role = context.User.FindFirstValue(ClaimTypes.Role) });
         }).RequireAuthorization(RolePolicies.Staff);
 
-        app.MapCustomerApi().AddEndpointFilter(PrivateRequest).MapGet("/profile", async (HttpContext context, StoreDbContext db, CancellationToken ct) =>
+        var customer = app.MapCustomerApi().AddEndpointFilter(PrivateRequest);
+        customer.MapGet("/profile", async (HttpContext context, StoreDbContext db, CancellationToken ct) =>
         {
             context.Response.Headers.CacheControl = "no-store";
             var id = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
@@ -115,6 +119,33 @@ public static class AccountEndpoints
                 .SingleOrDefaultAsync(user => user.Id == id, ct);
             return user is null ? Results.Unauthorized() : Results.Ok(CustomerProfileDto.FromUser(user));
         });
+
+        // SCRUM-103: the owner corrects name, tax ID and home address. The account always comes from the session;
+        // the body cannot name another account (unknown properties are rejected) and the email is not editable.
+        customer.MapPut("/profile", async (UpdateCustomerProfileRequest input, HttpContext context, StoreDbContext db, CancellationToken ct) =>
+        {
+            var id = long.Parse(context.User.FindFirstValue(ClaimTypes.NameIdentifier)!);
+            var user = await db.Users.Include(user => user.Addresses).SingleOrDefaultAsync(user => user.Id == id, ct);
+            if (user is null) return Results.Unauthorized();
+            // The stored email goes through the same validation, so every field limit stays in CustomerProfileValidation.
+            var profile = new CustomerProfileInput(input.Name, user.Email, input.TaxId, input.HomeAddress);
+            var errors = CustomerProfileValidation.Validate(profile);
+            if (errors.Count != 0) return Results.ValidationProblem(errors);
+
+            var before = (user.Name, user.TaxId, user.HomeAddress);
+            CustomerProfileValidation.Apply(user, profile);
+            var now = DateTime.UtcNow;
+            if ((user.Name, user.TaxId) != (before.Name, before.TaxId)) user.UpdatedAt = now;
+            if (user.HomeAddress != before.HomeAddress)
+                user.Addresses.Single(address => address.IsDefault && address.IsActive).UpdatedAt = now;
+            try { await db.SaveChangesAsync(ct); }
+            catch (DbUpdateConcurrencyException)
+            {
+                return Results.Problem(statusCode: StatusCodes.Status409Conflict,
+                    title: "Your profile was changed at the same time. Reload it and try again.");
+            }
+            return Results.Ok(CustomerProfileDto.FromUser(user));
+        }).AddEndpointFilter<CsrfFilter>();
     }
 
     private static async Task<IResult> CurrentAccount(ClaimsPrincipal principal, StoreDbContext db, CancellationToken ct)

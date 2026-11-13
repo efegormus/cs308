@@ -33,6 +33,8 @@ test("public pages are open to everyone, including guests", () => {
 test("protected pages are closed to guests and to the wrong role", () => {
   const matrix = [
     ["/dashboard", ["Customer"]],
+    ["/profile", ["Customer"]],
+    ["/profile?returnUrl=%2Fcheckout", ["Customer"]],
     ["/checkout", ["Customer"]],
     ["/orders", ["Customer"]],
     ["/order-confirmation?orderId=3", ["Customer"]],
@@ -129,4 +131,11 @@ test("the account menu's first entry is named after the page it opens", () => {
   assert.equal(accountLabel("SalesManager"), "Management");
   assert.equal(accountLabel("SupportAgent"), "Support");
   assert.equal(accountLabel("Nobody"), null);
+});
+
+test("the profile page (SCRUM-103) is for customers; after login it keeps its own returnUrl", () => {
+  assert.equal(postLoginPath(customer, "/profile?returnUrl=%2Fcheckout"), "/profile?returnUrl=%2Fcheckout");
+  assert.equal(postLoginPath(productManager, "/profile?returnUrl=%2Fcheckout"), "/manage");
+  assert.equal(postLoginPath(support, "/profile"), "/support");
+  assert.equal(isPublicPath("/profile"), false);
 });

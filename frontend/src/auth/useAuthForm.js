@@ -1,15 +1,16 @@
-// What the login and register forms share: the button, the requests and the motion.
+// What the login, register and profile forms share: the button, the requests and the motion.
 // The API contract is in docs/authentication.md, the motion rules in docs/ui-design.md.
 import { useCallback, useEffect, useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useNavigate } from "react-router";
-import { NETWORK_ERROR, loginErrorMessage, parseRetryAfter } from "../lib/auth-utils.js";
+import { NETWORK_ERROR, loginErrorMessage, parseRetryAfter, saveSuccessSteps } from "../lib/auth-utils.js";
 import { postLoginPath } from "../lib/role-routes.js";
 import { useAuth } from "./AuthProvider.jsx";
 
 const REQUEST_TIMEOUT_MS = 15000;
 const FILL_MS = 950; // Keep equal to the auth-fill-x animation in auth.css.
 const CHECK_MS = 500; // How long "Signed in" stays visible when the hooks finish first.
+const SAVED_MS = 1800; // How long "Saved" stays on the profile page before the button is ready again.
 
 const BUTTON_CLASSES = {
   idle: "submit",
@@ -37,7 +38,11 @@ function markLineDone(event) {
   if (event.target.classList.contains("ri")) event.target.parentElement.classList.add("done");
 }
 
-export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
+// The options after loadingLabel are for forms of a signed-in visitor, such as the profile page (SCRUM-103). Their
+// defaults keep the login and register behaviour.
+export function useAuthForm({
+  returnUrl, idleLabel, loadingLabel, fillLabel = "Signing you in…", okLabel = "Signed in", redirectSignedIn = true
+}) {
   const { account, authReady, completeLogin, csrfToken, refreshCsrf } = useAuth();
   const navigate = useNavigate();
   const [buttonState, setButtonState] = useState("idle");
@@ -57,7 +62,7 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
 
   // completeLogin sets the account while the success animation plays. The button is not idle then, so only a
   // visitor who was already signed in goes straight to returnUrl.
-  const alreadySignedIn = authReady && account !== null && buttonState === "idle";
+  const alreadySignedIn = redirectSignedIn && authReady && account !== null && buttonState === "idle";
   useEffect(() => {
     if (alreadySignedIn) navigate(postLoginPath(account, returnUrl), { replace: true });
   }, [alreadySignedIn, account, navigate, returnUrl]);
@@ -135,6 +140,24 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
     if (mounted.current) navigate(postLoginPath(signedInAccount, returnUrl), { replace: true });
   }, [completeLogin, navigate, returnUrl]);
 
+  // For a successful save: the fill and the check (okLabel) for SAVED_MS, then the button is ready again. When the
+  // focus was lost because the button was disabled, it goes back to the button.
+  const finishSave = useCallback(async () => {
+    for (const step of saveSuccessSteps({ reduced: prefersReducedMotion(), fillMs: FILL_MS, holdMs: SAVED_MS })) {
+      if (!mounted.current) return;
+      if (step.state !== "idle") {
+        setButtonState(step.state);
+        await wait(step.ms);
+        continue;
+      }
+      flushSync(() => setButtonState("idle"));
+      if (document.activeElement === document.body) buttonRef.current?.focus();
+    }
+  }, []);
+
+  // A request signal with the same time limit as post().
+  const requestSignal = useCallback(() => AbortSignal.timeout(REQUEST_TIMEOUT_MS), []);
+
   // Spotlight position on the primary button, relative to the button. Only the style changes, so nothing re-renders.
   const moveSpotlight = useCallback(event => {
     const button = buttonRef.current;
@@ -146,8 +169,8 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
   const buttonLabels = {
     idle: idleLabel,
     loading: loadingLabel,
-    fill: "Signing you in…",
-    ok: "Signed in",
+    fill: fillLabel,
+    ok: okLabel,
     locked: `Try again in ${secondsLeft}s`
   };
 
@@ -162,6 +185,8 @@ export function useAuthForm({ returnUrl, idleLabel, loadingLabel }) {
     unlock,
     fail,
     finishLogin,
+    finishSave,
+    requestSignal,
     formProps: { className: "card play", noValidate: true, onAnimationEnd: markLineDone },
     buttonProps: {
       ref: buttonRef,

@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { fetchQuote, fetchReceipt, recoverPurchase, submitCheckout, fetchDeliveries, transitionDelivery, mergeGuestCart, isQuote, isReceipt } from "./purchase-api.js";
+import { PROFILE_INCOMPLETE_TITLE, fetchQuote, fetchReceipt, recoverPurchase, submitCheckout, fetchDeliveries, transitionDelivery, mergeGuestCart, isQuote, isReceipt, needsCompleteProfile } from "./purchase-api.js";
 import { normalizeRequestError } from "./request-errors.js";
 const line = { productId: 1, name: "<script>literal text</script>", quantity: 1, unitPrice: 10, total: 10 };
 const quote = { cartId: 1, quoteToken: "A".repeat(64), currency: "TRY", name: "Customer", taxId: "Tax", email: "test@example.com", address: "Address", items: [line], total: 10 };
@@ -44,4 +44,18 @@ test("guest merge preserves reported stock/full-cart conflicts", async t => {
     conflicts: [{ productId: 7, name: "Kept selection", reason: "CartFull", quantity: 1, stockQuantity: 3 }] };
   t.mock.method(globalThis, "fetch", async () => new Response(JSON.stringify(data)));
   assert.deepEqual((await mergeGuestCart("csrf")).conflicts, data.conflicts);
+});
+test("only the incomplete-profile 409 is marked for the profile redirect; the title is never forwarded", async t => {
+  const problem = title => new Response(JSON.stringify({ status: 409, title }), { status: 409, headers: { "Content-Type": "application/problem+json" } });
+  t.mock.method(globalThis, "fetch", async () => problem(PROFILE_INCOMPLETE_TITLE));
+  await assert.rejects(fetchQuote(), error => needsCompleteProfile(error) && !JSON.stringify(error).includes("Complete your"));
+  await assert.rejects(submitCheckout({ ...quote, key: "00000000-0000-0000-0000-000000000000" },
+    { number: "4242424242424242", expiryMonth: 12, expiryYear: 2030, securityCode: "123" }, "csrf"), needsCompleteProfile);
+  for (const other of ["Your cart is empty. Add products before checkout.", "Your carts need to be merged before checkout.", "The order changed. Reload before trying again."]) {
+    globalThis.fetch.mock.mockImplementation(async () => problem(other));
+    await assert.rejects(fetchQuote(), error => error.status === 409 && !needsCompleteProfile(error));
+  }
+  globalThis.fetch.mock.mockImplementation(async () => new Response("not json", { status: 409 }));
+  await assert.rejects(fetchQuote(), error => error.status === 409 && !needsCompleteProfile(error));
+  assert.equal(needsCompleteProfile({ status: 400, reason: "profile-incomplete" }), false);
 });
