@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { formatPrice, safeImageUrl, stockLabel } from "./product-display.js";
+import { formatPrice, safeImageUrl, specRow, stockLabel, stockStatus } from "./product-display.js";
 
 const base = "http://localhost:5173/products";
 
@@ -41,4 +41,27 @@ test("stockLabel says how many are available", () => {
 
 test("stockLabel says out of stock for 0", () => {
   assert.deepEqual(stockLabel(0), { inStock: false, text: "Out of stock" });
+});
+
+test("stockStatus gives the card's status without the count", () => {
+  assert.deepEqual(stockStatus(12), { inStock: true, text: "In stock" });
+  assert.deepEqual(stockStatus(1), { inStock: true, text: "In stock" });
+  assert.deepEqual(stockStatus(0), { inStock: false, text: "Out of stock" });
+  assert.deepEqual(stockStatus(undefined), { inStock: false, text: "Out of stock" });
+});
+
+test("specRow prefers the brand", () => {
+  assert.deepEqual(specRow({ brandName: "Nova", description: "A phone" }), { kind: "brand", text: "Nova" });
+});
+
+test("specRow falls back to the first line of the description", () => {
+  assert.deepEqual(specRow({ brandName: null, description: "  6.1-inch screen\r\nSecond line" }),
+    { kind: "description", text: "6.1-inch screen" });
+  assert.deepEqual(specRow({ description: "One line" }), { kind: "description", text: "One line" });
+});
+
+test("specRow is null without a brand or a description", () => {
+  assert.equal(specRow({ brandName: null, description: null }), null);
+  assert.equal(specRow({ brandName: "", description: "   " }), null);
+  assert.equal(specRow({}), null);
 });

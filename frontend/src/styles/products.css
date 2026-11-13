@@ -1,60 +1,73 @@
-/* From wwwroot/css/products.css. Only the selectors changed: everything is scoped to .catalog-page, so it cannot reach the login page. */
-.catalog-page { font-family: Arial, sans-serif; color: #222; background: #f6f7f9; }
+/* From wwwroot/css/products.css. Everything is scoped to .catalog-page, so it cannot reach the login page.
+   Colors are the tokens of design-system.css (SCRUM-123), so the catalog follows the dark theme too. The one color
+   left is the plain button border #b9c4d2 (DESIGN.md, Open questions 9). */
+.catalog-page { font-family: Arial, sans-serif; color: var(--fg); background: var(--bg); }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .catalog-page { color-scheme: dark; }
+}
+:root[data-theme="dark"] .catalog-page { color-scheme: dark; }
 .catalog-page, .catalog-page * { box-sizing: border-box; }
 .catalog-page { margin: 0; }
 .catalog-page [hidden] { display: none !important; }
-.catalog-page a { color: #174a8b; }
-.catalog-page a:focus-visible, .catalog-page button:focus-visible { outline: 3px solid #b66d00; outline-offset: 4px; }
-.catalog-page .skip-link { position: absolute; top: -5rem; left: 1rem; padding: 1rem; background: white; }
+.catalog-page a { color: var(--link); }
+.catalog-page a:focus-visible, .catalog-page button:not(.ui-button):focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.catalog-page .skip-link { position: absolute; top: -5rem; left: 1rem; padding: 1rem; background: var(--surface); }
 .catalog-page .skip-link:focus { top: 1rem; }
 .catalog-page main { max-width: 1200px; margin: auto; padding: 2.5rem 1.5rem; min-height: 75vh; }
 .catalog-page h1 { margin: 0 0 .75rem; }
-.catalog-page .intro, .catalog-page .category-description { color: #505966; line-height: 1.6; }
+.catalog-page .intro, .catalog-page .category-description { color: var(--muted); line-height: 1.6; }
 .catalog-page .category-nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.75rem 0; }
-.catalog-page .category-nav a, .catalog-page button { padding: .75rem 1rem; border: 1px solid #b9c4d2;
-  border-radius: .4rem; background: white; font: inherit; }
-.catalog-page button { cursor: pointer; color: #174a8b; }
+/* Plain buttons. The shared Button (.ui-button) keeps its own look, so it is left out. */
+.catalog-page .category-nav a, .catalog-page button:not(.ui-button) { padding: .75rem 1rem; border: 1px solid #b9c4d2;
+  border-radius: .4rem; background: var(--surface); font: inherit; }
+.catalog-page button:not(.ui-button) { cursor: pointer; color: var(--link); }
 .catalog-page .product-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
   gap: .75rem; align-items: end; margin: 1.5rem 0; }
 .catalog-page .product-filters label { display: grid; gap: .35rem; font-weight: 600; }
 .catalog-page .product-filters input, .catalog-page .product-filters select {
-  min-width: 0; padding: .65rem; border: 1px solid #b9c4d2; border-radius: .4rem; background: white; font: inherit; }
+  min-width: 0; padding: .65rem; border: 1px solid #b9c4d2; border-radius: .4rem; background: var(--surface);
+  color: inherit; font: inherit; }
 .catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2rem 0; }
 .catalog-page .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 1rem; padding: 0; list-style: none; }
 .catalog-page .wishlist-card { display: flex; height: 100%; flex-direction: column; gap: .5rem; padding: 1rem;
-  border: 1px solid #dce0e6; border-radius: .6rem; background: white; }
+  border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); }
 .catalog-page .wishlist-card img, .catalog-page .wishlist-card .image-placeholder {
-  width: 100%; height: 180px; object-fit: contain; border-radius: .3rem; background: #f0f2f5; }
+  width: 100%; height: 180px; object-fit: contain; border-radius: .3rem; background: var(--bg); }
 .catalog-page .wishlist-card h2 { font-size: 1.1rem; }
 .catalog-page .category-section { margin-top: 2.5rem; scroll-margin-top: 1.5rem; }
 .catalog-page .category-section h2 { margin-bottom: .5rem; overflow-wrap: anywhere; }
-.catalog-page .product-count { font-size: .9rem; font-weight: normal; color: #505966; }
-.catalog-page .product-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  gap: 1.25rem; padding: 0; list-style: none; }
-.catalog-page .product-card { height: 100%; display: flex; flex-direction: column; padding: 1.25rem;
-  border: 1px solid #dce0e6; border-radius: .6rem; background: white; overflow-wrap: anywhere; }
+.catalog-page .product-count { font-size: .9rem; font-weight: normal; color: var(--muted); }
+/* Images of the product page and the wishlist. The product card has its own 1:1 image below. */
 .catalog-page .product-image, .catalog-page .image-placeholder { width: 100%; height: 180px; object-fit: contain;
-  border-radius: .3rem; background: #f0f2f5; }
-.catalog-page .image-placeholder { display: flex; align-items: center; justify-content: center; color: #626c79; }
-.catalog-page .product-card h3 { margin: 1rem 0 .5rem; font-size: 1.1rem; }
-.catalog-page .product-description { color: #505966; line-height: 1.5; margin: 0 0 1rem; }
-.catalog-page .product-brand { color: #505966; font-weight: 600; margin: 0 0 .5rem; }
+  border-radius: .3rem; background: var(--bg); }
+.catalog-page .image-placeholder { display: flex; align-items: center; justify-content: center; color: var(--muted); }
+.catalog-page .product-description { color: var(--muted); line-height: 1.5; margin: 0 0 1rem; }
+.catalog-page .product-brand { color: var(--muted); font-weight: 600; margin: 0 0 .5rem; }
 .catalog-page .price { margin: auto 0 .5rem; padding-top: 1rem; font-size: 1.2rem; font-weight: bold; }
-.catalog-page .stock { margin: 0; color: #24613b; }
-.catalog-page .out-of-stock { color: #8a351e; }
+.catalog-page .stock { margin: 0; color: var(--ok-fg); }
+.catalog-page .out-of-stock { color: var(--danger); }
 @media (max-width: 480px) { .catalog-page main { padding: 2rem 1rem; } .catalog-page h1 { font-size: 1.8rem; } }
 
-/* Product detail page (SCRUM-45) */
-.catalog-page .product-detail { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 2rem;
-  margin-top: 1.5rem; padding: 1.5rem; border: 1px solid #dce0e6; border-radius: .6rem; background: white; }
-.catalog-page .product-detail .product-image, .catalog-page .product-detail .image-placeholder { height: 360px; }
-.catalog-page .product-gallery { display: grid; gap: .75rem; align-content: start; }
-.catalog-page .product-gallery .product-image { max-width: 100%; }
-.catalog-page .product-info h1 { margin: .25rem 0 1rem; overflow-wrap: anywhere; }
-.catalog-page .product-category { margin: 0; }
-.catalog-page .product-specs { display: grid; grid-template-columns: max-content 1fr; gap: .5rem 1.25rem; margin: 1.5rem 0 0; }
-.catalog-page .product-specs dt { font-weight: bold; }
-.catalog-page .product-specs dd { margin: 0; overflow-wrap: anywhere; }
+/* Product grid and product card on /products (SCRUM-123, DESIGN.md Product card). The frame (16px corners, 20px
+   padding, --shadow-product, --surface) comes from ui/Card. 4 columns, 3 up to 1024px, 2 up to 768px, 1 up to 480px. */
+.catalog-page .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg);
+  margin: 0; padding: 0; list-style: none; }
+@media (max-width: 1024px) { .catalog-page .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+@media (max-width: 768px) { .catalog-page .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 480px) { .catalog-page .product-grid { grid-template-columns: minmax(0, 1fr); } }
+.catalog-page .product-card { height: 100%; overflow-wrap: anywhere; }
+.catalog-page .product-card .product-image, .catalog-page .product-card .image-placeholder {
+  height: auto; aspect-ratio: 1 / 1; border-radius: var(--radius-tile); background: var(--bg); }
+.catalog-page .product-card .image-placeholder { padding: var(--space-md); font: var(--type-body-sm); text-align: center; }
+.catalog-page .product-card h3 { margin: var(--space-md) 0 var(--space-xs); font: var(--type-heading-sm); }
 .catalog-page .product-card h3 a { color: inherit; }
-@media (max-width: 700px) { .catalog-page .product-detail { grid-template-columns: 1fr; } }
+.catalog-page .product-card .product-spec { margin: 0; font: var(--type-body-sm); color: var(--muted);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+/* The price, stock and actions sit at the bottom, so they line up across a row. */
+.catalog-page .product-card .price { margin: auto 0 0; padding-top: var(--space-sm); font: var(--type-price); }
+.catalog-page .product-card .stock { margin: var(--space-xxs) 0 0; font: var(--type-caption); }
+.catalog-page .product-card-message { margin: var(--space-xs) 0 0; font: var(--type-body-sm); }
+.catalog-page .product-card-error { color: var(--danger); }
+.catalog-page .product-card-actions { display: flex; gap: var(--space-xs); margin-top: var(--space-md); }
+.catalog-page .product-card-actions .ui-button { flex: 1; }

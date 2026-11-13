@@ -54,6 +54,7 @@ Give the page its wrapper class, as described in [Shared rules](#shared-rules).
 | `--danger-bg` | Error banner background | `#fdecea` | `#3a1c17` |
 | `--danger-fg` | Error banner text | `#7a1f0d` | `#ffd1c7` |
 | `--ok` | Success fill | `#1a7f37` | `#238636` |
+| `--ok-fg` | Success text, such as "In stock" | `#1a7f37` | `#3fb950` |
 | `--sale-bg` | Discount badge | `#b3262b` | same |
 | `--sale-fg` | Discount badge text | `#ffffff` | same |
 | `--shadow` | Card shadow | `0 1px 3px rgba(31, 41, 55, 0.08)` | `0 1px 3px rgba(0, 0, 0, 0.4)` |
@@ -63,8 +64,9 @@ Give the page its wrapper class, as described in [Shared rules](#shared-rules).
 | `--ring-glow` | Button hover ring | `rgba(23, 74, 139, 0.22)` | `rgba(77, 132, 224, 0.35)` |
 
 Dark values follow the visitor's system setting. The login and register pages
-(`.auth-page`), the home page and the cart page use the dark background; the catalog
-and purchase pages (`products.css`, `purchases.css`) have no dark theme yet.
+(`.auth-page`), the home page, the cart page and, since SCRUM-123, the catalog pages
+(`products.css`: product list, product page, wishlist) use the dark background; the
+purchase pages (`purchases.css`) have no dark theme yet.
 
 ## Layout and spacing
 
@@ -113,8 +115,8 @@ the mask would clip the focus ring.
 What the React pages have in common today, as written in `frontend/src/styles/`. Every
 page has a wrapper class, and its CSS file starts every selector with it, because all CSS
 files load at once. The login, register, home and cart pages and the request states use
-the color tokens above. `products.css` and `purchases.css` came from the old pages and
-still write their colors directly.
+the color tokens above. `products.css` uses them too, except the plain button border
+`#b9c4d2`. `purchases.css` came from the old pages and still writes its colors directly.
 
 ### Type scale
 
@@ -134,8 +136,9 @@ still write their colors directly.
 | Field error | Open Sans | 13px | 600 |
 | Coverflow stock | Open Sans | 12px | 600 |
 
-Catalog and purchase pages still use Arial: product name 1.1rem, price 1.2rem bold,
-product count 0.9rem.
+The product card uses the scale: name 20px 600 Poppins, spec row 14px Open Sans, price
+24px 500 Poppins, stock 12px 600 Open Sans. The rest of the catalog and the purchase pages
+still use Arial: product page price 1.2rem bold, product count 0.9rem.
 
 ### Spacing
 
@@ -146,7 +149,7 @@ product count 0.9rem.
 | Home `main` | max-width 1280px, 36px top, 56px bottom, at least 16px at the sides |
 | Home: between rows, row padding, bar side padding | 32px, 18px top and 16px bottom, 20px |
 | Catalog `main` | max-width 1200px, 2.5rem 1.5rem (2rem 1rem up to 480px wide) |
-| Product grid gap, product card padding | 1.25rem, 1.25rem |
+| Product grid gap, product card padding | 20px, 20px |
 | Purchase card padding | `clamp(1rem, 3vw, 2rem)` |
 | Cart: between lines, line padding | 0.75rem, 0.75rem 1rem |
 
@@ -155,24 +158,24 @@ product count 0.9rem.
 | Pattern | Rule |
 | --- | --- |
 | Primary button (login, register) | Height 48px, full width, radius 6px, `--accent`, Poppins 16px 500 |
-| Plain button (catalog) | Padding 0.75rem 1rem, radius 0.4rem, white background, 1px `#b9c4d2` border, text `#174a8b` |
+| Plain button (catalog) | Padding 0.75rem 1rem, radius 0.4rem, `--surface` background, 1px `#b9c4d2` border, text `--link`. Not applied to `Button` |
 | Checkout button (cart) | Padding 0.625rem 1.25rem, radius 0.4rem, `--accent`, weight 600 |
 | Coverflow arrow | 44px circle, `--surface`, 1px `--line` border, fills with `--accent` on hover |
 | Login card | Max-width 420px, radius 10px, 1px `--line` border, `--shadow` |
-| Product card | Radius 0.6rem, 1px `#dce0e6` border, white |
+| Product card | `Card` (16px corners, 20px padding, `--shadow-product`, no border); see Product card |
 | Purchase card | Radius 0.6rem, 1px `#dce0e6` border, white |
 | Cart line | Radius 0.5rem, 1px `--line` border, `--surface` |
 | Coverflow row, card | Radius 12px with `--shadow`, radius 10px with `--card-shadow` at the front |
 | Login input | Height 44px, radius 6px, 1px `--field-line` border, 16px text |
 | Purchase input | Padding 0.75rem, radius 0.3rem, 1px `#9ba9b9` border |
 | Home sort dropdown | Height 40px, min-width 190px, radius 8px, 1px `--field-line` border, 14px text |
-| Focus ring | 3px outline, `--focus` (`#b66d00` on catalog and purchase pages). Offset 2px on login and purchase inputs, 3px on home, cart and request states, 4px on catalog links and buttons |
+| Focus ring | 3px outline, `--focus` (`#b66d00` written directly on purchase pages). Offset 2px on login and purchase inputs and on `Button`, 3px on home, cart and request states, 4px on catalog links and plain buttons |
 
 ### Shared UI components
 
 `frontend/src/components/ui/` holds the shared parts from DESIGN.md. Each has its own CSS
 file next to it, and its classes start with `ui-`. The header search uses `Button` and
-`Input` (with `hideLabel`); no page uses them yet.
+`Input` (with `hideLabel`); the product card uses `Card` and `Button`.
 
 | Component | Rule |
 | --- | --- |
@@ -198,6 +201,21 @@ Footer sections hold the full rules.
 | Current page | 2px `--accent` line (inset shadow) and `aria-current="page"` |
 | Footer | `--footer` background, store name, Products / Cart / Orders (Cart and Orders for guests and customers), copyright in `--footer-fg-soft`. Links `--footer-fg`, underlined, 44px high. No support link until the customer chat exists |
 | Requests | The header and the page share one `GET /api/categories` when they load together (`fetchCategories`) |
+
+### Product card
+
+`components/ProductCard.jsx` and the product grid rules in `styles/products.css` (SCRUM-123).
+DESIGN.md's Product card section holds the full rules.
+
+| Part | Rule |
+| --- | --- |
+| Grid | 4 columns, 3 up to 1024px, 2 up to 768px, 1 up to 480px; 20px gap |
+| Frame | `Card` as `<article class="product-card">`, full height of the row |
+| Image | 1:1, `object-fit: contain`, `--bg`, 8px corners; "No image available" when missing or broken |
+| Text | Name `h3` (link to `/product?id=<id>`), spec row (`specRow`: brand, else the first description line, one line with "…"), price, stock status (`stockStatus`: "In stock" in `--ok-fg`, "Out of stock" in `--danger`) |
+| Add to cart | Full-width `Button`, one unit, `withCsrfRetry` (one retry after a 400). Success: `role="status"` "Added to your cart. View cart"; failure: `role="alert"` with `addToCartError`. Out of stock: disabled "Out of stock". Staff: no button |
+| Alignment | Price, stock, message and button sit at the bottom, so they line up across a row |
+| Actions row | `.product-card-actions`, room for a second action such as a wishlist button |
 
 ### Loading, empty and error states
 
@@ -341,7 +359,8 @@ sits on the pointer (lerp 1).
 ### Home tokens
 
 They sit on `.home-page` in `home.css`. `--home-ok` is separate from `--ok` because `--ok`
-is a button fill. On a dark card, `#238636` is too dim for 12px text.
+is a button fill. On a dark card, `#238636` is too dim for 12px text. The shared `--ok-fg`
+(SCRUM-123) has the same values; the home page keeps its own token for now.
 
 | Token | Purpose | Light | Dark |
 | --- | --- | --- | --- |
