@@ -6,11 +6,13 @@ prices, costs, serial numbers, model names, warranty and distributor details.
 The 30 added Nova products are explicitly fictional demo models; none of their
 prices/specifications are retail claims.
 
-Product pictures and descriptions (SCRUM-127): every product has its own original 512x512 SVG
-in `frontend/public/assets/catalog/products/`, named after its seed key (no real brand marks,
-no downloaded photos), and a written description. The product card shows the picture at 1:1,
-and the pictures work offline. `scripts/test_seed_catalog.py` checks that each image exists,
-is square and is not shared, and that each description is written for its product.
+Product pictures and descriptions (SCRUM-127): every product has a square picture in
+`frontend/public/assets/catalog/products/`, named after its seed key, and a written description.
+46 products have an original 512x512 SVG illustration (no real brand marks) and the 9 real-brand phones and
+tablets with a matching photo have a `.jpg` (see `docs/IMAGE-CREDITS.md` for where they come from). The product
+card shows the picture at 1:1, and the pictures work offline. `scripts/test_seed_catalog.py` checks that each
+image exists, is square and is not shared, that photos are at most 150 KB and are listed in the credits file,
+and that each description is written for its product.
 The seed skips SKUs that already exist, so a database seeded earlier keeps its old pictures
 and descriptions. To load the new ones, start from an empty database (this deletes the demo
 data in it): `docker compose down -v`, then run the database, migrate and seed commands again.

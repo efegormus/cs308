@@ -98,7 +98,7 @@
       "name": "iPhone 16",
       "model": "iPhone 16",
       "serialNumber": "DEMO-SERIAL-PHONE-001",
-      "description": "A graphite smartphone from Apple, model iPhone 16. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A black smartphone from Apple, model iPhone 16. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 15,
       "price": 55000,
       "cost": 27500.0,
@@ -106,13 +106,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/products/phone-001.svg",
+      "imageUrl": "/assets/catalog/products/phone-001.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -134,7 +134,7 @@
       "name": "Samsung Galaxy S25",
       "model": "Galaxy S25",
       "serialNumber": "DEMO-SERIAL-PHONE-002",
-      "description": "A silver smartphone from Samsung, model Galaxy S25. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A pink smartphone from Samsung, model Galaxy S25. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 20,
       "price": 48000,
       "cost": 24000.0,
@@ -142,13 +142,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Samsung",
-      "imageUrl": "/assets/catalog/products/phone-002.svg",
+      "imageUrl": "/assets/catalog/products/phone-002.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Silver"
+          "text": "Pink"
         },
         {
           "code": "wireless",
@@ -170,7 +170,7 @@
       "name": "Google Pixel 9",
       "model": "Pixel 9",
       "serialNumber": "DEMO-SERIAL-PHONE-003",
-      "description": "A blue smartphone from Google, model Pixel 9. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A black smartphone from Google, model Pixel 9. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 12,
       "price": 43000,
       "cost": 21500.0,
@@ -178,13 +178,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Google",
-      "imageUrl": "/assets/catalog/products/phone-003.svg",
+      "imageUrl": "/assets/catalog/products/phone-003.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Blue"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -242,7 +242,7 @@
       "name": "iPhone 15",
       "model": "iPhone 15",
       "serialNumber": "DEMO-SERIAL-PHONE-005",
-      "description": "A silver smartphone from Apple, model iPhone 15. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A black smartphone from Apple, model iPhone 15. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 10,
       "price": 45000,
       "cost": 22500.0,
@@ -250,13 +250,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/products/phone-005.svg",
+      "imageUrl": "/assets/catalog/products/phone-005.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Silver"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -278,7 +278,7 @@
       "name": "iPad Air",
       "model": "iPad Air",
       "serialNumber": "DEMO-SERIAL-TABLET-001",
-      "description": "A blue tablet from Apple, model iPad Air. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A grey tablet from Apple, model iPad Air. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 10,
       "price": 29000,
       "cost": 14500.0,
@@ -286,13 +286,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/products/tablet-001.svg",
+      "imageUrl": "/assets/catalog/products/tablet-001.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Blue"
+          "text": "Grey"
         },
         {
           "code": "wireless",
@@ -314,7 +314,7 @@
       "name": "iPad Pro",
       "model": "iPad Pro",
       "serialNumber": "DEMO-SERIAL-TABLET-002",
-      "description": "A graphite tablet from Apple, model iPad Pro. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A black tablet from Apple, model iPad Pro. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 57000,
       "cost": 28500.0,
@@ -322,13 +322,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/products/tablet-002.svg",
+      "imageUrl": "/assets/catalog/products/tablet-002.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -350,7 +350,7 @@
       "name": "Samsung Galaxy Tab S10",
       "model": "Galaxy Tab S10",
       "serialNumber": "DEMO-SERIAL-TABLET-003",
-      "description": "A silver tablet from Samsung, model Galaxy Tab S10. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A grey tablet from Samsung, model Galaxy Tab S10. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 12,
       "price": 34000,
       "cost": 17000.0,
@@ -358,13 +358,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Samsung",
-      "imageUrl": "/assets/catalog/products/tablet-003.svg",
+      "imageUrl": "/assets/catalog/products/tablet-003.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Silver"
+          "text": "Grey"
         },
         {
           "code": "wireless",
@@ -394,7 +394,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Xiaomi",
-      "imageUrl": "/assets/catalog/products/tablet-004.svg",
+      "imageUrl": "/assets/catalog/products/tablet-004.jpg",
       "specifications": [
         {
           "code": "color",
@@ -422,7 +422,7 @@
       "name": "Lenovo Tab P12",
       "model": "Tab P12",
       "serialNumber": "DEMO-SERIAL-TABLET-005",
-      "description": "A graphite tablet from Lenovo, model Tab P12. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
+      "description": "A grey tablet from Lenovo, model Tab P12. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 15000,
       "cost": 7500.0,
@@ -430,13 +430,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Lenovo",
-      "imageUrl": "/assets/catalog/products/tablet-005.svg",
+      "imageUrl": "/assets/catalog/products/tablet-005.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Grey"
         },
         {
           "code": "wireless",
