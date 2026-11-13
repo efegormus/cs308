@@ -1,0 +1,49 @@
+/* The customer profile page (SCRUM-103). The page also has .auth-page, so auth.css and auth-textarea.css give it the
+   fields, field errors, banner, button, shake and masked reveal unchanged. These rules only add what the profile
+   needs: the column, two cards in one form, the read-only email and the incomplete-profile note.
+   Every selector starts with .profile-page; colors only from tokens (design-system.css, DESIGN.md). */
+
+.profile-page .profile-form { width: 100%; max-width: var(--form-max); }
+
+/* Same values as the login and register heading (.auth-page .card h1), which only matches inside the form card. */
+.profile-page .profile-form h1 {
+  margin: 0 0 8px; font-family: var(--font-display); font-size: 28px; font-weight: 600; text-wrap: balance;
+}
+
+.profile-page .profile-cards { display: flex; flex-direction: column; gap: var(--space-xl); }
+.profile-page .profile-card {
+  padding: var(--space-form-card-y) var(--space-xxl);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow);
+}
+.profile-page .profile-card h2 { margin: 0; font: var(--type-heading-sm); color: var(--fg); }
+
+/* The email is shown for reference only. */
+.profile-page .field input[readonly] { background: var(--bg); color: var(--muted); }
+.profile-page .field-note { font: var(--type-body-sm); color: var(--muted); }
+
+/* Neutral note, not an error: --surface with a --line border and a 3px --accent line on the left. */
+.profile-page .profile-notice {
+  margin: 0 0 var(--space-field-gap); padding: 12px 14px; border: 1px solid var(--line); border-radius: var(--radius-field);
+  background: var(--surface); box-shadow: inset 3px 0 0 var(--accent); color: var(--fg); font: var(--type-label);
+}
+
+.profile-page .profile-actions { margin-top: var(--space-xl); }
+.profile-page .profile-actions .submit { margin-top: 0; }
+.profile-page .profile-saved { margin: var(--space-field-gap) 0 0; text-align: center; color: var(--muted); }
+
+/* The cards rise in 140ms apart, on the reveal curve, while their lines reveal inside them. */
+.profile-page .play .profile-card {
+  animation: profile-card-in 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(120ms + var(--card, 0) * 140ms);
+}
+@keyframes profile-card-in {
+  from { transform: translateY(24px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+@media (max-width: 480px) {
+  .profile-page .profile-card { padding: 28px 20px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .profile-page .play .profile-card { animation: none; }
+}
