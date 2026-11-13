@@ -98,7 +98,7 @@
       "name": "iPhone 16",
       "model": "iPhone 16",
       "serialNumber": "DEMO-SERIAL-PHONE-001",
-      "description": "Apple smartphone demonstration item",
+      "description": "A black smartphone from Apple, model iPhone 16. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 15,
       "price": 55000,
       "cost": 27500.0,
@@ -106,13 +106,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/phone-001.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -134,7 +134,7 @@
       "name": "Samsung Galaxy S25",
       "model": "Galaxy S25",
       "serialNumber": "DEMO-SERIAL-PHONE-002",
-      "description": "Samsung smartphone demonstration item",
+      "description": "A pink smartphone from Samsung, model Galaxy S25. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 20,
       "price": 48000,
       "cost": 24000.0,
@@ -142,13 +142,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Samsung",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/phone-002.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Silver"
+          "text": "Pink"
         },
         {
           "code": "wireless",
@@ -170,7 +170,7 @@
       "name": "Google Pixel 9",
       "model": "Pixel 9",
       "serialNumber": "DEMO-SERIAL-PHONE-003",
-      "description": "Google smartphone demonstration item",
+      "description": "A black smartphone from Google, model Pixel 9. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 12,
       "price": 43000,
       "cost": 21500.0,
@@ -178,13 +178,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Google",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/phone-003.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Blue"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -206,7 +206,7 @@
       "name": "Xiaomi 14",
       "model": "Xiaomi 14",
       "serialNumber": "DEMO-SERIAL-PHONE-004",
-      "description": "Xiaomi smartphone demonstration item",
+      "description": "A black smartphone from Xiaomi, model Xiaomi 14. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 18,
       "price": 32000,
       "cost": 16000.0,
@@ -214,13 +214,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Xiaomi",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/phone-004.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -242,7 +242,7 @@
       "name": "iPhone 15",
       "model": "iPhone 15",
       "serialNumber": "DEMO-SERIAL-PHONE-005",
-      "description": "Apple smartphone demonstration item",
+      "description": "A black smartphone from Apple, model iPhone 15. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 10,
       "price": 45000,
       "cost": 22500.0,
@@ -250,13 +250,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "PHONES",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/phone-005.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Silver"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -278,7 +278,7 @@
       "name": "iPad Air",
       "model": "iPad Air",
       "serialNumber": "DEMO-SERIAL-TABLET-001",
-      "description": "Apple tablet demonstration item",
+      "description": "A grey tablet from Apple, model iPad Air. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 10,
       "price": 29000,
       "cost": 14500.0,
@@ -286,13 +286,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/tablet-001.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Blue"
+          "text": "Grey"
         },
         {
           "code": "wireless",
@@ -314,7 +314,7 @@
       "name": "iPad Pro",
       "model": "iPad Pro",
       "serialNumber": "DEMO-SERIAL-TABLET-002",
-      "description": "Apple tablet demonstration item",
+      "description": "A black tablet from Apple, model iPad Pro. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 57000,
       "cost": 28500.0,
@@ -322,13 +322,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Apple",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/tablet-002.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Black"
         },
         {
           "code": "wireless",
@@ -350,7 +350,7 @@
       "name": "Samsung Galaxy Tab S10",
       "model": "Galaxy Tab S10",
       "serialNumber": "DEMO-SERIAL-TABLET-003",
-      "description": "Samsung tablet demonstration item",
+      "description": "A grey tablet from Samsung, model Galaxy Tab S10. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 12,
       "price": 34000,
       "cost": 17000.0,
@@ -358,13 +358,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Samsung",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/tablet-003.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Silver"
+          "text": "Grey"
         },
         {
           "code": "wireless",
@@ -386,7 +386,7 @@
       "name": "Xiaomi Pad 7",
       "model": "Xiaomi Pad 7",
       "serialNumber": "DEMO-SERIAL-TABLET-004",
-      "description": "Xiaomi tablet demonstration item",
+      "description": "A blue tablet from Xiaomi, model Xiaomi Pad 7. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 16,
       "price": 19000,
       "cost": 9500.0,
@@ -394,7 +394,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Xiaomi",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/tablet-004.jpg",
       "specifications": [
         {
           "code": "color",
@@ -422,7 +422,7 @@
       "name": "Lenovo Tab P12",
       "model": "Tab P12",
       "serialNumber": "DEMO-SERIAL-TABLET-005",
-      "description": "Lenovo tablet demonstration item",
+      "description": "A grey tablet from Lenovo, model Tab P12. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 15000,
       "cost": 7500.0,
@@ -430,13 +430,13 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "TABLETS",
       "brand": "Lenovo",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/tablet-005.jpg",
       "specifications": [
         {
           "code": "color",
           "label": "Colour",
           "dataType": "Text",
-          "text": "Graphite"
+          "text": "Grey"
         },
         {
           "code": "wireless",
@@ -458,7 +458,7 @@
       "name": "Nova Laptops Demo 1",
       "model": "LAP-100",
       "serialNumber": "DEMO-SERIAL-LAPTOPS-001",
-      "description": "Fictional laptops demonstration product. Technical specifications and prices are sample data.",
+      "description": "A silver laptop from Nova, model LAP-100. A portable computer with a full keyboard and a wide screen for study, office work and everyday browsing. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 28500,
       "cost": 14250,
@@ -466,7 +466,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "LAPTOPS",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/laptops.svg",
+      "imageUrl": "/assets/catalog/products/laptops-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -494,7 +494,7 @@
       "name": "Nova Laptops Demo 2",
       "model": "LAP-200",
       "serialNumber": "DEMO-SERIAL-LAPTOPS-002",
-      "description": "Fictional laptops demonstration product. Technical specifications and prices are sample data.",
+      "description": "A blue laptop from Nova, model LAP-200. A portable computer with a full keyboard and a wide screen for study, office work and everyday browsing. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 29000,
       "cost": 14500,
@@ -502,7 +502,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "LAPTOPS",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/laptops.svg",
+      "imageUrl": "/assets/catalog/products/laptops-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -530,7 +530,7 @@
       "name": "Nova Laptops Demo 3",
       "model": "LAP-300",
       "serialNumber": "DEMO-SERIAL-LAPTOPS-003",
-      "description": "Fictional laptops demonstration product. Technical specifications and prices are sample data.",
+      "description": "A graphite laptop from Nova, model LAP-300. A portable computer with a full keyboard and a wide screen for study, office work and everyday browsing. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 29500,
       "cost": 14750,
@@ -538,7 +538,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "LAPTOPS",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/laptops.svg",
+      "imageUrl": "/assets/catalog/products/laptops-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -566,7 +566,7 @@
       "name": "Nova Monitors Demo 1",
       "model": "MON-100",
       "serialNumber": "DEMO-SERIAL-MONITORS-001",
-      "description": "Fictional monitors demonstration product. Technical specifications and prices are sample data.",
+      "description": "A silver monitor from Nova, model MON-100. A desktop display with a clear picture and a stable stand, suited to work, study and entertainment. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 7500,
       "cost": 3750,
@@ -574,7 +574,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "MONITORS",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/monitors.svg",
+      "imageUrl": "/assets/catalog/products/monitors-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -602,7 +602,7 @@
       "name": "Nova Monitors Demo 2",
       "model": "MON-200",
       "serialNumber": "DEMO-SERIAL-MONITORS-002",
-      "description": "Fictional monitors demonstration product. Technical specifications and prices are sample data.",
+      "description": "A blue monitor from Nova, model MON-200. A desktop display with a clear picture and a stable stand, suited to work, study and entertainment. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 8000,
       "cost": 4000,
@@ -610,7 +610,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "MONITORS",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/monitors.svg",
+      "imageUrl": "/assets/catalog/products/monitors-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -638,7 +638,7 @@
       "name": "Nova Monitors Demo 3",
       "model": "MON-300",
       "serialNumber": "DEMO-SERIAL-MONITORS-003",
-      "description": "Fictional monitors demonstration product. Technical specifications and prices are sample data.",
+      "description": "A graphite monitor from Nova, model MON-300. A desktop display with a clear picture and a stable stand, suited to work, study and entertainment. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 8500,
       "cost": 4250,
@@ -646,7 +646,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "MONITORS",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/monitors.svg",
+      "imageUrl": "/assets/catalog/products/monitors-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -674,7 +674,7 @@
       "name": "Nova Audio Demo 1",
       "model": "AUD-100",
       "serialNumber": "DEMO-SERIAL-AUDIO-001",
-      "description": "Fictional audio demonstration product. Technical specifications and prices are sample data.",
+      "description": "A silver pair of headphones from Nova, model AUD-100. Over-ear headphones with soft ear cushions and an adjustable headband for music, calls and long listening sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 2500,
       "cost": 1250,
@@ -682,7 +682,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "AUDIO",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/audio.svg",
+      "imageUrl": "/assets/catalog/products/audio-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -710,7 +710,7 @@
       "name": "Nova Audio Demo 2",
       "model": "AUD-200",
       "serialNumber": "DEMO-SERIAL-AUDIO-002",
-      "description": "Fictional audio demonstration product. Technical specifications and prices are sample data.",
+      "description": "A blue pair of headphones from Nova, model AUD-200. Over-ear headphones with soft ear cushions and an adjustable headband for music, calls and long listening sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 3000,
       "cost": 1500,
@@ -718,7 +718,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "AUDIO",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/audio.svg",
+      "imageUrl": "/assets/catalog/products/audio-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -746,7 +746,7 @@
       "name": "Nova Audio Demo 3",
       "model": "AUD-300",
       "serialNumber": "DEMO-SERIAL-AUDIO-003",
-      "description": "Fictional audio demonstration product. Technical specifications and prices are sample data.",
+      "description": "A graphite pair of headphones from Nova, model AUD-300. Over-ear headphones with soft ear cushions and an adjustable headband for music, calls and long listening sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 3500,
       "cost": 1750,
@@ -754,7 +754,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "AUDIO",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/audio.svg",
+      "imageUrl": "/assets/catalog/products/audio-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -782,7 +782,7 @@
       "name": "Nova Wearables Demo 1",
       "model": "WEA-100",
       "serialNumber": "DEMO-SERIAL-WEARABLES-001",
-      "description": "Fictional wearables demonstration product. Technical specifications and prices are sample data.",
+      "description": "A silver smartwatch from Nova, model WEA-100. A wrist watch that shows the time and notifications and tracks daily activity, worn on a comfortable strap. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 4500,
       "cost": 2250,
@@ -790,7 +790,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "WEARABLES",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/wearables.svg",
+      "imageUrl": "/assets/catalog/products/wearables-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -818,7 +818,7 @@
       "name": "Nova Wearables Demo 2",
       "model": "WEA-200",
       "serialNumber": "DEMO-SERIAL-WEARABLES-002",
-      "description": "Fictional wearables demonstration product. Technical specifications and prices are sample data.",
+      "description": "A blue smartwatch from Nova, model WEA-200. A wrist watch that shows the time and notifications and tracks daily activity, worn on a comfortable strap. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 5000,
       "cost": 2500,
@@ -826,7 +826,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "WEARABLES",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/wearables.svg",
+      "imageUrl": "/assets/catalog/products/wearables-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -854,7 +854,7 @@
       "name": "Nova Wearables Demo 3",
       "model": "WEA-300",
       "serialNumber": "DEMO-SERIAL-WEARABLES-003",
-      "description": "Fictional wearables demonstration product. Technical specifications and prices are sample data.",
+      "description": "A graphite smartwatch from Nova, model WEA-300. A wrist watch that shows the time and notifications and tracks daily activity, worn on a comfortable strap. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 5500,
       "cost": 2750,
@@ -862,7 +862,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "WEARABLES",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/wearables.svg",
+      "imageUrl": "/assets/catalog/products/wearables-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -890,7 +890,7 @@
       "name": "Nova Accessories Demo 1",
       "model": "ACC-100",
       "serialNumber": "DEMO-SERIAL-ACCESSORIES-001",
-      "description": "Fictional accessories demonstration product. Technical specifications and prices are sample data.",
+      "description": "A silver USB-C charging cable from Nova, model ACC-100. A durable braided cable for charging and data transfer, supplied with a hook-and-loop tie. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 8,
       "price": 1100,
       "cost": 550,
@@ -898,7 +898,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "ACCESSORIES",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/accessories.svg",
+      "imageUrl": "/assets/catalog/products/accessories-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -926,7 +926,7 @@
       "name": "Nova Accessories Demo 2",
       "model": "ACC-200",
       "serialNumber": "DEMO-SERIAL-ACCESSORIES-002",
-      "description": "Fictional accessories demonstration product. Technical specifications and prices are sample data.",
+      "description": "A blue power bank from Nova, model ACC-200. A pocket-sized portable battery that charges a phone or tablet away from a socket. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 1600,
       "cost": 800,
@@ -934,7 +934,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "ACCESSORIES",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/accessories.svg",
+      "imageUrl": "/assets/catalog/products/accessories-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -962,7 +962,7 @@
       "name": "Nova Accessories Demo 3",
       "model": "ACC-300",
       "serialNumber": "DEMO-SERIAL-ACCESSORIES-003",
-      "description": "Fictional accessories demonstration product. Technical specifications and prices are sample data.",
+      "description": "A graphite wireless mouse from Nova, model ACC-300. A compact wireless mouse with a quiet scroll wheel and a comfortable shape for everyday computer use. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 2100,
       "cost": 1050,
@@ -970,7 +970,7 @@
       "distributorInformation": "Demo Distributor (sample data)",
       "categoryCode": "ACCESSORIES",
       "brand": "Nova Demo",
-      "imageUrl": "/assets/catalog/accessories.svg",
+      "imageUrl": "/assets/catalog/products/accessories-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -998,7 +998,7 @@
       "name": "Nova Smartphone A100",
       "model": "Smartphone A100",
       "serialNumber": "DEMO-SERIAL-SMARTPHONES-001",
-      "description": "Fictional Nova smartphones demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite smartphone from Nova, model Smartphone A100. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 18250,
       "cost": 10950.0,
@@ -1006,7 +1006,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMARTPHONES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/demo-smartphones-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1021,7 +1021,7 @@
       "name": "Nova Smartphone A200",
       "model": "Smartphone A200",
       "serialNumber": "DEMO-SERIAL-SMARTPHONES-002",
-      "description": "Fictional Nova smartphones demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver smartphone from Nova, model Smartphone A200. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 18500,
       "cost": 11100.0,
@@ -1029,7 +1029,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMARTPHONES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/demo-smartphones-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1044,7 +1044,7 @@
       "name": "Nova Smartphone A300",
       "model": "Smartphone A300",
       "serialNumber": "DEMO-SERIAL-SMARTPHONES-003",
-      "description": "Fictional Nova smartphones demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue smartphone from Nova, model Smartphone A300. A touch-screen phone for calls, messages, photos and apps, with a camera on the back and wireless connectivity. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 18750,
       "cost": 11250.0,
@@ -1052,7 +1052,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMARTPHONES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/phones.svg",
+      "imageUrl": "/assets/catalog/products/demo-smartphones-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1067,7 +1067,7 @@
       "name": "Nova Android Tablet B100",
       "model": "Android Tablet B100",
       "serialNumber": "DEMO-SERIAL-ANDROID_TABLETS-001",
-      "description": "Fictional Nova android tablets demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite tablet from Nova, model Android Tablet B100. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 12250,
       "cost": 7350.0,
@@ -1075,7 +1075,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "ANDROID_TABLETS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/demo-android_tablets-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1090,7 +1090,7 @@
       "name": "Nova Android Tablet B200",
       "model": "Android Tablet B200",
       "serialNumber": "DEMO-SERIAL-ANDROID_TABLETS-002",
-      "description": "Fictional Nova android tablets demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver tablet from Nova, model Android Tablet B200. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 12500,
       "cost": 7500.0,
@@ -1098,7 +1098,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "ANDROID_TABLETS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/demo-android_tablets-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1113,7 +1113,7 @@
       "name": "Nova Android Tablet B300",
       "model": "Android Tablet B300",
       "serialNumber": "DEMO-SERIAL-ANDROID_TABLETS-003",
-      "description": "Fictional Nova android tablets demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue tablet from Nova, model Android Tablet B300. A large-screen tablet for reading, video, note taking and light work, easy to carry between rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 17,
       "price": 12750,
       "cost": 7650.0,
@@ -1121,7 +1121,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "ANDROID_TABLETS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/tablets.svg",
+      "imageUrl": "/assets/catalog/products/demo-android_tablets-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1136,7 +1136,7 @@
       "name": "Nova Ultrabook C100",
       "model": "Ultrabook C100",
       "serialNumber": "DEMO-SERIAL-ULTRABOOKS-001",
-      "description": "Fictional Nova ultrabooks demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite laptop from Nova, model Ultrabook C100. A portable computer with a full keyboard and a wide screen for study, office work and everyday browsing. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 26250,
       "cost": 15750.0,
@@ -1144,7 +1144,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "ULTRABOOKS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/laptops.svg",
+      "imageUrl": "/assets/catalog/products/demo-ultrabooks-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1159,7 +1159,7 @@
       "name": "Nova Ultrabook C200",
       "model": "Ultrabook C200",
       "serialNumber": "DEMO-SERIAL-ULTRABOOKS-002",
-      "description": "Fictional Nova ultrabooks demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver laptop from Nova, model Ultrabook C200. A portable computer with a full keyboard and a wide screen for study, office work and everyday browsing. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 26500,
       "cost": 15900.0,
@@ -1167,7 +1167,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "ULTRABOOKS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/laptops.svg",
+      "imageUrl": "/assets/catalog/products/demo-ultrabooks-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1182,7 +1182,7 @@
       "name": "Nova Ultrabook C300",
       "model": "Ultrabook C300",
       "serialNumber": "DEMO-SERIAL-ULTRABOOKS-003",
-      "description": "Fictional Nova ultrabooks demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue laptop from Nova, model Ultrabook C300. A portable computer with a full keyboard and a wide screen for study, office work and everyday browsing. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 17,
       "price": 26750,
       "cost": 16050.0,
@@ -1190,7 +1190,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "ULTRABOOKS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/laptops.svg",
+      "imageUrl": "/assets/catalog/products/demo-ultrabooks-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1205,7 +1205,7 @@
       "name": "Nova Gaming Monitor D100",
       "model": "Gaming Monitor D100",
       "serialNumber": "DEMO-SERIAL-GAMING_MONITORS-001",
-      "description": "Fictional Nova gaming monitors demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite monitor from Nova, model Gaming Monitor D100. A gaming monitor with a fast, smooth picture and an RGB light strip, built for long play sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 9250,
       "cost": 5550.0,
@@ -1213,7 +1213,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "GAMING_MONITORS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/monitors.svg",
+      "imageUrl": "/assets/catalog/products/demo-gaming_monitors-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1228,7 +1228,7 @@
       "name": "Nova Gaming Monitor D200",
       "model": "Gaming Monitor D200",
       "serialNumber": "DEMO-SERIAL-GAMING_MONITORS-002",
-      "description": "Fictional Nova gaming monitors demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver monitor from Nova, model Gaming Monitor D200. A gaming monitor with a fast, smooth picture and an RGB light strip, built for long play sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 9500,
       "cost": 5700.0,
@@ -1236,7 +1236,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "GAMING_MONITORS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/monitors.svg",
+      "imageUrl": "/assets/catalog/products/demo-gaming_monitors-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1251,7 +1251,7 @@
       "name": "Nova Gaming Monitor D300",
       "model": "Gaming Monitor D300",
       "serialNumber": "DEMO-SERIAL-GAMING_MONITORS-003",
-      "description": "Fictional Nova gaming monitors demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue monitor from Nova, model Gaming Monitor D300. A gaming monitor with a fast, smooth picture and an RGB light strip, built for long play sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 9750,
       "cost": 5850.0,
@@ -1259,7 +1259,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "GAMING_MONITORS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/monitors.svg",
+      "imageUrl": "/assets/catalog/products/demo-gaming_monitors-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1274,7 +1274,7 @@
       "name": "Nova Headphone E100",
       "model": "Headphone E100",
       "serialNumber": "DEMO-SERIAL-HEADPHONES-001",
-      "description": "Fictional Nova headphones demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite pair of headphones from Nova, model Headphone E100. Over-ear headphones with soft ear cushions and an adjustable headband for music, calls and long listening sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 2750,
       "cost": 1650.0,
@@ -1282,7 +1282,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "HEADPHONES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/audio.svg",
+      "imageUrl": "/assets/catalog/products/demo-headphones-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1297,7 +1297,7 @@
       "name": "Nova Headphone E200",
       "model": "Headphone E200",
       "serialNumber": "DEMO-SERIAL-HEADPHONES-002",
-      "description": "Fictional Nova headphones demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver pair of headphones from Nova, model Headphone E200. Over-ear headphones with soft ear cushions and an adjustable headband for music, calls and long listening sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 3000,
       "cost": 1800.0,
@@ -1305,7 +1305,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "HEADPHONES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/audio.svg",
+      "imageUrl": "/assets/catalog/products/demo-headphones-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1320,7 +1320,7 @@
       "name": "Nova Headphone E300",
       "model": "Headphone E300",
       "serialNumber": "DEMO-SERIAL-HEADPHONES-003",
-      "description": "Fictional Nova headphones demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue pair of headphones from Nova, model Headphone E300. Over-ear headphones with soft ear cushions and an adjustable headband for music, calls and long listening sessions. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 17,
       "price": 3250,
       "cost": 1950.0,
@@ -1328,7 +1328,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "HEADPHONES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/audio.svg",
+      "imageUrl": "/assets/catalog/products/demo-headphones-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1340,10 +1340,10 @@
     },
     {
       "seedKey": "DEMO-SMARTWATCHES-001",
-      "name": "Nova Smartwatche F100",
+      "name": "Nova Smartwatch F100",
       "model": "Smartwatche F100",
       "serialNumber": "DEMO-SERIAL-SMARTWATCHES-001",
-      "description": "Fictional Nova smartwatches demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite smartwatch from Nova, model Smartwatche F100. A wrist watch that shows the time and notifications and tracks daily activity, worn on a comfortable strap. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 5250,
       "cost": 3150.0,
@@ -1351,7 +1351,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMARTWATCHES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/wearables.svg",
+      "imageUrl": "/assets/catalog/products/demo-smartwatches-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1363,10 +1363,10 @@
     },
     {
       "seedKey": "DEMO-SMARTWATCHES-002",
-      "name": "Nova Smartwatche F200",
+      "name": "Nova Smartwatch F200",
       "model": "Smartwatche F200",
       "serialNumber": "DEMO-SERIAL-SMARTWATCHES-002",
-      "description": "Fictional Nova smartwatches demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver smartwatch from Nova, model Smartwatche F200. A wrist watch that shows the time and notifications and tracks daily activity, worn on a comfortable strap. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 5500,
       "cost": 3300.0,
@@ -1374,7 +1374,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMARTWATCHES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/wearables.svg",
+      "imageUrl": "/assets/catalog/products/demo-smartwatches-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1386,10 +1386,10 @@
     },
     {
       "seedKey": "DEMO-SMARTWATCHES-003",
-      "name": "Nova Smartwatche F300",
+      "name": "Nova Smartwatch F300",
       "model": "Smartwatche F300",
       "serialNumber": "DEMO-SERIAL-SMARTWATCHES-003",
-      "description": "Fictional Nova smartwatches demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue smartwatch from Nova, model Smartwatche F300. A wrist watch that shows the time and notifications and tracks daily activity, worn on a comfortable strap. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 17,
       "price": 5750,
       "cost": 3450.0,
@@ -1397,7 +1397,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMARTWATCHES",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/wearables.svg",
+      "imageUrl": "/assets/catalog/products/demo-smartwatches-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1412,7 +1412,7 @@
       "name": "Nova Charger G100",
       "model": "Charger G100",
       "serialNumber": "DEMO-SERIAL-CHARGERS-001",
-      "description": "Fictional Nova chargers demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite charger from Nova, model Charger G100. A wall charger with a detachable cable for fast, safe charging of phones, tablets and other devices. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 1050,
       "cost": 630.0,
@@ -1420,7 +1420,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "CHARGERS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/accessories.svg",
+      "imageUrl": "/assets/catalog/products/demo-chargers-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1435,7 +1435,7 @@
       "name": "Nova Charger G200",
       "model": "Charger G200",
       "serialNumber": "DEMO-SERIAL-CHARGERS-002",
-      "description": "Fictional Nova chargers demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver charger from Nova, model Charger G200. A wall charger with a detachable cable for fast, safe charging of phones, tablets and other devices. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 1300,
       "cost": 780.0,
@@ -1443,7 +1443,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "CHARGERS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/accessories.svg",
+      "imageUrl": "/assets/catalog/products/demo-chargers-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1458,7 +1458,7 @@
       "name": "Nova Charger G300",
       "model": "Charger G300",
       "serialNumber": "DEMO-SERIAL-CHARGERS-003",
-      "description": "Fictional Nova chargers demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue charger from Nova, model Charger G300. A wall charger with a detachable cable for fast, safe charging of phones, tablets and other devices. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 1550,
       "cost": 930.0,
@@ -1466,7 +1466,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "CHARGERS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/accessories.svg",
+      "imageUrl": "/assets/catalog/products/demo-chargers-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1481,7 +1481,7 @@
       "name": "Nova Smart TV H100",
       "model": "Smart TV H100",
       "serialNumber": "DEMO-SERIAL-SMART_TVS-001",
-      "description": "Fictional Nova smart tvs demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite television from Nova, model Smart TV H100. A flat-screen smart TV for streaming, broadcast channels and games, with a slim frame that fits most living rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 24250,
       "cost": 14550.0,
@@ -1489,7 +1489,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMART_TVS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/tv-video.svg",
+      "imageUrl": "/assets/catalog/products/demo-smart_tvs-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1504,7 +1504,7 @@
       "name": "Nova Smart TV H200",
       "model": "Smart TV H200",
       "serialNumber": "DEMO-SERIAL-SMART_TVS-002",
-      "description": "Fictional Nova smart tvs demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver television from Nova, model Smart TV H200. A flat-screen smart TV for streaming, broadcast channels and games, with a slim frame that fits most living rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 24500,
       "cost": 14700.0,
@@ -1512,7 +1512,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMART_TVS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/tv-video.svg",
+      "imageUrl": "/assets/catalog/products/demo-smart_tvs-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1527,7 +1527,7 @@
       "name": "Nova Smart TV H300",
       "model": "Smart TV H300",
       "serialNumber": "DEMO-SERIAL-SMART_TVS-003",
-      "description": "Fictional Nova smart tvs demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue television from Nova, model Smart TV H300. A flat-screen smart TV for streaming, broadcast channels and games, with a slim frame that fits most living rooms. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 17,
       "price": 24750,
       "cost": 14850.0,
@@ -1535,7 +1535,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "SMART_TVS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/tv-video.svg",
+      "imageUrl": "/assets/catalog/products/demo-smart_tvs-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1550,7 +1550,7 @@
       "name": "Nova Controller I100",
       "model": "Controller I100",
       "serialNumber": "DEMO-SERIAL-CONTROLLERS-001",
-      "description": "Fictional Nova controllers demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite game controller from Nova, model Controller I100. An ergonomic game controller with two analogue sticks, face buttons and shoulder triggers for console and PC play. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 2450,
       "cost": 1470.0,
@@ -1558,7 +1558,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "CONTROLLERS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/gaming.svg",
+      "imageUrl": "/assets/catalog/products/demo-controllers-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1573,7 +1573,7 @@
       "name": "Nova Controller I200",
       "model": "Controller I200",
       "serialNumber": "DEMO-SERIAL-CONTROLLERS-002",
-      "description": "Fictional Nova controllers demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver game controller from Nova, model Controller I200. An ergonomic game controller with two analogue sticks, face buttons and shoulder triggers for console and PC play. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 2700,
       "cost": 1620.0,
@@ -1581,7 +1581,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "CONTROLLERS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/gaming.svg",
+      "imageUrl": "/assets/catalog/products/demo-controllers-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1596,7 +1596,7 @@
       "name": "Nova Controller I300",
       "model": "Controller I300",
       "serialNumber": "DEMO-SERIAL-CONTROLLERS-003",
-      "description": "Fictional Nova controllers demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue game controller from Nova, model Controller I300. An ergonomic game controller with two analogue sticks, face buttons and shoulder triggers for console and PC play. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 17,
       "price": 2950,
       "cost": 1770.0,
@@ -1604,7 +1604,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "CONTROLLERS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/gaming.svg",
+      "imageUrl": "/assets/catalog/products/demo-controllers-003.svg",
       "specifications": [
         {
           "code": "color",
@@ -1619,7 +1619,7 @@
       "name": "Nova Mirrorless Camera J100",
       "model": "Mirrorless Camera J100",
       "serialNumber": "DEMO-SERIAL-MIRRORLESS-001",
-      "description": "Fictional Nova mirrorless cameras demo item for comparing catalog options. Variant 1, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A graphite camera from Nova, model Mirrorless Camera J100. A mirrorless camera with a changeable lens, a comfortable grip and manual controls for photo and video. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 11,
       "price": 32250,
       "cost": 19350.0,
@@ -1627,7 +1627,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "MIRRORLESS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/cameras.svg",
+      "imageUrl": "/assets/catalog/products/demo-mirrorless-001.svg",
       "specifications": [
         {
           "code": "color",
@@ -1642,7 +1642,7 @@
       "name": "Nova Mirrorless Camera J200",
       "model": "Mirrorless Camera J200",
       "serialNumber": "DEMO-SERIAL-MIRRORLESS-002",
-      "description": "Fictional Nova mirrorless cameras demo item for comparing catalog options. Variant 2, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A silver camera from Nova, model Mirrorless Camera J200. A mirrorless camera with a changeable lens, a comfortable grip and manual controls for photo and video. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 14,
       "price": 32500,
       "cost": 19500.0,
@@ -1650,7 +1650,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "MIRRORLESS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/cameras.svg",
+      "imageUrl": "/assets/catalog/products/demo-mirrorless-002.svg",
       "specifications": [
         {
           "code": "color",
@@ -1665,7 +1665,7 @@
       "name": "Nova Mirrorless Camera J300",
       "model": "Mirrorless Camera J300",
       "serialNumber": "DEMO-SERIAL-MIRRORLESS-003",
-      "description": "Fictional Nova mirrorless cameras demo item for comparing catalog options. Variant 3, supplied with setup guide and a two-year demonstration warranty; specifications and prices are sample data.",
+      "description": "A blue camera from Nova, model Mirrorless Camera J300. A mirrorless camera with a changeable lens, a comfortable grip and manual controls for photo and video. Sample catalog item: specifications and prices are demonstration data.",
       "quantityInStock": 0,
       "price": 32750,
       "cost": 19650.0,
@@ -1673,7 +1673,7 @@
       "distributorInformation": "Nova Demo Distribution, Istanbul (fictional)",
       "categoryCode": "MIRRORLESS",
       "brand": "Nova (Demo)",
-      "imageUrl": "/assets/catalog/cameras.svg",
+      "imageUrl": "/assets/catalog/products/demo-mirrorless-003.svg",
       "specifications": [
         {
           "code": "color",
