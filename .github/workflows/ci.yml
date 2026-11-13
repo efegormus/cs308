@@ -196,6 +196,9 @@ jobs:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
         run: python3 scripts/verify_admin_browser.py --url http://127.0.0.1:5200 --operator-assembly "$RUNNER_TEMP/published-app/OnlineStore.dll"
 
+      - name: Verify the customer profile page
+        run: python3 scripts/verify_profile_browser.py --url http://127.0.0.1:5200
+
       - name: Upload application log on failure
         if: failure()
         uses: actions/upload-artifact@v7
