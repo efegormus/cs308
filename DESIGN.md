@@ -774,6 +774,35 @@ still [Belirsiz]: the sales overview has no revenue chart yet.
 
 Motion is listed under "Motion and reduced motion".
 
+### Customer profile [Uyarlandı]
+
+The customer's `/profile` page (SCRUM-103), where name, tax ID and home address are corrected. It is built
+from the login and register parts (`.auth-page`, `useAuthForm`) and keeps their sizes for now: a 28px title and a
+48px button with 6px corners, like login, not the `heading-lg` and 44px targets (see Migration status).
+
+- **Layout.** One column up to 420px (`--form-max`): the title, one line of `--muted` text, then two form cards in
+  one form, "Account" and "Invoice and delivery", 24px apart, and one full-width "Save changes" button under them.
+  Each card is the form card (`--surface`, 1px `--line`, `--shadow`, 10px corners, padding 36px 32px; 28px 20px up
+  to 480px) with a `heading-sm` title.
+- **Email.** Shown read-only for reference: `--bg` fill and `--muted` text in the normal input frame, with the note
+  "Email cannot be changed here." in `body-sm` `--muted` under it.
+- **Incomplete-profile note.** A legacy account without a tax ID or home address sees "Add your tax ID and home
+  address before you pay." above the cards. It is a note, not an error: `role="status"`, `--surface` fill, 1px
+  `--line` border, a 3px `--accent` line on the left (an inset shadow, as in the admin menu), `--fg` text in
+  `label`, 6px corners. No new token. Errors keep the red error banner.
+- **After a save** the button shows the `--ok` fill and "Saved", then returns to "Save changes" (see Motion), and a
+  `role="status"` line "Your changes are saved." appears under it, with "Continue to checkout" when the page was
+  opened from checkout.
+
+| Pair | Ratio | Need | Result |
+| --- | --- | --- | --- |
+| `--fg` `#222222` on `--surface` `#ffffff` (note text) | 15.91:1 | 4.5 | Pass |
+| `--accent` `#024ad8` line on `--surface` `#ffffff` | 7.06:1 | 3 | Pass |
+| Dark `--fg` `#e8ebf0` on dark `--surface` `#18202c` | 13.71:1 | 4.5 | Pass |
+| Dark `--accent` `#2d6bcf` line on dark `--surface` `#18202c` | 3.21:1 | 3 | Pass |
+| `--muted` `#505966` on `--bg` `#f6f7f9` (read-only email) / dark `#a4aebc` on `#0e131a` | 6.61:1 / 8.31:1 | 4.5 | Pass |
+| `--field-line` `#6b7280` on `--bg` `#f6f7f9` (read-only frame) / dark `#7b8799` on `#0e131a` | 4.51:1 / 5.12:1 | 3 | Pass |
+
 ### Live chat [Belirsiz]
 
 Support chat for guests and customers (requirement 13). Decision pending.
@@ -794,12 +823,17 @@ Decision pending.
   (220ms, 80ms apart) and count from 0 (700ms, easeOutCubic), skeleton rows shimmer (1.2s), and the
   review approval runs 200ms (button to circle), 120ms + 250ms (tick), 800ms (hold) and 250ms (close).
   The values live in `frontend/src/lib/motion.js`; keyframes start with `admin-`.
+- Customer profile (SCRUM-103): the login and register motion (masked reveal of the title, text, note, every field
+  and the button; shake; spotlight; spinner; the 0.95s `--ok` fill and the check), plus the two cards rising 24px
+  in 0.85s on the same curve, 140ms apart (`profile-card-in`). After a save the check and "Saved" stay about 1.8s,
+  then the button reads "Save changes" again.
 - No animation library.
 - `prefers-reduced-motion: reduce` turns these off and shows the final state at once. The reveal
   masks must come off in that mode too, or they clip the focus ring. On the home page side cards
   scale instead of turning and the VIEW circle sits on the pointer. In the admin panel KPI values
   show their final value at once and an approved review's tick and green show at once; the row still
-  waits 800ms, then goes without a fade.
+  waits 800ms, then goes without a fade. On the profile page the cards do not rise, and after a save
+  the check and "Saved" show at once without the fill.
 
 ## Accessibility patterns [Proje]
 
@@ -980,7 +1014,7 @@ the dark theme too.
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Catalog and purchase font | Poppins / Open Sans | Arial | `products.css` |
-| Page title | 32px 600, line height 1.2 | Login 28px; home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
+| Page title | 32px 600, line height 1.2 | Login, register and profile 28px; home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
 | Product card title | 20px 600 Poppins | Matches | `products.css` |
 | Price | 24px 500 Poppins | Product card matches; 1.2rem bold Arial (product page, wishlist); 1.2rem bold (purchase total) | `products.css`, `purchases.css` |
 | Order card title | 20px | 1.1rem | `orders.css` |
@@ -991,7 +1025,7 @@ the dark theme too.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Primary button height | 44px | `Button` 44px, used by the header search and the product card; 48px (login); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
+| Primary button height | 44px | `Button` 44px, used by the header search and the product card; 48px (login, register, profile); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
 | Primary button corners | 4px | `Button` 4px; 6px (login); 0.4rem (6.4px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login: ring glow and spotlight, fill unchanged | `components/ui/Button.css`; `auth.css` |
 | Secondary button | 44px, 4px corners | Padding 0.75rem 1rem, 0.4rem corners | `products.css` |
@@ -1003,6 +1037,7 @@ the dark theme too.
 | Product card spec row | One `body-sm` row | Matches: brand, or the first line of the description | `ProductCard.jsx`, `lib/product-display.js` |
 | Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
 | Admin panel | Menu, KPI cards, `Table`, review approval | Matches (SCRUM-124) | `pages/AdminPanelPage.jsx`, `components/admin/`, `components/ui/Table.js`, `styles/admin.css` |
+| Customer profile | Form cards, neutral note, 32px title and 44px button | Cards and note match; title 28px and button 48px with 6px corners, as on login (SCRUM-103) | `pages/ProfilePage.jsx`, `styles/profile.css`, `auth.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by the header search; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Hard-coded `#e8f0fa`, `#ffebea`, `#7c231d` | `purchases.css` |
