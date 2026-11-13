@@ -30,6 +30,14 @@ def wait_for_reveal(page):
     page.wait_for_function("[...document.querySelectorAll('.profile-form .r')].every(line => line.classList.contains('done'))")
 
 
+def wait_until(page, condition, message, timeout_seconds=10):
+    # page.wait_for_timeout lets Playwright deliver pending events, such as a route handler call, while it waits.
+    deadline = time.monotonic() + timeout_seconds
+    while not condition():
+        assert time.monotonic() < deadline, message
+        page.wait_for_timeout(50)
+
+
 def verify(url, executable=None, screenshots=None):
     if urlparse(url).hostname not in ("localhost", "127.0.0.1"):
         raise ValueError("Profile verification is restricted to a disposable local server.")
@@ -52,6 +60,7 @@ def verify(url, executable=None, screenshots=None):
                 response = context.request.post(url + path, data=body, headers={"X-CSRF-TOKEN": token})
                 if response.status != 429 or attempt:
                     return response
+                print(f"INFO: {path} answered 429 (shared login/register limit); waiting 61 s once")
                 time.sleep(61)
 
         def new_page(context):
@@ -85,8 +94,10 @@ def verify(url, executable=None, screenshots=None):
             held = []
             page.route("**/api/customer/profile", lambda route: held.append(route) if route.request.method == "GET" else route.continue_())
             page.goto(url + "/profile")
+            # The page shows the loading line before it sends the GET, and the sync API only runs a route handler
+            # inside a later Playwright call, so wait for the handler itself before checking the held request.
+            wait_until(page, lambda: held, "The profile request was not made.")
             expect(page.get_by_role("status").filter(has_text="Loading your profile…")).to_be_visible()
-            assert held, "The profile request was not made."
             held[0].continue_()
             page.unroute("**/api/customer/profile")
             expect(page.get_by_role("heading", level=1, name="My profile")).to_be_visible()
