@@ -5,7 +5,9 @@ import os
 import tempfile
 import unittest
 from pathlib import Path
+from unittest import mock
 
+import dev
 from dev import development_environment, init_config
 
 
@@ -73,6 +75,31 @@ class LocalConfigurationTests(unittest.TestCase):
             for port in (0, 65536, -1):
                 with self.assertRaises(ValueError):
                     init_config(port, Path(directory))
+
+
+class RunCommandTests(unittest.TestCase):
+    def test_the_executable_found_on_the_path_is_started_not_the_bare_name(self):
+        # On Windows which("npm") finds npm.cmd; the bare name "npm" cannot be started there (SCRUM-129).
+        with mock.patch.object(dev.shutil, 'which', return_value=r'C:\nodejs\npm.CMD'), \
+                mock.patch.object(dev.subprocess, 'run') as run:
+            dev.run(['npm', '--prefix', 'frontend', 'ci'], {'A': 'b'})
+        run.assert_called_once_with([r'C:\nodejs\npm.CMD', '--prefix', 'frontend', 'ci'],
+                                    cwd=dev.ROOT, env={'A': 'b'}, check=True)
+
+    def test_a_missing_executable_is_reported_by_name(self):
+        with mock.patch.object(dev.shutil, 'which', return_value=None), \
+                mock.patch.object(dev.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'Required executable not found: npm'):
+                dev.run(['npm', 'ci'], {})
+        run.assert_not_called()
+
+    def test_an_executable_that_cannot_be_started_names_the_command_and_not_the_environment(self):
+        with mock.patch.object(dev.shutil, 'which', return_value='/bin/npm'), \
+                mock.patch.object(dev.subprocess, 'run', side_effect=FileNotFoundError()):
+            with self.assertRaises(ValueError) as caught:
+                dev.run(['npm', 'ci'], {'ConnectionStrings__DefaultConnection': 'SECRET'})
+        self.assertIn('npm', str(caught.exception))
+        self.assertNotIn('SECRET', str(caught.exception))
 
 
 if __name__ == '__main__':
