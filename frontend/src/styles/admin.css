@@ -1,0 +1,157 @@
+/* The admin panel (SCRUM-124): /manage for product and sales managers. Tokens: design-system.css; rules: DESIGN.md,
+   "Admin panel". Every selector starts with .admin-page, because all stylesheets load at once. Durations come from
+   lib/motion.js through the custom properties AdminShell puts on .admin-shell; keyframes start with admin-. */
+.admin-page { flex: 1; background: var(--bg); color: var(--fg); font: var(--type-body-md); }
+.admin-page, .admin-page * { box-sizing: border-box; }
+.admin-page .admin-main { width: 100%; max-width: var(--page-max); margin: 0 auto; padding: var(--space-xl) var(--space-xxl) var(--space-xxl); }
+.admin-page .admin-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+.admin-page a { color: var(--link); }
+.admin-page a:hover { color: var(--accent-hover); }
+.admin-page a:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* Frame: 240px menu on the left, content on the right. */
+.admin-page .admin-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
+.admin-page .admin-nav { position: sticky; top: var(--space-md); }
+.admin-page .admin-nav-toggle { display: none; }
+.admin-page .admin-nav-list {
+  margin: 0; padding: var(--space-xs) 0; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-tile);
+}
+.admin-page .admin-nav-link {
+  display: flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-md);
+  color: var(--fg); text-decoration: none; font: var(--type-nav-link);
+  box-shadow: inset 0 0 0 var(--accent);
+  transition: box-shadow var(--admin-menu-line-ms) ease;
+}
+/* Hover: a 3px --accent line on the left. Current page: the same line on a light --accent tint. */
+.admin-page .admin-nav-link:hover { color: var(--fg); box-shadow: inset 3px 0 0 var(--accent); }
+.admin-page .admin-nav-link[aria-current="page"] {
+  box-shadow: inset 3px 0 0 var(--accent);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface));
+}
+.admin-page .admin-nav-link:focus-visible { outline: 3px solid var(--focus); outline-offset: -3px; }
+
+.admin-page .admin-account { margin: 0 0 var(--space-xs); font: var(--type-body-sm); color: var(--muted); }
+.admin-page .admin-section { animation: admin-section-in var(--admin-section-ms) var(--admin-ease) both; }
+@keyframes admin-section-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: none; }
+}
+.admin-page .admin-section-head { margin-bottom: var(--space-xl); }
+.admin-page .admin-section-head h1 { margin: 0 0 var(--space-xs); font: var(--type-heading-lg); }
+.admin-page .admin-section-head h1:focus { outline: none; }
+.admin-page .admin-lead { margin: 0; max-width: 60ch; color: var(--muted); }
+.admin-page .request-state { margin-block: 0 var(--space-xl); }
+
+/* KPI cards: they rise in one after another. */
+.admin-page .admin-kpis {
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-md); margin-bottom: var(--space-xxl);
+}
+.admin-page .admin-kpi {
+  gap: var(--space-xxs); box-shadow: var(--shadow); border: 1px solid var(--line); border-radius: var(--radius-card);
+  animation: admin-rise var(--admin-kpi-rise-ms) var(--admin-ease) both;
+  animation-delay: calc(var(--i, 0) * var(--admin-kpi-stagger-ms));
+}
+@keyframes admin-rise {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.admin-page .admin-kpi-label { margin: 0; font: var(--type-label); color: var(--muted); }
+.admin-page .admin-kpi-value { margin: 0; font: var(--type-heading-md); font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+.admin-page .admin-kpi-hint { margin: 0; font: var(--type-caption); color: var(--muted); }
+
+/* Lists under the KPIs. */
+/* minmax(0, 1fr): a wide table scrolls inside its frame instead of widening the column (and the page). */
+.admin-page .admin-panels { display: grid; grid-template-columns: minmax(0, 1fr); gap: var(--space-xxl); }
+.admin-page .admin-panel-head {
+  display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: var(--space-xs);
+  margin-bottom: var(--space-sm);
+}
+.admin-page .admin-panel-head h2 { margin: 0; font: var(--type-heading-sm); }
+.admin-page .admin-panel-head a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+.admin-page .admin-cell-list { margin: 0; padding: 0; list-style: none; }
+.admin-page .admin-more { margin-top: var(--space-md); }
+.admin-page .admin-empty {
+  margin: 0; padding: var(--space-md); color: var(--muted);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-tile);
+}
+
+/* Reviews waiting for approval. */
+.admin-page .admin-review-list {
+  margin: 0; padding: 0; list-style: none;
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-tile); overflow: hidden;
+}
+.admin-page .admin-review {
+  overflow: hidden; border-top: 1px solid var(--line);
+  transition: opacity var(--admin-approve-collapse-ms) ease, max-height var(--admin-approve-collapse-ms) ease,
+    min-height var(--admin-approve-collapse-ms) ease, border-top-width var(--admin-approve-collapse-ms) ease;
+}
+.admin-page .admin-review:first-child { border-top-width: 0; }
+.admin-page .admin-review--closing { opacity: 0; min-height: 0; border-top-width: 0; }
+.admin-page .admin-review-inner { display: flex; align-items: center; gap: var(--space-md); padding: var(--space-md); }
+.admin-page .admin-review-text { flex: 1; min-width: 0; }
+.admin-page .admin-review-product { margin: 0 0 var(--space-xxs); font: var(--type-label); }
+.admin-page .admin-review-body { margin: 0 0 var(--space-xxs); overflow-wrap: anywhere; }
+.admin-page .admin-review-meta { margin: 0; font: var(--type-caption); color: var(--muted); }
+.admin-page .admin-review-error { margin: 0; padding: 0 var(--space-md) var(--space-md); font: var(--type-field-error); color: var(--danger); }
+
+/* Approve: 110px button -> 44px green circle with a white tick drawn after a short delay. */
+.admin-page .admin-approve {
+  position: relative; flex: none; width: 110px; padding: 0; overflow: hidden;
+  transition: width var(--admin-approve-morph-ms) ease, background-color var(--admin-approve-morph-ms) ease,
+    border-radius var(--admin-approve-morph-ms) ease, box-shadow 0.2s ease;
+}
+.admin-page .admin-approve[aria-disabled="true"] { cursor: default; }
+/* Specific enough to beat the shared button's hover fill and dark-theme ring. */
+.admin-page .admin-review .admin-approve.is-approved,
+.admin-page .admin-review .admin-approve.is-approved:is(:hover, :active):not(:disabled) {
+  width: 44px; border-radius: 22px; background: var(--ok); box-shadow: none;
+}
+.admin-page .admin-approve.is-approved .admin-approve-label { opacity: 0; }
+.admin-page .admin-approve-tick {
+  position: absolute; inset: 0; margin: auto; fill: none; stroke: var(--accent-fg); stroke-width: 2.5;
+  stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1; stroke-dashoffset: 1; opacity: 0;
+}
+.admin-page .admin-approve.is-approved .admin-approve-tick {
+  opacity: 1; stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--admin-approve-tick-ms) ease var(--admin-approve-tick-delay-ms);
+}
+
+/* Breakpoints 480 / 768 / 1024 / 1280 (DESIGN.md, Responsive). */
+@media (max-width: 1280px) {
+  .admin-page .admin-main { padding-inline: var(--space-xl); }
+}
+@media (max-width: 1024px) {
+  .admin-page .admin-kpis { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+/* Below 768px the menu is a disclosure at the top: a 44px button opens the same list under it. */
+@media (max-width: 767.98px) {
+  .admin-page .admin-shell { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); }
+  .admin-page .admin-nav { position: static; }
+  .admin-page .admin-nav-toggle {
+    display: flex; align-items: center; gap: var(--space-xs); width: 100%; min-height: var(--touch-target);
+    padding: 0 var(--space-md); background: var(--surface); color: var(--fg);
+    border: 1px solid var(--field-line); border-radius: var(--radius-button); font: var(--type-button); cursor: pointer;
+  }
+  .admin-page .admin-nav-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+  .admin-page .admin-nav-current { flex: 1; text-align: start; color: var(--muted); font: var(--type-body-md); }
+  .admin-page .admin-nav-current::before { content: "· "; }
+  .admin-page .admin-nav-toggle[aria-expanded="true"] .admin-nav-chevron { transform: rotate(180deg); }
+  .admin-page .admin-nav-list { display: none; margin-top: var(--space-xs); }
+  .admin-page .admin-nav-list.is-open { display: block; }
+  .admin-page .admin-section-head h1 { font: var(--type-heading-md); }
+}
+@media (max-width: 480px) {
+  .admin-page .admin-main { padding: var(--space-md) var(--space-md) var(--space-xl); }
+  .admin-page .admin-kpis { grid-template-columns: minmax(0, 1fr); }
+  .admin-page .admin-review-inner { align-items: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-page .admin-section, .admin-page .admin-kpi { animation: none; }
+  .admin-page .admin-nav-link, .admin-page .admin-review, .admin-page .admin-approve,
+  .admin-page .admin-approve .admin-approve-tick, .admin-page .admin-approve.is-approved .admin-approve-tick { transition: none; }
+}
