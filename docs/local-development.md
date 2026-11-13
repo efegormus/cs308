@@ -88,6 +88,9 @@ python3 scripts/dev.py check
 User Secrets load in Development only. Outside that environment supply
 ConnectionStrings__DefaultConnection and MySql__ServerVersion through a secret
 manager/environment. Do not use the helper against a shared or production server.
+
+On Windows the helper starts the file it finds on the PATH (for example `npm.cmd`), so
+`py scripts/dev.py frontend-build` works the same as `npm --prefix frontend run build`.
 Migrations are explicit; ordinary startup does not create tables or seed data.
 
 ## Real MySQL integration tests

@@ -62,10 +62,16 @@ def development_environment(root=ROOT):
 
 
 def run(command, env):
-    if shutil.which(command[0]) is None:
+    executable = shutil.which(command[0])
+    if executable is None:
         raise ValueError(f"Required executable not found: {command[0]}. See docs/local-development.md.")
+    # Start the file that which() found, not the bare name. On Windows npm is npm.cmd and CreateProcess does not
+    # search PATHEXT, so the bare name "npm" cannot be started although which() finds it (SCRUM-129).
     # Secrets are passed through the child environment, never command-line arguments.
-    subprocess.run(command, cwd=ROOT, env=env, check=True)
+    try:
+        subprocess.run([executable, *command[1:]], cwd=ROOT, env=env, check=True)
+    except FileNotFoundError as error:
+        raise ValueError(f"Could not start {command[0]} ({executable}). See docs/local-development.md.") from error
 
 
 def main(argv=None):
