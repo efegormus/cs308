@@ -1,0 +1,45 @@
+/* Data table (SCRUM-124). Tokens: design-system.css. The frame is an outline card (1px --line, --surface); a wide table
+   scrolls sideways inside .ui-table-scroll, so the page never does. The shimmer time comes from motion.js through
+   --admin-shimmer-ms, with 1.2s as the fallback outside the admin panel. */
+.ui-table-frame {
+  box-sizing: border-box; max-width: 100%;
+  background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--radius-tile);
+  font: var(--type-body-sm);
+}
+.ui-table-scroll { max-width: 100%; overflow-x: auto; border-radius: inherit; }
+.ui-table-scroll:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.ui-table { width: 100%; min-width: 32rem; border-collapse: collapse; }
+.ui-table-caption {
+  margin: 0; padding: var(--space-sm) var(--space-md); text-align: start;
+  font: var(--type-label); color: var(--fg);
+}
+.ui-table-cell {
+  padding: var(--space-sm) var(--space-md); text-align: start; vertical-align: top;
+  border-top: 1px solid var(--line); overflow-wrap: break-word;
+}
+.ui-table-cell--end { text-align: end; white-space: nowrap; }
+.ui-table thead .ui-table-cell { font: var(--type-label); color: var(--muted); white-space: nowrap; }
+.ui-table tbody th.ui-table-cell { font-weight: 600; }
+.ui-table-empty { margin: 0; padding: var(--space-md); color: var(--muted); }
+.ui-table-frame--empty .ui-table-caption + .ui-table-empty { padding-top: 0; }
+.ui-table-sr {
+  position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+/* Skeleton rows: a soft gradient moves across each bar. */
+.ui-table-skeleton {
+  display: block; height: 12px; width: 80%; border-radius: var(--radius-badge);
+  background: linear-gradient(90deg, var(--line) 25%, var(--bg) 50%, var(--line) 75%);
+  background-size: 200% 100%;
+  animation: ui-table-shimmer var(--admin-shimmer-ms, 1200ms) linear infinite;
+}
+.ui-table-skeleton-row:nth-child(even) .ui-table-skeleton { width: 60%; }
+@keyframes ui-table-shimmer {
+  from { background-position: 100% 0; }
+  to { background-position: -100% 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .ui-table-skeleton { animation: none; background: var(--line); }
+}
