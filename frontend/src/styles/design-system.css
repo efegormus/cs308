@@ -30,6 +30,8 @@
   --danger-bg: #fdecea;
   --danger-fg: #7a1f0d;
   --ok: #1a7f37;
+  /* Success text, such as "In stock". --ok is a fill; the dark --ok is too dim for small text on --surface. */
+  --ok-fg: #1a7f37;
   --sale-bg: #b3262b;
   --sale-fg: #ffffff;
 
@@ -89,7 +91,7 @@
     --header-hover: rgba(255, 255, 255, 0.12); --footer: #0a0f17; --footer-fg: #ffffff; --footer-fg-soft: #cfd5df;
     --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
     --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
-    --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636; --sale-bg: #b3262b; --sale-fg: #ffffff;
+    --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636; --ok-fg: #3fb950; --sale-bg: #b3262b; --sale-fg: #ffffff;
     --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --shadow-menu: 0 10px 28px rgba(0, 0, 0, 0.55); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
   }
 }
@@ -98,6 +100,6 @@
   --header-hover: rgba(255, 255, 255, 0.12); --footer: #0a0f17; --footer-fg: #ffffff; --footer-fg-soft: #cfd5df;
   --fg: #e8ebf0; --muted: #a4aebc; --line: #2a3445; --field-line: #7b8799;
   --accent: #2d6bcf; --accent-hover: #4a84e0; --accent-fg: #ffffff; --link: #8db9ff; --focus: #f0a64a;
-  --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636; --sale-bg: #b3262b; --sale-fg: #ffffff;
+  --danger: #ff8a73; --danger-bg: #3a1c17; --danger-fg: #ffd1c7; --ok: #238636; --ok-fg: #3fb950; --sale-bg: #b3262b; --sale-fg: #ffffff;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4); --shadow-menu: 0 10px 28px rgba(0, 0, 0, 0.55); --btn-glow: rgba(255, 255, 255, 0.28); --ring-glow: rgba(77, 132, 224, 0.35);
 }

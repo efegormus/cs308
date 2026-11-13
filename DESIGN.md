@@ -26,7 +26,8 @@ colors:
   danger: "#a32b12"           # [Proje] error border and field message (HP bloom-deep #b3262b)
   danger-bg: "#fdecea"        # [Proje] error banner background
   danger-fg: "#7a1f0d"        # [Proje] error banner text
-  ok: "#1a7f37"               # [Proje] success fill, in-stock text
+  ok: "#1a7f37"               # [Proje] success fill
+  ok-fg: "#1a7f37"            # [Uyarlandı] new; success text such as "In stock" (dark #3fb950)
   header: "#ffffff"           # [Uyarlandı] white nav bar
   header-fg: "#222222"        # [Uyarlandı] = fg
   header-fg-soft: "#505966"   # [Uyarlandı] = muted; signed-in name
@@ -205,8 +206,8 @@ components:
   card-product-price:         # [Uyarlandı]
     textColor: "{colors.fg}"
     typography: "{typography.price}"
-  stock-in:                   # [Proje]
-    textColor: "{colors.ok}"
+  stock-in:                   # [Uyarlandı] ok-fg since SCRUM-123
+    textColor: "{colors.ok-fg}"
     typography: "{typography.caption}"
   stock-out:                  # [Proje]
     textColor: "{colors.danger}"
@@ -327,7 +328,8 @@ from borders and one light shadow, not from heavy elevation.
 | `--danger` | `#a32b12` | [Proje] | Error border, field error, out-of-stock text |
 | `--danger-bg` | `#fdecea` | [Proje] | Error banner background |
 | `--danger-fg` | `#7a1f0d` | [Proje] | Error banner text |
-| `--ok` | `#1a7f37` | [Proje] | Success fill, in-stock text |
+| `--ok` | `#1a7f37` | [Proje] | Success fill |
+| `--ok-fg` | `#1a7f37` | [Uyarlandı] | New. Success text on `--surface`, such as "In stock" (same as `--ok` in light) |
 | `--header` | `#ffffff` | [Uyarlandı] | Header bar |
 | `--header-fg` | `#222222` | [Uyarlandı] | Header text, same as `--fg` |
 | `--header-fg-soft` | `#505966` | [Uyarlandı] | Signed-in name, same as `--muted` |
@@ -371,6 +373,7 @@ written in both dark blocks too, because its light value changed and the dark th
 | `--danger-bg` | `#3a1c17` | [Proje] |
 | `--danger-fg` | `#ffd1c7` | [Proje] |
 | `--ok` | `#238636` | [Proje] |
+| `--ok-fg` | `#3fb950` | [Uyarlandı] New; the value of the home page's `--home-ok` |
 | `--shadow` | `0 1px 3px rgba(0, 0, 0, 0.4)` | [Proje] |
 | `--ring-glow` | `rgba(77, 132, 224, 0.35)` | [Proje] |
 | `--footer` | `#0a0f17` | [Uyarlandı] New; today's dark `--header` |
@@ -390,6 +393,12 @@ lists them [Proje].
 
 Measured with the WCAG 2 formula. Text needs at least 4.5:1, interface parts (borders that
 identify a control, focus rings, indicators) at least 3:1.
+
+Method: take each sRGB channel of the hex value as c = value / 255 and linearize it (c / 12.92
+when c ≤ 0.04045, otherwise ((c + 0.055) / 1.055)^2.4). The relative luminance is
+L = 0.2126 R + 0.7152 G + 0.0722 B, and the ratio is (L1 + 0.05) / (L2 + 0.05) with L1 the
+lighter color. Ratios are rounded to two decimals. Example, dark `--ok-fg` `#3fb950` on dark
+`--surface` `#18202c`: L = 0.3633 and 0.0141, so (0.3633 + 0.05) / (0.0141 + 0.05) = 6.45:1.
 
 | Pair | Ratio | Need | Result |
 | --- | --- | --- | --- |
@@ -422,6 +431,13 @@ identify a control, focus rings, indicators) at least 3:1.
 | `--danger` `#a32b12` on `--surface` / `--danger-bg` | 7.21:1 / 6.31:1 | 4.5 | Pass |
 | `--danger-fg` `#7a1f0d` on `--danger-bg` `#fdecea` | 9.05:1 | 4.5 | Pass |
 | `--ok` `#1a7f37` on `--surface`; `#ffffff` on `--ok` | 5.08:1 | 4.5 | Pass |
+| `--ok-fg` `#1a7f37` on `--surface` `#ffffff` / `--bg` `#f6f7f9` (in-stock text) | 5.08:1 / 4.74:1 | 4.5 | Pass |
+| Dark `--ok-fg` `#3fb950` on dark `--surface` `#18202c` / `--bg` `#0e131a` | 6.45:1 / 7.34:1 | 4.5 | Pass |
+| Dark `--ok` `#238636` on dark `--surface` `#18202c` | 3.54:1 | 4.5 | Fail for text, so `--ok` stays a fill and text uses `--ok-fg` |
+| Dark `--danger` `#ff8a73` on dark `--surface` `#18202c` (out-of-stock text) | 7.13:1 | 4.5 | Pass |
+| Dark `--fg` `#e8ebf0` / `--muted` `#a4aebc` on dark `--surface` `#18202c` (card name, spec row) | 13.71:1 / 7.30:1 | 4.5 | Pass |
+| Dark `--link` `#8db9ff` on dark `--surface` `#18202c` ("View cart") | 8.20:1 | 4.5 | Pass |
+| Dark `--focus` `#f0a64a` on dark `--surface` `#18202c` | 8.00:1 | 3 | Pass |
 | `--line` `#dce0e6` on `--surface` `#ffffff` | 1.33:1 | — | Decorative only; never the only edge of a control |
 
 ## Typography
@@ -636,30 +652,50 @@ and `home.css`. HP's hero, chevrons and category icon cards are not used on the 
 
 Top to bottom:
 
-1. Image, 1:1, `object-fit: contain`, with the "No image available" placeholder when it is
-   missing or fails [Proje].
+1. Image, 1:1, `object-fit: contain`, on `--bg` with 8px corners (`rounded.tile`), with the
+   "No image available" placeholder when it is missing or fails [Proje].
 2. Title, `heading-sm` (Poppins 20px 600), linking to `/product?id=<id>`.
-3. One spec row, `body-sm` in `--muted`.
+3. One spec row, `body-sm` in `--muted`: the brand, or else the first line of the description.
+   It stays on one line and ends with "…" when it is too long. No row when there is neither.
 4. Price, `price` (Poppins 24px 500).
-5. Stock line, `caption` (see Stock).
-6. Call to action pinned to the bottom of the card.
+5. Stock line, `caption`: "In stock" or "Out of stock", without the count (see Stock).
+6. "Add to cart", the shared primary `Button`, full width and 44px high, pinned to the bottom
+   of the card. It adds one unit. Its description (`aria-describedby`) is the product name.
 
-The card: `--surface`, 16px corners, shadow `0 2px 8px rgba(26, 26, 26, 0.08)`, padding 20px
-[Proje]. Cards in a row have equal heights. Out-of-stock products are still shown and still found
-by search (requirement 7), but their card offers no add-to-cart action.
+The card is the shared `Card`: `--surface`, 16px corners, shadow `0 2px 8px rgba(26, 26, 26,
+0.08)`, padding 20px [Proje]. Cards in a row have equal heights, and the price, stock line and
+button line up at the bottom. The grid has 4 columns, 3 up to 1024px, 2 up to 768px and 1 up to
+480px, with a 20px gap.
+
+- Out-of-stock products are still shown and still found by search (requirement 7), but their
+  card offers no add-to-cart action: the button is disabled and reads "Out of stock", as on the
+  product page. A disabled button keeps the cards' bottoms aligned and says why nothing can be
+  added; the server checks the stock again.
+- Staff accounts see no button, because the cart API refuses them (the header hides their cart
+  too).
+- After an add, a `role="status"` line "Added to your cart. View cart" appears above the button,
+  and the header's cart count follows. A failure shows a `role="alert"` line in `--danger` with
+  the product page's messages. A refused CSRF token is renewed and the add tried once more.
+- The button sits in an actions row, so a second action (a wishlist button, for example) can go
+  next to it later.
+- No discount badge yet: the product API has no discount field (see Discount badge).
 
 ### Discount badge [Uyarlandı]
 
 `--sale-bg` (`#b3262b`) fill, `--sale-fg` (`#ffffff`) text, 6.50:1. 3px corners, padding 4px 8px,
 Open Sans 14px 600. It shows the discount (for example "−20%") next to the price or on the image
-corner. Discounts are set by sales managers (requirement 11).
+corner. Discounts are set by sales managers (requirement 11). The product API returns no
+discount yet, so no page shows the badge.
 
 ### Stock and out of stock [Proje]
 
 - Every product shows its stock (requirement 3).
-- In stock: `--ok` text ("In stock"). Out of stock: `--danger` text ("Out of stock").
-- The home coverflow uses `--home-ok` for in-stock text, because in the dark theme `--ok`
-  (`#238636`) is too dim for 12px text.
+- In stock: `--ok-fg` text ("In stock"). Out of stock: `--danger` text ("Out of stock").
+- `--ok-fg` exists because in the dark theme `--ok` (`#238636`) is too dim for 12px text
+  (3.54:1 on `--surface`). `--ok` stays the success fill.
+- The product card shows the status only; the product page shows the count ("In stock · 12
+  available").
+- The home coverflow still uses its own `--home-ok`, which has the same values as `--ok-fg`.
 - Out-of-stock products are listed and searchable but cannot be added to the cart; the server
   checks stock as well (requirement 7).
 
@@ -769,8 +805,9 @@ Decision pending.
 
 - Write media queries at 480, 768, 1024 and 1280px.
 - Touch targets are at least 44 × 44px.
-- No mobile-specific design: the header wraps, grids reflow with `auto-fit`, and there is no
-  sideways scroll at 375px.
+- No mobile-specific design: the header wraps, grids reflow, and there is no sideways scroll at
+  375px. The product grid steps from 4 columns to 3 (up to 1024px), 2 (up to 768px) and 1 (up
+  to 480px); other grids use `auto-fit`.
 - Existing max widths stay (see Layout) [Proje].
 - Thresholds that belong to a component stay as they are: the coverflow's 700px track width and
   733px status height [Proje]. Other current thresholds are in "Migration status".
@@ -812,8 +849,10 @@ Mistakes in it, corrected here:
 
 ## Open questions
 
-1. **Product card details.** Which call to action (add to cart or view), what the spec row shows
-   (for example model and warranty), and the card padding: 20px today [Proje], 24px in HP.
+1. **Product card details.** Decided in SCRUM-123: "Add to cart" (disabled "Out of stock" when
+   there is none), the spec row shows the brand or the first line of the description, and the
+   padding stays 20px [Proje] (24px in HP). Model and warranty can join the spec row when the
+   list API returns them. The number stays so the numbers below do not change.
 2. **Input size.** Inputs stay 44px high with 6px corners [Proje]; HP uses 4px corners, the same
    as buttons. Purchase inputs (padding 12px, 4.8px corners) and the 40px sort select differ too.
 3. **`--danger` and `--sale-bg`.** Keep two reds (`#a32b12` for errors, `#b3262b` for discounts)
@@ -825,8 +864,10 @@ Mistakes in it, corrected here:
 6. **Neutral colors from HP.** `--fg` `#222222` vs HP ink `#1a1a1a`, `--bg` `#f6f7f9` vs HP cloud
    `#f7f7f7`, `--line` `#dce0e6` vs HP hairline `#e8e8e8`, `--muted` `#505966` vs HP graphite
    `#636363` / charcoal `#3d3d3d`. All kept [Proje].
-7. **Dark theme for new parts.** The product card shadow has no dark value; the discount badge
-   uses the light colors and its edge is 2.52:1 on the dark surface.
+7. **Dark theme for new parts.** The product card shadow has no dark value: on the dark `--bg`
+   it is barely visible, and the card stands out by its `--surface` fill alone (SCRUM-123
+   screenshots). The discount badge uses the light colors and its edge is 2.52:1 on the dark
+   surface.
 8. **Dark theme button hover.** The fill stays `--accent` and the ring shows hover. A separate
    pressed token for dark could come later.
 9. **Secondary button border.** Today a hard-coded `#b9c4d2`; HP uses a 1px primary border.
@@ -843,6 +884,9 @@ Mistakes in it, corrected here:
     and a full-width panel per top-level category (see Header). The number stays so the numbers
     below do not change.
 16. **Manrope.** Could be considered later; nothing planned.
+17. **Disabled button look.** A disabled `Button` is the `--accent` fill at opacity 0.7, so the
+    "Out of stock" button on a card still looks blue. A gray disabled fill would read more
+    clearly as unavailable; it needs a token and a contrast check.
 
 ## Migration status
 
@@ -850,26 +894,29 @@ Target is this file. "Current" is what the code has on this branch. SCRUM-123 mo
 `frontend/src/styles/design-system.css`, set the light tokens to their target values and added the
 type scale (`--type-*`), spacing (`--space-*`) and corner (`--radius-*`) tokens and the shared
 `Button`, `Input`, `Card` and `Badge` in `frontend/src/components/ui/`. Step 2 rebuilt the header
-and footer on those tokens; the header search uses `Button` and `Input`. No page uses the
-components or the type, spacing and corner tokens yet.
+and footer on those tokens; the header search uses `Button` and `Input`. Step 3 moved the
+`/products` product card to `Card`, `Button` and the type, spacing and corner tokens, and
+`products.css` (product list, product page, wishlist) to the color tokens, so those pages follow
+the dark theme too.
 
 ### Colors
 
 | Token | Target (light) | Current (light) | File |
 | --- | --- | --- | --- |
-| `--accent` | `#024ad8` | `#024ad8`; hard-coded `#174a8b` in catalog and purchase rules; fallbacks `#174a8b`, `#1d4ed8` | `design-system.css`; `products.css`, `purchases.css`; `cart.css`, `orders.css`, `add-to-cart.css` |
+| `--accent` | `#024ad8` | `#024ad8`; hard-coded `#174a8b` in purchase rules; fallbacks `#174a8b`, `#1d4ed8` | `design-system.css`; `purchases.css`; `cart.css`, `orders.css`, `add-to-cart.css` |
 | `--accent-hover` | `#0e3191` | `#0e3191` | `design-system.css` |
 | `--accent-fg` | `#ffffff` | `#ffffff`; hard-coded `white`/`#fff` | `design-system.css`; `purchases.css`, `add-to-cart.css` |
-| `--bg` | `#f6f7f9` | `#f6f7f9`; hard-coded in catalog | `design-system.css`; `products.css` |
-| `--surface` | `#ffffff` | `#ffffff`; hard-coded `white` | `design-system.css`; `products.css`, `purchases.css` |
-| `--fg` | `#222222` | `#222222`; hard-coded `#222` | `design-system.css`; `products.css` |
-| `--muted` | `#505966` | `#505966`; hard-coded `#505966`; fallbacks `#5d6877` | `design-system.css`; `products.css`; `cart.css`, `orders.css` |
-| `--line` | `#dce0e6` | `#dce0e6`; hard-coded `#dce0e6`, `#e3e7eb` | `design-system.css`; `products.css`, `purchases.css` |
+| `--bg` | `#f6f7f9` | `#f6f7f9` | `design-system.css`, `products.css` |
+| `--surface` | `#ffffff` | `#ffffff`; hard-coded `white` | `design-system.css`, `products.css`; `purchases.css` |
+| `--fg` | `#222222` | `#222222` | `design-system.css`, `products.css` |
+| `--muted` | `#505966` | `#505966`; fallbacks `#5d6877` | `design-system.css`, `products.css`; `cart.css`, `orders.css` |
+| `--line` | `#dce0e6` | `#dce0e6`; hard-coded `#dce0e6`, `#e3e7eb` | `design-system.css`, `products.css`; `purchases.css` |
 | `--field-line` | `#6b7280` | `#6b7280`; hard-coded `#9ba9b9` (purchase inputs), `#b9c4d2` (catalog buttons) | `design-system.css`; `purchases.css`, `products.css` |
-| `--link` | `#174a8b` | `#174a8b`; hard-coded in catalog | `design-system.css`; `products.css` |
-| `--focus` | `#b66d00` | `#b66d00`; hard-coded in catalog and purchase rules | `design-system.css`; `products.css`, `purchases.css` |
-| `--danger` | `#a32b12` | `#a32b12`; hard-coded `#8a351e` (out of stock), `#7c231d`; fallback `#b00020` | `design-system.css`; `products.css`, `purchases.css`; `orders.css`, `add-to-cart.css` |
-| `--ok` | `#1a7f37` | `#1a7f37`; hard-coded `#24613b` (in stock) | `design-system.css`; `products.css` |
+| `--link` | `#174a8b` | `#174a8b` | `design-system.css`, `products.css` |
+| `--focus` | `#b66d00` | `#b66d00`; hard-coded in purchase rules | `design-system.css`, `products.css`; `purchases.css` |
+| `--danger` | `#a32b12` | `#a32b12`; hard-coded `#7c231d`; fallback `#b00020` | `design-system.css`, `products.css`; `purchases.css`; `orders.css`, `add-to-cart.css` |
+| `--ok` | `#1a7f37` | `#1a7f37` | `design-system.css` |
+| `--ok-fg` | `#1a7f37` (dark `#3fb950`) | Matches; in-stock text on the product list, product page and wishlist | `design-system.css`, `products.css` |
 | `--header` | `#ffffff` | `#ffffff` | `design-system.css`, `site-header.css` |
 | `--header-fg` | `#222222` | `#222222` | `design-system.css`, `site-header.css` |
 | `--header-fg-soft` | `#505966` | `#505966` | `design-system.css` |
@@ -888,17 +935,17 @@ components or the type, spacing and corner tokens yet.
 | --- | --- | --- | --- |
 | Catalog and purchase font | Poppins / Open Sans | Arial | `products.css` |
 | Page title | 32px 600, line height 1.2 | Login 28px; home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
-| Product card title | 20px 600 Poppins | 1.1rem bold Arial | `products.css` |
-| Price | 24px 500 Poppins | 1.2rem bold Arial (catalog); 1.2rem bold (purchase total) | `products.css`, `purchases.css` |
+| Product card title | 20px 600 Poppins | Matches | `products.css` |
+| Price | 24px 500 Poppins | Product card matches; 1.2rem bold Arial (product page, wishlist); 1.2rem bold (purchase total) | `products.css`, `purchases.css` |
 | Order card title | 20px | 1.1rem | `orders.css` |
-| Stock line | 12px 600 | Browser default size | `products.css` |
-| Button label | Poppins 16px 500 | Login Poppins 16px 500; others inherit body font, 600 | `auth.css`; `cart.css`, `add-to-cart.css`, `products.css` |
+| Stock line | 12px 600 | Product card matches; browser default size on the product page | `products.css` |
+| Button label | Poppins 16px 500 | Login and product card Poppins 16px 500; others inherit body font, 600 | `auth.css`, `components/ui/Button.css`; `cart.css`, `add-to-cart.css`, `products.css` |
 
 ### Components
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Primary button height | 44px | `Button` 44px, used by the header search; 48px (login); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
+| Primary button height | 44px | `Button` 44px, used by the header search and the product card; 48px (login); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
 | Primary button corners | 4px | `Button` 4px; 6px (login); 0.4rem (6.4px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login: ring glow and spotlight, fill unchanged | `components/ui/Button.css`; `auth.css` |
 | Secondary button | 44px, 4px corners | Padding 0.75rem 1rem, 0.4rem corners | `products.css` |
@@ -906,8 +953,8 @@ components or the type, spacing and corner tokens yet.
 | Header content | Logo, API categories with mega menu, search, account, cart count | Matches | `Header.jsx`, `CategoryMenu.jsx` |
 | Active nav link | 2px `--accent` underline | Matches | `site-header.css` |
 | Footer | `--footer` dark | Matches | `site-footer.css`, `Footer.jsx` |
-| Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | `Card` has the frame (16px, 20px, `--shadow-product`) but `ProductCard.jsx` does not use it; 0.6rem corners, 1px `#dce0e6` border, no shadow, image 180px high, no CTA | `components/ui/Card.css`; `products.css`, `ProductCard.jsx` |
-| Product card spec row | One `body-sm` row | Description paragraph | `ProductCard.jsx` |
+| Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | Matches: `Card`, 1:1 image, "Add to cart" `Button` | `components/ui/Card.css`, `products.css`, `ProductCard.jsx` |
+| Product card spec row | One `body-sm` row | Matches: brand, or the first line of the description | `ProductCard.jsx`, `lib/product-display.js` |
 | Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by the header search; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
@@ -917,7 +964,7 @@ components or the type, spacing and corner tokens yet.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 576 (cart), 700 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `home.css` |
-| Touch targets | 44px | Header and footer 44px; cart quantity buttons 2.25rem (36px); sort select 40px | `cart.css`, `home.css` |
+| Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 480 / 768 / 1024 (product grid), 576 (cart), 700 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `home.css` |
+| Touch targets | 44px | Header, footer and card buttons 44px; cart quantity buttons 2.25rem (36px); sort select 40px; catalog filter inputs 41px and selects 42px; card title links 28px high (inline text links) | `cart.css`, `home.css`, `products.css` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
-| Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Token `--shadow-product`, used only by `Card`; product cards have none | `design-system.css`; `products.css` |
+| Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Matches, through `Card` | `design-system.css`, `components/ui/Card.css` |

@@ -13,6 +13,18 @@ export function clampQuantity(value, max) {
   return Math.min(number, Math.max(max, 1));
 }
 
+// Runs send(token) with the current CSRF token. A token from before a login or logout is refused with 400: then it
+// gets a new token and tries once more. Any other failure, or a second 400, is thrown to the caller.
+export async function withCsrfRetry(send, csrfToken, refreshCsrf) {
+  try {
+    return await send(await csrfToken());
+  } catch (failure) {
+    if (failure?.status !== 400) throw failure;
+    await refreshCsrf();
+    return send(await csrfToken());
+  }
+}
+
 // A short sentence for a failed "Add to cart", by HTTP status. Nothing from the server body is shown.
 export function addToCartError(status) {
   if (status === 403) return "Staff accounts cannot shop. Please use a customer account.";
