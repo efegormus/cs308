@@ -12,7 +12,8 @@ import ProductsPage from "./pages/ProductsPage.jsx";
 import RegisterPage from "./pages/RegisterPage.jsx";
 import WishlistPage from "./pages/WishlistPage.jsx";
 import DashboardPage from "./pages/DashboardPage.jsx";
-import { ManagePage, SupportPage } from "./pages/RoleHomePages.jsx";
+import AdminPanelPage from "./pages/AdminPanelPage.jsx";
+import { SupportPage } from "./pages/RoleHomePages.jsx";
 
 export default function App() {
   return (
@@ -31,7 +32,7 @@ export default function App() {
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/deliveries" element={<DeliveriesPage />} />
           <Route path="/dashboard" element={<DashboardPage />} />
-          <Route path="/manage" element={<ManagePage />} />
+          <Route path="/manage/:section?" element={<AdminPanelPage />} />
           <Route path="/support" element={<SupportPage />} />
         </Route>
       </Routes>
