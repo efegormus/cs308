@@ -183,6 +183,7 @@ file next to it, and its classes start with `ui-`. The header search uses `Butto
 | `Input` | Label, input and optional field error. 44px, 6px corners, 1px `--field-line`, 16px Open Sans, padding 0 12px, focus 3px `--focus` offset 2px. With `error`: `aria-invalid`, `aria-describedby`, 2px `--danger` border, 13px 600 message. `hideLabel` keeps the label for screen readers only |
 | `Card` | DESIGN.md's `card-product`: `--surface`, 16px corners, padding 20px, `--shadow-product`, flex column. `as` picks the element |
 | `Badge` | Discount badge: `--sale-bg`, `--sale-fg`, 3px corners, padding 4px 8px, Open Sans 14px 600 |
+| `Table` | Data table (SCRUM-124). Plain `createElement` like `RequestStates.js`, so Node tests render it; the page imports `ui/Table.css`. Columns `{ key, header, render?, rowHeader?, align? }`; `th scope="col"`, `th scope="row"` for a `rowHeader` column. `loading`: skeleton rows (1.2s shimmer) in a `role="status"` box named by `loadingLabel`. No rows: `emptyText` in a `role="status"` box. Wide tables scroll inside a focusable, named region; the page never scrolls sideways |
 
 ### Header and footer
 
@@ -226,6 +227,43 @@ DESIGN.md's Product card section holds the full rules.
 | Loading | `LoadingState`: `role="status"`, a short label such as "Loading your cart…". The product list has its own status line, "Loading products…" |
 | Error | `ErrorState`: `role="alert"`, a safe message from `normalizeRequestError`, and a "Try again" button when the page passes `onRetry`. It uses `--danger`, `--danger-bg` and `--danger-fg` |
 | Empty | Plain text. "Your cart is empty." with a link to the products, "No deliveries yet.", "No products available in this category yet." on the product list, "No products in this category yet." on a home row, "No products available yet. Please check back soon." when the catalog has nothing |
+
+## Admin panel
+
+`pages/AdminPanelPage.jsx`, `components/admin/` (`AdminShell`, `KpiCard`, `ReviewApprovalRow`),
+`styles/admin.css`, and the pure helpers `lib/admin-menu.js`, `lib/admin-api.js`, `lib/count-up.js`,
+`lib/approval-row.js` and `lib/motion.js` (SCRUM-124). It replaces the SCRUM-130 landing page at `/manage`;
+DESIGN.md's Admin panel section holds the rules.
+
+| Part | Rule |
+| --- | --- |
+| Routes | `/manage` (Overview) and `/manage/<section>`. Product manager: `deliveries`, `reviews`, `low-stock`. Sales manager: `invoices`, `discounts`. Another role's section sends back to `/manage`; other roles get the `PurchaseAccess` message |
+| Data | `GET /api/product-management/dashboard` (one request serves Overview, Reviews and Low stock), `GET /api/product-management/deliveries` (the Deliveries table, read-only; status changes stay on `/deliveries`), `GET /api/sales/dashboard` for the last 30 days |
+| Menu | 240px from 768px up; below 768px a 44px "Menu" disclosure (`aria-expanded`), closed by a choice or Escape. Hover: 3px `--accent` inset line; current page: the line, `aria-current="page"` and `color-mix(in srgb, var(--accent) 10%, var(--surface))` |
+| KPI cards | `Card`; product manager: low-stock products, pending deliveries, reviews to approve; sales manager: gross revenue, refunds, net revenue, active discounts. tr-TR numbers, TRY amounts. A list at the API's cap says "The first N are shown." |
+| Review approval | `ReviewApprovalRow` takes `onApprove(review)`. There is no approval API until SCRUM-81, so the page passes a placeholder that resolves at once and the section says that nothing is saved yet |
+
+### Admin motion
+
+The values are in `lib/motion.js`. `AdminShell` puts them on `.admin-shell` as custom properties
+(`--admin-section-ms` and so on), so CSS and JS read the same numbers. `prefers-reduced-motion: reduce`
+turns all of it off.
+
+| Effect | Duration | Delay | Curve |
+| --- | --- | --- | --- |
+| Section content `admin-section-in`: 8px from above, opacity 0 to 1 | 220ms | 0 | `cubic-bezier(0.22, 1, 0.36, 1)` |
+| Menu item line (`box-shadow`) | 200ms | 0 | ease |
+| KPI card `admin-rise`: 8px from below | 220ms | index × 80ms | `cubic-bezier(0.22, 1, 0.36, 1)` |
+| KPI value counts from 0 (`requestAnimationFrame`) | 700ms | with its card | easeOutCubic |
+| Skeleton shimmer | 1.2s, repeats | 0 | linear |
+| Approve: width 110px to 44px, `--ok` fill, 22px corners | 200ms | after `onApprove` resolves | ease |
+| Approve: tick drawn (`stroke-dashoffset`) | 250ms | 120ms | ease |
+| Approved row waits (button blocked, `aria-label` "Review approved") | 800ms | 0 | — |
+| Row closes: opacity, `max-height`, `min-height`, `border-top` to 0, then removed | 250ms | 0 | ease |
+
+With reduced motion the KPI value is final at once, the tick and green show at once, and the row goes
+800ms later without a fade. When the removed row held the focus, it moves to the next row's Approve
+button, or to the heading when the list is empty.
 
 ## Home page coverflow
 

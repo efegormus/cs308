@@ -731,9 +731,48 @@ Requirement 5. Decision pending.
 
 Requirements 11 and 14. Decision pending.
 
-### Admin tables, KPIs, sidebar and charts [Belirsiz]
+### Admin panel [Uyarlandı]
 
-Sales manager and product manager screens (requirements 8, 11 and 12). Decision pending.
+The product and sales managers' panel at `/manage` (SCRUM-124; requirements 8, 11 and 12). Charts are
+still [Belirsiz]: the sales overview has no revenue chart yet.
+
+- **Frame.** From 768px up, a 240px menu on the left (`--surface`, 1px `--line`, 8px corners) and the
+  content on the right. Page titles `heading-lg` (Poppins), text `body-md` (Open Sans). Inner width up to
+  1280px.
+- **Menu.** Product manager: Overview, Deliveries, Reviews, Low stock. Sales manager: Overview, Invoices,
+  Discounts. Every item is 44px high. Hover shows a 3px `--accent` line on the left (an inset shadow, 200ms).
+  The current page keeps `aria-current="page"`, the same line and a light `--accent` tint,
+  `color-mix(in srgb, var(--accent) 10%, var(--surface))` (light `#e6edfb`, dark `#1a283c`). The tint is
+  mixed from tokens, not a new token.
+- **Below 768px** the menu is a disclosure at the top: a 44px "Menu" button with `aria-expanded` that shows
+  the current section and opens the same list under it; choosing an item or Escape closes it. This is the
+  one exception to "no hamburger drawer": it is not a drawer and does not cover the page, like the
+  header's mega menu.
+- **KPI cards.** `Card` with a 1px `--line` border, `--shadow` and 10px corners; label in `label`, value in
+  `heading-md` with tabular numbers, tr-TR format (amounts in TRY). 4 columns, 2 up to 1024px, 1 up to
+  480px.
+- **Table.** The shared `Table` (`components/ui/Table.js`): an outline frame (1px `--line`, `--surface`,
+  8px corners), a `label` caption, `th scope="col"` headers in `--muted`, a `th scope="row"` first column,
+  `body-sm` cells, numbers right-aligned. A wide table scrolls sideways inside its frame, never the page.
+  Loading shows skeleton rows in a `role="status"` box with an `aria-label` (and the same text for screen
+  readers); empty shows its text in a `role="status"` box.
+- **Review approval.** "Approve" is the shared `Button`, 110px wide. After the approval call succeeds it
+  turns into a 44px `--ok` circle with a white tick and `aria-label` "Review approved", waits, then the row
+  fades and closes; the list is `aria-live="polite"` and announces it. A failure brings the button back and
+  shows a `--danger` message under the row. The fill is `--ok`, not `--ok-fg`: white on the dark `--ok-fg`
+  is 2.54:1.
+
+| Pair | Ratio | Need | Result |
+| --- | --- | --- | --- |
+| `--fg` `#222222` on the light tint `#e6edfb` | 13.54:1 | 4.5 | Pass |
+| `--accent` `#024ad8` line on the light tint | 6.01:1 | 3 | Pass |
+| `--focus` `#b66d00` on the light tint | 3.45:1 | 3 | Pass |
+| Dark `--fg` `#e8ebf0` on the dark tint `#1a283c` | 12.44:1 | 4.5 | Pass |
+| Dark `--accent` `#2d6bcf` line on the dark tint / on dark `--surface` | 2.91:1 / 3.21:1 | 3 | Below 3 on the tint; the tint and `aria-current` mark the item too |
+| Dark `--focus` `#f0a64a` on the dark tint | 7.26:1 | 3 | Pass |
+| `#ffffff` tick on `--ok` `#1a7f37` / dark `#238636` | 5.08:1 / 4.63:1 | 3 | Pass |
+
+Motion is listed under "Motion and reduced motion".
 
 ### Live chat [Belirsiz]
 
@@ -751,10 +790,16 @@ Decision pending.
   the success fill. Values in `docs/ui-design.md`.
 - Home: row and card entrances, coverflow transitions and the VIEW cursor. Values in
   `docs/ui-design.md`.
+- Admin panel (SCRUM-124): section content enters 8px from above (220ms), KPI cards rise one after another
+  (220ms, 80ms apart) and count from 0 (700ms, easeOutCubic), skeleton rows shimmer (1.2s), and the
+  review approval runs 200ms (button to circle), 120ms + 250ms (tick), 800ms (hold) and 250ms (close).
+  The values live in `frontend/src/lib/motion.js`; keyframes start with `admin-`.
 - No animation library.
 - `prefers-reduced-motion: reduce` turns these off and shows the final state at once. The reveal
   masks must come off in that mode too, or they clip the focus ring. On the home page side cards
-  scale instead of turning and the VIEW circle sits on the pointer.
+  scale instead of turning and the VIEW circle sits on the pointer. In the admin panel KPI values
+  show their final value at once and an approved review's tick and green show at once; the row still
+  waits 800ms, then goes without a fade.
 
 ## Accessibility patterns [Proje]
 
@@ -790,7 +835,8 @@ Decision pending.
 - Don't use HP brand elements: Forma DJR Micro, the chevron decoration, the HP logo rule, the
   storm colors, the printer plan cards, the "How can we help?" band or the strip above the header.
 - Don't change the coverflow's geometry or motion here; `docs/ui-design.md` owns it [Proje].
-- Don't add a hamburger drawer or a separate mobile layout [Uyarlandı].
+- Don't add a hamburger drawer or a separate mobile layout [Uyarlandı]. The admin panel's menu
+  disclosure below 768px is the one exception (see Admin panel).
 - Don't load more font weights than `index.html` loads [Proje].
 
 ## Responsive
@@ -956,6 +1002,7 @@ the dark theme too.
 | Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | Matches: `Card`, 1:1 image, "Add to cart" `Button` | `components/ui/Card.css`, `products.css`, `ProductCard.jsx` |
 | Product card spec row | One `body-sm` row | Matches: brand, or the first line of the description | `ProductCard.jsx`, `lib/product-display.js` |
 | Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
+| Admin panel | Menu, KPI cards, `Table`, review approval | Matches (SCRUM-124) | `pages/AdminPanelPage.jsx`, `components/admin/`, `components/ui/Table.js`, `styles/admin.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by the header search; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Hard-coded `#e8f0fa`, `#ffebea`, `#7c231d` | `purchases.css` |
