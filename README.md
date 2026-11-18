@@ -177,7 +177,7 @@ category with the same name is reused and a product with the same SKU (the seed 
 The demo category hierarchy is reconciled, while existing product inventory and prices are preserved. The sample data is
 for development and demos only; it is never imported automatically at startup.
 
-For the full 55-product catalog plus four role accounts, orders and review fixtures,
+For the full 55-product catalog plus five accounts across four roles, eight orders and review fixtures,
 see [demo data setup](docs/demo-data.md).
 
 Run backend integration tests and the existing seed validation tests with:
