@@ -10,6 +10,7 @@ using OnlineStore.Shopping;
 using OnlineStore.Errors;
 using OnlineStore.Hosting;
 using OnlineStore.Dashboards;
+using OnlineStore.Reviews;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -56,6 +57,7 @@ builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<DeliveryService>();
+builder.Services.AddScoped<ReviewService>();
 // Invoice PDFs live outside wwwroot (SCRUM-74).
 var invoiceRoot = builder.Configuration["Invoices:StoragePath"];
 builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsNullOrWhiteSpace(invoiceRoot)
@@ -117,6 +119,7 @@ app.MapCartEndpoints();
 app.MapWishlistEndpoints();
 app.MapInvoiceEndpoints();
 app.MapDashboardEndpoints();
+app.MapReviewEndpoints();
 
 app.Run();
 
