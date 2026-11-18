@@ -4,6 +4,7 @@ import { formatPrice, safeImageUrl, stockLabel } from "../lib/product-display.js
 import { specRows } from "../lib/product-detail.js";
 import AddToCart from "./AddToCart.jsx";
 import WishlistButton from "./WishlistButton.jsx";
+import ProductRatingSummary from "./ProductRatingSummary.jsx";
 
 // One product with its stock count (SCRUM-45 / SCRUM-110). Give it key={product.id}, so a different product
 // starts without the "image failed" state of the previous one. Everything is rendered as text, never as HTML.
@@ -30,6 +31,7 @@ export default function ProductDetail({ product }) {
           <Link to={`/products#category-${product.categoryId}`}>{product.categoryName}</Link>
         </p>
         <h1>{product.name}</h1>
+        <ProductRatingSummary key={product.id} productId={product.id} />
         {product.brandName && <p className="product-brand">{product.brandName}</p>}
         {product.description && <p className="product-description">{product.description}</p>}
         <p className="price">{formatPrice(product.price)}</p>
