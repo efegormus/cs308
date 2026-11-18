@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using OnlineStore.Accounts;
 using OnlineStore.Data;
@@ -28,15 +27,9 @@ public static class DemoSeedCommand
         var directory = Path.GetFullPath(Path.Combine(app.Environment.ContentRootPath, "..", ".local", "db-redesign"));
         Directory.CreateDirectory(directory);
         var credentialFile = Path.Combine(directory, "demo-accounts.json");
-        Dictionary<string, string> credentials;
-        if (File.Exists(credentialFile)) credentials = JsonSerializer.Deserialize<Dictionary<string, string>>(await File.ReadAllTextAsync(credentialFile))!;
-        else
-        {
-            credentials = Enum.GetNames<UserRole>().ToDictionary(role => role.ToLowerInvariant() + "@onlinestore.invalid",
-                _ => Convert.ToBase64String(RandomNumberGenerator.GetBytes(24)) + "Aa1!");
-            await File.WriteAllTextAsync(credentialFile, JsonSerializer.Serialize(credentials, new JsonSerializerOptions { WriteIndented = true }));
-            if (!OperatingSystem.IsWindows()) File.SetUnixFileMode(credentialFile, UnixFileMode.UserRead | UnixFileMode.UserWrite);
-        }
+        var credentials = await DemoAccountCredentials.LoadAsync(credentialFile,
+            Enum.GetNames<UserRole>().Select(role => role.ToLowerInvariant() + "@onlinestore.invalid")
+                .Append("reviewer@onlinestore.invalid"));
         var users = new Dictionary<UserRole, User>();
         foreach (var role in Enum.GetValues<UserRole>())
         {
@@ -55,6 +48,13 @@ public static class DemoSeedCommand
         var productManager = users[UserRole.ProductManager];
         var salesManager = users[UserRole.SalesManager];
         var support = users[UserRole.SupportAgent];
+        const string reviewerEmail = "reviewer@onlinestore.invalid";
+        var reviewerIndex = db.Protector.EmailIndex(reviewerEmail);
+        var reviewer = await db.Users.SingleOrDefaultAsync(u => u.EmailBlindIndex == reviewerIndex);
+        if (reviewer is null)
+            reviewer = await accounts.CreateCustomerAsync(new("Demo Reviewer", reviewerEmail, "DEMO-TAX-REVIEWER",
+                "Second demo address, Istanbul"), credentials[reviewerEmail])
+                ?? throw new InvalidOperationException("Cannot create second demo customer.");
         var phone = await db.Products.SingleAsync(p => p.Sku == "PHONE-001");
         if (!await db.Discounts.AnyAsync(d => d.Name == "Demo electronics discount"))
         {
@@ -64,19 +64,20 @@ public static class DemoSeedCommand
             await db.SaveChangesAsync();
         }
 
-        async Task<Order> Purchase(string marker, string sku, int quantity, OrderStatus target)
+        async Task<Order> Purchase(string marker, string sku, int quantity, OrderStatus target, User? buyer = null)
         {
+            buyer ??= customer;
             var existing = await db.Orders.Include(o => o.OrderItems).SingleOrDefaultAsync(o => o.OrderNumber == marker);
             if (existing is not null) return existing;
             var product = await db.Products.SingleAsync(p => p.Sku == sku);
             // An interrupted previous fixture run can reuse its open cart.
-            var cart = await db.Carts.Include(c => c.Items).SingleOrDefaultAsync(c => c.UserId == customer.Id && c.State == CartState.Open);
-            if (cart is null) { cart = new Cart { UserId = customer.Id }; db.Carts.Add(cart); }
+            var cart = await db.Carts.Include(c => c.Items).SingleOrDefaultAsync(c => c.UserId == buyer.Id && c.State == CartState.Open);
+            if (cart is null) { cart = new Cart { UserId = buyer.Id }; db.Carts.Add(cart); }
             db.CartItems.RemoveRange(cart.Items);
             cart.Items = [new CartItem { ProductId = product.Id, Quantity = quantity }];
             await db.SaveChangesAsync();
-            var quote = await checkout.QuoteAsync(customer.Id, default);
-            var receipt = await checkout.CompleteAsync(customer.Id, new(quote.CartId, Guid.NewGuid().ToString("D"), quote.QuoteToken,
+            var quote = await checkout.QuoteAsync(buyer.Id, default);
+            var receipt = await checkout.CompleteAsync(buyer.Id, new(quote.CartId, Guid.NewGuid().ToString("D"), quote.QuoteToken,
                 new MockCard { Number = "4242424242424242", ExpiryMonth = 12, ExpiryYear = DateTime.UtcNow.Year + 1, SecurityCode = "123" }), default);
             var order = await db.Orders.Include(o => o.OrderItems).SingleAsync(o => o.Id == receipt.Receipt.OrderId);
             order.OrderNumber = marker;
@@ -110,11 +111,37 @@ public static class DemoSeedCommand
         if (!await db.Ratings.AnyAsync(r => r.UserId == customer.Id && r.ProductId == phone.Id))
         {
             db.Ratings.Add(new Rating { UserId = customer.Id, ProductId = phone.Id, OrderItemId = line.Id, Stars = 5 });
+            await db.SaveChangesAsync();
+        }
+        if (!await db.Comments.AnyAsync(c => c.UserId == customer.Id && c.ProductId == phone.Id))
+        {
             db.Comments.Add(new Comment { UserId = customer.Id, ProductId = phone.Id, OrderItemId = line.Id,
                 Body = "Demo: product arrived and works well.", ApprovalStatus = ApprovalStatus.Approved,
                 ModeratedByUserId = productManager.Id, ModeratedAt = DateTime.UtcNow });
             await db.SaveChangesAsync();
         }
+        // Both customers have several delivered products. Keep these last two
+        // completely unreviewed so the live form can submit a rating AND comment.
+        await Purchase("DEMO-RATE-LIVE-001", "AUDIO-002", 1, OrderStatus.Delivered);
+        var reviewerPhone = await Purchase("DEMO-REVIEWER-PHONE-001", "PHONE-001", 1, OrderStatus.Delivered, reviewer);
+        var reviewerTablet = await Purchase("DEMO-REVIEWER-TABLET-001", "TABLET-001", 1, OrderStatus.Delivered, reviewer);
+        await Purchase("DEMO-REVIEWER-LIVE-001", "LAPTOPS-002", 1, OrderStatus.Delivered, reviewer);
+
+        async Task SeedReview(Order reviewedOrder, byte stars, string body, ApprovalStatus status)
+        {
+            var reviewedLine = reviewedOrder.OrderItems.Single();
+            if (!await db.Ratings.AnyAsync(r => r.UserId == reviewer.Id && r.ProductId == reviewedLine.ProductId))
+                db.Ratings.Add(new Rating { UserId = reviewer.Id, ProductId = reviewedLine.ProductId,
+                    OrderItemId = reviewedLine.Id, Stars = stars });
+            if (!await db.Comments.AnyAsync(c => c.UserId == reviewer.Id && c.ProductId == reviewedLine.ProductId))
+                db.Comments.Add(new Comment { UserId = reviewer.Id, ProductId = reviewedLine.ProductId,
+                    OrderItemId = reviewedLine.Id, Body = body, ApprovalStatus = status,
+                    ModeratedByUserId = status == ApprovalStatus.Approved ? productManager.Id : null,
+                    ModeratedAt = status == ApprovalStatus.Approved ? DateTime.UtcNow : null });
+            await db.SaveChangesAsync();
+        }
+        await SeedReview(reviewerPhone, 3, "Demo: delivered phone, second customer's approved review.", ApprovalStatus.Approved);
+        await SeedReview(reviewerTablet, 4, "Demo: delivered tablet, second customer's comment awaits approval.", ApprovalStatus.Pending);
         if (!await db.ReturnRequests.AnyAsync(r => r.OrderItemId == line.Id))
         {
             await using var transaction = await db.Database.BeginTransactionAsync();
