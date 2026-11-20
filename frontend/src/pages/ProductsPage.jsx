@@ -2,19 +2,23 @@ import { useEffect, useRef } from "react";
 import { useLocation, useSearchParams } from "react-router";
 import CategoryNav from "../components/CategoryNav.jsx";
 import CategorySection from "../components/CategorySection.jsx";
+import ProductCard from "../components/ProductCard.jsx";
 import { useCatalog } from "../hooks/useCatalog.js";
 import { catalogSummary, categoryAnchorId, categoryIdFromHash, visibleCategories } from "../lib/category-display.js";
 import {
   catalogFiltersFromSearchParams, clearCatalogSearchParams, hasCatalogFilters, sortDescription, updateCatalogSearchParams
 } from "../lib/catalog-query.js";
 
-// The product list, grouped by category (SCRUM-109). The home page links here as /products#category-<id>.
+// The product list, grouped by category (SCRUM-109). Category links filter all pages through ?categoryId=<id>; saved hash links are supported.
 export default function ProductsPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const { search, categoryId, brandId, minPrice, maxPrice, sort, order, page } =
     catalogFiltersFromSearchParams(searchParams);
-  const { status, categories, brands, totalCount, totalPages, retry } = useCatalog({
-    categoryId: categoryId || undefined,
+  const { hash } = useLocation();
+  const legacyCategory = categoryIdFromHash(hash);
+  const activeCategoryId = categoryId || (legacyCategory === null ? "" : String(legacyCategory));
+  const { status, categories, brands, items = [], totalCount, totalPages, retry } = useCatalog({
+    categoryId: activeCategoryId || undefined,
     brandId: brandId || undefined,
     minPrice: minPrice || undefined,
     maxPrice: maxPrice || undefined,
@@ -24,9 +28,9 @@ export default function ProductsPage() {
     page,
     pageSize: 24
   });
-  const hasFilters = hasCatalogFilters({ search, categoryId, brandId, minPrice, maxPrice });
-  const displayedCategories = visibleCategories(categories, hasFilters ? "filtered" : "");
-  const { hash } = useLocation();
+  const hasFilters = hasCatalogFilters({ search, categoryId: activeCategoryId, brandId, minPrice, maxPrice });
+  // These groups contain one page, never the whole category's inventory.
+  const displayedCategories = visibleCategories(categories, "current page");
   const scrolledTo = useRef(null);
 
   function updateQuery(name, value, resetPage = true) {
@@ -59,13 +63,13 @@ export default function ProductsPage() {
       <title>Products by category | Online Store</title>
       <main id="main-content">
         <h1>Shop by category</h1>
-        <p className="intro">Explore our phones and tablets. Prices are in Turkish lira.</p>
+        <p className="intro">Explore electronics across all departments. Prices are in Turkish lira.</p>
         <form className="product-filters" role="search" onSubmit={event => event.preventDefault()}>
           <label>Search products
             <input type="search" value={search} onChange={event => updateQuery("search", event.target.value)} />
           </label>
           <label>Category
-            <select value={categoryId} onChange={event => updateQuery("categoryId", event.target.value)}>
+            <select value={activeCategoryId} onChange={event => updateQuery("categoryId", event.target.value)}>
               <option value="">All categories</option>
               {categories.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}
             </select>
@@ -88,7 +92,7 @@ export default function ProductsPage() {
             <select value={sort} onChange={event => updateQuery("sort", event.target.value)}>
               <option value="">Name</option>
               <option value="price">Price</option>
-              <option value="popularity">Popularity</option>
+              <option value="popularity">Popularity (units sold)</option>
             </select>
           </label>
           <label>Order
@@ -99,7 +103,7 @@ export default function ProductsPage() {
             </select>
           </label>
         </form>
-        <CategoryNav categories={displayedCategories} />
+        <CategoryNav categories={categories} />
         <p id="catalog-status" role="status" aria-live="polite">{message}</p>
         {status === "ready" && totalCount > 0 && <p className="sort-note">{sortDescription(sort, order)}</p>}
         {status === "ready" && hasFilters && (
@@ -109,8 +113,11 @@ export default function ProductsPage() {
           <p className="empty-hint">Try a different word, a wider price range or another category, or clear the filters to see everything.</p>
         )}
         {status === "error" && <button type="button" onClick={retry}>Try again</button>}
+        {status === "ready" && totalCount > 0 && <p>Showing {items.length} products on this page.</p>}
         <div id="catalog" aria-busy={status === "loading"}>
-          {displayedCategories.map(category => <CategorySection key={category.id} category={category} />)}
+          {sort ? items.length > 0 && <section className="category-section" aria-label="Sorted products">
+            <h2>Products</h2><ul className="product-grid">{items.map(product => <ProductCard key={product.id} product={product} />)}</ul>
+          </section> : displayedCategories.map(category => <CategorySection key={category.id} category={category} />)}
         </div>
         {status === "ready" && totalPages > 1 && (
           <nav className="catalog-pagination" aria-label="Product pages">

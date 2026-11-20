@@ -239,8 +239,8 @@ public class ProductEndpointsTests
 
         var json = await client.GetStringAsync("/api/products/20");
 
-        Assert.DoesNotContain("serialNumber", json, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain("FIXTURE-PIXEL-9", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("serialNumber", json, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("FIXTURE-PIXEL-9", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("sku", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("cost", json, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain("isActive", json, StringComparison.OrdinalIgnoreCase);

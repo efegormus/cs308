@@ -1,4 +1,5 @@
 using System.Data;
+using System.Globalization;
 using System.Text.Json.Serialization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -25,7 +26,7 @@ public sealed record CommentDecision(string? Decision, string? Note)
 
 // The moderation screen shows the comment, the product and the author's display name. No e-mail, address or tax data.
 public sealed record ModerationComment(long Id, long ProductId, string ProductName, string AuthorName, int? Rating,
-    string Body, string Status, DateTime CreatedAt, DateTime? ModeratedAt, string? ModerationNote);
+    string Body, string Status, DateTime CreatedAt, DateTime? ModeratedAt, string? ModerationNote, string Version);
 public sealed record ModerationPage(string Status, IReadOnlyList<ModerationComment> Comments, long? NextAfterId);
 public sealed record ModerationResult(ModerationComment Comment, bool Changed);
 
@@ -46,7 +47,7 @@ public sealed class ModerationService(StoreDbContext db, TimeProvider clock)
         return new(wanted.ToString(), rows.Take(PageSize).ToList(), rows.Count > PageSize ? rows[PageSize - 1].Id : null);
     }
 
-    public async Task<ModerationResult> DecideAsync(long moderatorId, long commentId, CommentDecision input, CancellationToken ct)
+    public async Task<ModerationResult> DecideAsync(long moderatorId, long commentId, CommentDecision input, CancellationToken ct, string? expectedVersion = null)
     {
         if (input.Validate().Count != 0) throw new PurchaseException(400, "Use a valid decision and note.");
         if (commentId <= 0) throw new PurchaseException(404, "Comment not found.");
@@ -64,8 +65,11 @@ public sealed class ModerationService(StoreDbContext db, TimeProvider clock)
         var changed = false;
         if (comment.ApprovalStatus == ApprovalStatus.Pending)
         {
+            if (expectedVersion is not null && Version(comment.UpdatedAt) != expectedVersion)
+                throw new PurchaseException(409, "The comment changed. Refresh the moderation queue.");
             var now = clock.GetUtcNow().UtcDateTime;
             now = now.AddTicks(-(now.Ticks % 10));
+            if (now <= comment.UpdatedAt) now = comment.UpdatedAt.AddTicks(10);
             comment.ApprovalStatus = target;
             comment.ModeratedByUserId = moderatorId;
             comment.ModeratedAt = now;
@@ -83,6 +87,8 @@ public sealed class ModerationService(StoreDbContext db, TimeProvider clock)
         return new(view, changed);
     }
 
+    private static string Version(DateTime updatedAt) => updatedAt.Ticks.ToString(CultureInfo.InvariantCulture);
+
     private IQueryable<ModerationComment> View(IQueryable<Comment> comments) =>
         from comment in comments
         join author in db.Users.AsNoTracking() on comment.UserId equals author.Id
@@ -90,5 +96,5 @@ public sealed class ModerationService(StoreDbContext db, TimeProvider clock)
         select new ModerationComment(comment.Id, comment.ProductId, product.Name, author.Name,
             db.Ratings.Where(r => r.UserId == comment.UserId && r.ProductId == comment.ProductId)
                 .Select(r => (int?)r.Stars).FirstOrDefault(),
-            comment.Body, comment.ApprovalStatus.ToString(), comment.CreatedAt, comment.ModeratedAt, comment.ModerationNote);
+            comment.Body, comment.ApprovalStatus.ToString(), comment.CreatedAt, comment.ModeratedAt, comment.ModerationNote, Version(comment.UpdatedAt));
 }

@@ -21,8 +21,8 @@ from playwright.sync_api import expect, sync_playwright
 
 PM_MENU = ["Overview", "Deliveries", "Reviews", "Low stock"]
 SM_MENU = ["Overview", "Invoices", "Discounts"]
-# Pending comments for the moderation check (SCRUM-141). The list and decision calls are route-mocked, because the
-# seed has no comments: a small in-memory queue answers them the way docs/reviews.md describes, 3 to a page.
+# Controlled moderation UI cases (SCRUM-141) use a small route-mocked queue, 3 to a page.
+# verify_purchasing_browser.py separately exercises real customer submissions and decisions against MySQL.
 def moderation_comment(id, product, author, rating, body):
     return {"id": id, "productId": id - 900000, "productName": product, "authorName": author, "rating": rating,
             "body": body, "status": "Pending", "createdAt": f"2026-11-{id - 899990:02d}T13:00:00Z",

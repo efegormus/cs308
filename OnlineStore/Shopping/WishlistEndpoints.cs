@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using OnlineStore.Accounts;
 using OnlineStore.Data;
 using OnlineStore.Dtos;
+using OnlineStore.Catalog;
 
 namespace OnlineStore.Shopping;
 
@@ -14,20 +15,22 @@ public static class WishlistEndpoints
             .WithMetadata(PrivateResponseMetadata.Instance)
             .AddEndpointFilter<WishlistErrorFilter>();
 
-        customer.MapGet("/wishlist", async (ClaimsPrincipal principal, StoreDbContext db, CancellationToken ct) =>
+        customer.MapGet("/wishlist", async (ClaimsPrincipal principal, StoreDbContext db, HttpContext context, CancellationToken ct) =>
         {
             if (!TryOwner(principal, out var owner)) return Results.Unauthorized();
-            var items = await db.WishlistItems.AsNoTracking()
-                .Where(item => item.UserId == owner && item.Product.IsActive && item.Product.Category.IsActive)
-                .OrderByDescending(item => item.AddedAt).ThenBy(item => item.ProductId)
-                .Select(item => new WishlistProductDto(item.ProductId, item.AddedAt,
-                    new ProductListItemDto(item.Product.Id, item.Product.Name, item.Product.Price,
-                        item.Product.StockQuantity, item.Product.StockQuantity > 0,
-                        item.Product.Images.Where(image => image.IsPrimary).OrderBy(image => image.SortOrder)
-                            .ThenBy(image => image.Id).Select(image => image.StorageKey).FirstOrDefault(),
-                        item.Product.CategoryId, item.Product.Category.Name, item.Product.Description,
-                        item.Product.Brand != null && item.Product.Brand.IsActive ? item.Product.Brand.Name : null)))
-                .ToListAsync(ct);
+            var priced = ProductPricing.Query(db, ProductPricing.UtcNow(context.RequestServices))
+                .Where(p => p.Product.IsActive && p.Product.Category.IsActive);
+            var items = await (from item in db.WishlistItems.AsNoTracking()
+                               join product in priced on item.ProductId equals product.Product.Id
+                               where item.UserId == owner
+                               orderby item.AddedAt descending, item.ProductId
+                               select new WishlistProductDto(item.ProductId, item.AddedAt,
+                                   new ProductListItemDto(product.Product.Id, product.Product.Name, product.Price,
+                                       product.Product.StockQuantity, product.Product.StockQuantity > 0,
+                                       product.Product.Images.Where(i => i.IsPrimary).OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.StorageKey).FirstOrDefault(),
+                                       product.Product.CategoryId, product.Product.Category.Name, product.Product.Description,
+                                       product.Product.Brand != null && product.Product.Brand.IsActive ? product.Product.Brand.Name : null,
+                                       product.ListPrice, product.DiscountRate))).ToListAsync(ct);
             return Results.Ok(items);
         });
 

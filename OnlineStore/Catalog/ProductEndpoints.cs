@@ -25,7 +25,7 @@ public static class ProductEndpoints
         app.MapGet("/api/products", async (
             long? categoryId, long? brandId, decimal? minPrice, decimal? maxPrice,
             string? search, string? sort, string? order, int? page, int? pageSize,
-            StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+            StoreDbContext db, ILoggerFactory loggerFactory, HttpContext context, CancellationToken cancellationToken) =>
         {
             var term = search?.Trim().Replace("ı", "i").Replace("İ", "i");
             if (term is { Length: > MaxSearchLength })
@@ -56,8 +56,8 @@ public static class ProductEndpoints
 
             try
             {
-                var query = db.Products.AsNoTracking()
-                    .Where(product => product.IsActive && product.Category.IsActive);
+                var query = ProductPricing.Query(db, ProductPricing.UtcNow(context.RequestServices))
+                    .Where(product => product.Product.IsActive && product.Product.Category.IsActive);
 
                 if (categoryId is not null)
                 {
@@ -70,11 +70,11 @@ public static class ProductEndpoints
                         if (children.Count == 0) break;
                         categoryIds.UnionWith(children);
                     }
-                    query = query.Where(product => categoryIds.Contains(product.CategoryId));
+                    query = query.Where(product => categoryIds.Contains(product.Product.CategoryId));
                 }
 
                 if (brandId is not null)
-                    query = query.Where(product => product.BrandId == brandId && product.Brand != null && product.Brand.IsActive);
+                    query = query.Where(product => product.Product.BrandId == brandId && product.Product.Brand != null && product.Product.Brand.IsActive);
                 if (minPrice is not null)
                     query = query.Where(product => product.Price >= minPrice.Value);
                 if (maxPrice is not null)
@@ -86,12 +86,12 @@ public static class ProductEndpoints
                     // escape LIKE wildcards so "%" or "_" typed by a visitor match literally.
                     var pattern = "%" + term.Replace(@"\", @"\\").Replace("%", @"\%").Replace("_", @"\_").ToLowerInvariant() + "%";
                     query = query.Where(product =>
-                        EF.Functions.Like(product.Name.Replace("ı", "i").Replace("İ", "i").ToLower(), pattern, "\\")
-                        || (product.Description != null && EF.Functions.Like(product.Description.Replace("ı", "i").Replace("İ", "i").ToLower(), pattern, "\\")));
+                        EF.Functions.Like(product.Product.Name.Replace("ı", "i").Replace("İ", "i").ToLower(), pattern, "\\")
+                        || (product.Product.Description != null && EF.Functions.Like(product.Product.Description.Replace("ı", "i").Replace("İ", "i").ToLower(), pattern, "\\")));
                 }
 
                 var descending = direction == "desc";
-                IOrderedQueryable<Product> ordered;
+                IOrderedQueryable<PricedProduct> ordered;
                 if (sortBy == "price")
                 {
                     ordered = descending
@@ -102,8 +102,8 @@ public static class ProductEndpoints
                 {
                     // Units sold in orders whose payment is confirmed and that are not cancelled.
                     // Payment and fulfillment are separate enums; refunded orders are not Confirmed.
-                    var sold = (Expression<Func<Product, int>>)(product => db.OrderItems
-                        .Where(item => item.ProductId == product.Id
+                    var sold = (Expression<Func<PricedProduct, int>>)(product => db.OrderItems
+                        .Where(item => item.ProductId == product.Product.Id
                             && item.Order.PaymentStatus == PaymentStatus.Confirmed
                             && item.Order.Status != OrderStatus.Cancelled)
                         .Sum(item => (int?)(item.Quantity - item.RefundedQuantity)) ?? 0);
@@ -114,26 +114,26 @@ public static class ProductEndpoints
                 }
                 else
                 {
-                    ordered = query.OrderBy(product => product.Name);
+                    ordered = query.OrderBy(product => product.Product.Name);
                 }
 
                 // Ties are broken by name, then id, so the order is stable.
                 if (sortBy is not null && sortBy != "")
                 {
-                    ordered = ordered.ThenBy(product => product.Name);
+                    ordered = ordered.ThenBy(product => product.Product.Name);
                 }
 
-                ordered = ordered.ThenBy(product => product.Id);
+                ordered = ordered.ThenBy(product => product.Product.Id);
                 var paged = page is not null || pageSize is not null;
                 var currentPage = page ?? 1;
                 var currentPageSize = pageSize ?? 24;
                 var totalCount = paged ? await query.CountAsync(cancellationToken) : 0;
-                IQueryable<Product> selected = ordered;
+                IQueryable<PricedProduct> selected = ordered;
                 if (paged)
                     selected = selected.Skip((currentPage - 1) * currentPageSize).Take(currentPageSize);
 
                 var products = await selected
-                    .Select(ProductListItemDto.FromProduct)
+                    .Select(ProductListItemDto.FromPricedProduct)
                     .ToListAsync(cancellationToken);
 
                 if (!paged) return Results.Ok(products);
@@ -150,14 +150,13 @@ public static class ProductEndpoints
         // Unknown or inactive product -> 404. Out-of-stock products are returned (inStock = false).
         // A non-integer id does not match the {id:long} route, so the framework answers 404.
         app.MapGet("/api/products/{id:long}", async (
-            long id, StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+            long id, StoreDbContext db, ILoggerFactory loggerFactory, HttpContext context, CancellationToken cancellationToken) =>
         {
             try
             {
-                var product = await db.Products
-                    .AsNoTracking()
-                    .Where(product => product.Id == id && product.IsActive && product.Category.IsActive)
-                    .Select(ProductDetailDto.FromProduct)
+                var product = await ProductPricing.Query(db, ProductPricing.UtcNow(context.RequestServices))
+                    .Where(product => product.Product.Id == id && product.Product.IsActive && product.Product.Category.IsActive)
+                    .Select(ProductDetailDto.FromPricedProduct)
                     .FirstOrDefaultAsync(cancellationToken);
 
                 return product is null
@@ -175,7 +174,7 @@ public static class ProductEndpoints
 
         // Public: lists all categories so the site can group products. parentId gives the category tree.
         app.MapGet("/api/categories", async (
-            StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+            StoreDbContext db, ILoggerFactory loggerFactory, HttpContext context, CancellationToken cancellationToken) =>
         {
             try
             {
@@ -196,7 +195,7 @@ public static class ProductEndpoints
         }).AllowAnonymous();
 
         app.MapGet("/api/brands", async (
-            StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+            StoreDbContext db, ILoggerFactory loggerFactory, HttpContext context, CancellationToken cancellationToken) =>
         {
             try
             {

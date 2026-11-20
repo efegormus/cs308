@@ -1,6 +1,7 @@
 using System.Data.Common;
 using Microsoft.EntityFrameworkCore;
 using OnlineStore.Data;
+using OnlineStore.Dtos;
 
 namespace OnlineStore.Catalog;
 
@@ -9,28 +10,21 @@ public static class CatalogEndpoints
     public static void MapCatalogEndpoints(this WebApplication app)
     {
         app.MapGet("/api/catalog", async (
-            StoreDbContext db, ILoggerFactory loggerFactory, CancellationToken cancellationToken) =>
+            StoreDbContext db, ILoggerFactory loggerFactory, HttpContext context, CancellationToken cancellationToken) =>
         {
             try
             {
-                var categories = await db.Categories
-                    .AsNoTracking()
-                    .Where(category => category.IsActive)
-                    .OrderBy(category => category.Name)
-                    .ThenBy(category => category.Id)
-                    .Select(category => new CategoryListing(
-                        category.Id,
-                        category.Name,
-                        category.Description,
-                        category.Products
-                            .Where(product => product.IsActive && product.Category.IsActive)
-                            .OrderBy(product => product.Name)
-                            .ThenBy(product => product.Id)
-                            .Select(product => new ProductListing(
-                                product.Id, product.Name, product.Description,
-                                product.Price, product.StockQuantity, product.Images.Where(i => i.IsPrimary).Select(i => i.StorageKey).FirstOrDefault()))
-                            .ToList()))
+                var categories = await db.Categories.AsNoTracking().Where(c => c.IsActive)
+                    .OrderBy(c => c.Name).ThenBy(c => c.Id)
+                    .Select(c => new CategoryListing(c.Id, c.Name, c.Description, new List<ProductListing>()))
                     .ToListAsync(cancellationToken);
+                var products = await ProductPricing.Query(db, ProductPricing.UtcNow(context.RequestServices))
+                    .Where(p => p.Product.IsActive && p.Product.Category.IsActive)
+                    .Select(ProductListItemDto.FromPricedProduct).ToListAsync(cancellationToken);
+                var grouped = products.OrderBy(p => p.Name).ThenBy(p => p.Id).ToLookup(p => p.CategoryId);
+                foreach (var category in categories)
+                    category.Products.AddRange(grouped[category.Id].Select(p => new ProductListing(p.Id, p.Name,
+                        p.Description, p.Price, p.StockQuantity, p.ImageUrl, p.ListPrice, p.DiscountRate)));
 
                 return Results.Ok(categories);
             }
@@ -51,4 +45,4 @@ public sealed record CategoryListing(
     long Id, string Name, string? Description, List<ProductListing> Products);
 
 public sealed record ProductListing(
-    long Id, string Name, string? Description, decimal Price, int StockQuantity, string? ImageUrl);
+    long Id, string Name, string? Description, decimal Price, int StockQuantity, string? ImageUrl, decimal? ListPrice = null, decimal? DiscountRate = null);

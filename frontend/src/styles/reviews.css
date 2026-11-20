@@ -1,0 +1,8 @@
+.product-reviews { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+.review-comments { list-style: none; padding: 0; }
+.review-comments li { padding: .75rem 0; border-bottom: 1px solid var(--line); }
+.review-comments p, .own-comment p { white-space: pre-wrap; }
+.review-form { display: grid; gap: .75rem; }
+.review-form label { display: grid; gap: .35rem; }
+.review-form textarea { min-height: 6rem; resize: vertical; width: 100%; box-sizing: border-box; }
+.review-actions { display: flex; gap: .5rem; flex-wrap: wrap; }

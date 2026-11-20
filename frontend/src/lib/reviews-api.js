@@ -21,3 +21,72 @@ export async function fetchProductReviews(productId, { signal, afterId = 0 } = {
   if (!isProductReviews(data) || data.productId !== productId) throw { kind: "invalid-response" };
   return data;
 }
+
+export function isCustomerReview(value) {
+  return id(value?.productId) && typeof value.eligible === "boolean" && typeof value.canRate === "boolean"
+    && typeof value.canComment === "boolean" && (value.orderItemId === null || id(value.orderItemId))
+    && (value.rating === null || Number.isInteger(value.rating) && value.rating >= 1 && value.rating <= 5)
+    && (value.comment === null || id(value.comment?.id) && typeof value.comment.body === "string"
+      && ["Pending", "Approved", "Rejected"].includes(value.comment.status));
+}
+
+async function read(response, validate) {
+  if (!response.ok) throw { status: response.status };
+  let value; try { value = await response.json(); } catch { throw { kind: "invalid-response" }; }
+  if (!validate(value)) throw { kind: "invalid-response" };
+  return value;
+}
+
+export async function fetchCustomerReview(productId, { signal } = {}) {
+  if (!id(productId)) throw { kind: "invalid-request" };
+  return read(await fetch(`/api/customer/products/${productId}/review`, { signal, headers: { Accept: "application/json" } }),
+    value => isCustomerReview(value) && value.productId === productId);
+}
+
+export function reviewInput(rating, comment, eligibility) {
+  const input = {};
+  if (eligibility?.canRate && rating !== "") {
+    const number = Number(rating);
+    if (!Number.isInteger(number) || number < 1 || number > 5) return null;
+    input.rating = number;
+  }
+  if (eligibility?.canComment && typeof comment === "string" && comment.trim()) {
+    if (comment.trim().length > 2000) return null;
+    input.comment = comment.trim();
+  }
+  return Object.keys(input).length ? input : null;
+}
+
+export async function submitReview(productId, { rating, comment }, token, { signal } = {}) {
+  if (!id(productId)) throw { kind: "invalid-request" };
+  return read(await fetch(`/api/customer/products/${productId}/review`, {
+    method: "POST", signal, headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": token },
+    body: JSON.stringify({ rating, comment })
+  }), value => isCustomerReview(value) && value.productId === productId);
+}
+
+export function isModerationPage(value) {
+  return Array.isArray(value?.items) && value.items.length <= 20 && (value.nextAfterId === null || id(value.nextAfterId))
+    && value.items.every(c => id(c?.id) && id(c.productId) && typeof c.productName === "string"
+      && typeof c.customerName === "string" && typeof c.body === "string" && typeof c.version === "string"
+      && /^\d+$/.test(c.version) && Number.isFinite(Date.parse(c.createdAt))
+      && (c.rating === null || Number.isInteger(c.rating) && c.rating >= 1 && c.rating <= 5));
+}
+
+export async function fetchModeration(afterId = 0, { signal } = {}) {
+  if (!Number.isSafeInteger(afterId) || afterId < 0) throw { kind: "invalid-request" };
+  const queue = await read(await fetch(`/api/product-management/comments?afterId=${afterId}`, { signal }),
+    value => value?.status === "Pending" && Array.isArray(value.comments));
+  const page = { items: queue.comments.map(comment => ({ ...comment, customerName: comment?.authorName })), nextAfterId: queue.nextAfterId };
+  if (!isModerationPage(page)) throw { kind: "invalid-response" };
+  return page;
+}
+
+export async function moderateComment(comment, status, token, { signal } = {}) {
+  if (!id(comment?.id) || !["Approved", "Rejected"].includes(status) || !/^\d+$/.test(comment.version))
+    throw { kind: "invalid-request" };
+  return read(await fetch(`/api/product-management/comments/${comment.id}/moderation`, {
+    method: "POST", signal, headers: { "Content-Type": "application/json", "X-CSRF-TOKEN": token },
+    body: JSON.stringify({ status, version: comment.version })
+  }), value => value?.id === comment.id && value.status === status && typeof value.version === "string");
+}

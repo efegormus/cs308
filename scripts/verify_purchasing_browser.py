@@ -8,13 +8,15 @@ from pathlib import Path
 import re
 import secrets
 import subprocess
-from urllib.parse import urlparse
+import time
+from progress_demo_checks import invoice_proof, review_proof
+from urllib.parse import urlparse, urlencode
 import uuid
 
 from playwright.sync_api import expect, sync_playwright
 
 
-def verify(url, assembly, executable=None, report=None):
+def verify(url, assembly, executable=None, report=None, smtp_url=None):
     if urlparse(url).hostname not in ("localhost", "127.0.0.1"):
         raise ValueError("Purchasing verification is restricted to a disposable local server.")
     url = url.rstrip("/")
@@ -30,8 +32,13 @@ def verify(url, assembly, executable=None, report=None):
         manager = browser.new_context(viewport={"width": 1440, "height": 1000})
 
         def post(context, path, body):
-            token = context.request.get(url + "/api/auth/csrf").json()["token"]
-            return context.request.post(url + path, data=body, headers={"X-CSRF-TOKEN": token})
+            for attempt in range(2):
+                token = context.request.get(url + "/api/auth/csrf").json()["token"]
+                response = context.request.post(url + path, data=body, headers={"X-CSRF-TOKEN": token})
+                if response.status != 429 or attempt:
+                    return response
+                time.sleep(61)
+
 
         try:
             for context, prefix in [(customer, "buyer"), (manager, "manager")]:
@@ -45,15 +52,30 @@ def verify(url, assembly, executable=None, report=None):
             subprocess.run(["dotnet", str(assembly), "--set-role", f"manager-{suffix}@example.com", "ProductManager"],
                            cwd=assembly.parent, env=os.environ.copy(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
             products = customer.request.get(url + "/api/products").json()
-            product = next(item for item in products if item["stockQuantity"] >= 3)
+            product = next((item for item in products if item["stockQuantity"] >= 3 and item.get("listPrice", item["price"]) > item["price"]),
+                           next(item for item in products if item["stockQuantity"] >= 3))
+            second = next(item for item in products if item["stockQuantity"] >= 3 and item["id"] != product["id"])
             fixture.update(productId=product["id"], originalStock=product["stockQuantity"])
             assert post(customer, "/api/cart/items", {"productId": product["id"], "quantity": 1}).status == 200
+            assert post(customer, "/api/cart/items", {"productId": second["id"], "quantity": 1}).status == 200
             page = customer.new_page()
             errors, dialogs, checkout_posts = [], [], []
             page.on("pageerror", lambda error: errors.append(str(error)))
             page.on("dialog", lambda dialog: (dialogs.append(dialog.message), dialog.dismiss()))
             page.on("request", lambda request: checkout_posts.append(1)
                     if request.method == "POST" and request.url.split("?")[0].endswith("/api/customer/checkout") else None)
+            # Compare the same server-owned price across all published shopping surfaces.
+            money = lambda value: page.evaluate("value => new Intl.NumberFormat('tr-TR', {style:'currency', currency:'TRY'}).format(value)", value)
+            page.goto(url + "/products?" + urlencode({"search": product["name"]}))
+            tile = page.locator(".product-card").filter(has=page.get_by_role("heading", name=product["name"], exact=True))
+            expect(tile.locator(".price-current")).to_have_text(money(product["price"]))
+            if product.get("listPrice", product["price"]) > product["price"]:
+                expect(tile.locator(".price-original")).to_have_text(money(product["listPrice"]))
+            page.goto(url + f'/product?id={product["id"]}')
+            expect(page.locator(".product-detail .price-current")).to_have_text(money(product["price"]))
+            page.goto(url + "/cart")
+            cart_row = page.locator(".cart-line").filter(has=page.get_by_role("link", name=product["name"], exact=True))
+            expect(cart_row.locator(".price-current")).to_have_text(money(product["price"]))
             page.goto(url + "/checkout")
             expect(page).to_have_url(re.compile(r"/login\?returnUrl="))
             expect(page.locator("#login-form")).to_be_visible()
@@ -63,6 +85,13 @@ def verify(url, assembly, executable=None, report=None):
             expect(page).to_have_url(url + "/checkout")
             expect(page.locator("#checkout-form")).to_be_visible()
             expect(page.locator("#lines")).to_contain_text(product["name"])
+            cart = customer.request.get(url + "/api/cart").json()
+            quote = customer.request.get(url + "/api/customer/checkout").json()
+            assert next(line for line in cart["items"] if line["productId"] == product["id"])["unitPrice"] == product["price"]
+            assert next(line for line in quote["items"] if line["productId"] == product["id"])["unitPrice"] == product["price"]
+            assert cart["total"] == quote["total"]
+            expect(page.locator("#total")).to_have_text(money(quote["total"]))
+            print("PASS: published catalog/detail/cart/checkout agree on the effective unit price and total")
             expect(page.locator("#address")).to_contain_text("<img src=x onerror=alert(1)>")
             assert page.locator("#address img").count() == 0
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -73,6 +102,7 @@ def verify(url, assembly, executable=None, report=None):
                 page.locator("#expiry-year").fill(str(datetime.now().year + 1))
                 page.locator("#security-code").fill("123")
 
+            assert post(customer, f'/api/customer/products/{product["id"]}/review', {"rating": 5}).status == 403
             fill("4000000000000002")
             page.locator("#purchase").click()
             expect(page.get_by_role("alert")).to_contain_text("declined")
@@ -90,6 +120,7 @@ def verify(url, assembly, executable=None, report=None):
             pdf = customer.request.get(url + page.locator("#invoice").get_attribute("href"))
             assert pdf.status == 200 and pdf.headers["content-type"] == "application/pdf"
             assert pdf.body().startswith(b"%PDF")
+            invoice_proof(page, customer, manager, browser, url, order, product, smtp_url, f"buyer-{suffix}@example.com")
             page.reload()
             expect(page.locator("#receipt")).to_be_visible()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -119,6 +150,7 @@ def verify(url, assembly, executable=None, report=None):
             expect(page.locator("#order-status")).to_contain_text("Delivered")
             print("PASS: React ProductManager delivery actions update the customer's receipt and remove terminal actions")
 
+            review_proof(page, staff, customer, manager, browser, url, order, [product, second], suffix, post)
             assert post(customer, "/api/cart/items", {"productId": product["id"], "quantity": 1}).status == 200
             page.goto(url + "/checkout")
             expect(page.locator("#checkout-form")).to_be_visible()
@@ -165,8 +197,9 @@ def main():
     parser.add_argument("--operator-assembly", required=True)
     parser.add_argument("--browser-executable")
     parser.add_argument("--report", help="optional local fixture IDs for cleanup; contains no credentials")
+    parser.add_argument("--smtp-api-url", help="optional disposable Mailpit API for exact PDF attachment evidence")
     args = parser.parse_args()
-    verify(args.url, args.operator_assembly, args.browser_executable, args.report)
+    verify(args.url, args.operator_assembly, args.browser_executable, args.report, args.smtp_api_url)
 
 
 if __name__ == "__main__":

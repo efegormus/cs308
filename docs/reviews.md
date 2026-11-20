@@ -102,3 +102,34 @@ requests, including all three denied staff roles and public/private isolation.
 Run `dotnet test cs308.sln` with `ONLINESTORE_TEST_MYSQL` configured for a disposable
 local `_tests` database. Without it, MySQL tests skip and do not prove integrity.
 `npm test` in frontend covers public response validation and safe error handling.
+
+## Customer and product-manager screens (SCRUM-145)
+
+Delivered order cards at `/orders` link to each product's `#reviews` section.
+The product page shows the public average and approved comments, with cursor
+paging. A Customer sees their own rating and Pending/Approved/Rejected comment;
+only missing components are offered in the form. A guest sees a login link and
+an undelivered purchase cannot submit. The client refreshes eligibility and the
+public summary after success, keeps failed mutations explicit, and clears private
+views when the session expires or the identity/product changes.
+
+Product managers use `/manage/reviews`. `GET /api/product-management/comments?afterId=0`
+uses the shared SCRUM-81 queue contract `{status,comments,nextAfterId}`, 20 pending
+comments per page. Each comment contains `id`, `productId`, `productName`,
+`authorName`, nullable `rating`, `body`, `status`, `createdAt`, moderation metadata
+and an opaque string `version`. The React client maps authorName to its customer
+column. No email, tax ID or address is exposed.
+`POST /api/product-management/comments/{id}/moderation` requires ProductManager
+and CSRF, with `{status:"Approved"|"Rejected",version}`. It returns `{id,status,version}`.
+Both this versioned UI action and SCRUM-81’s `/decision` action share
+`ModerationService`; there is one queue route and one locking/decision implementation.
+A row lock and version check prevent competing decisions from overwriting each
+other. An exact repeated decision succeeds; an opposite terminal decision or
+stale pending version returns 409. Only Approved text becomes public. Ratings
+remain public for both decisions. Moderation records the acting manager/time.
+
+`ReviewMySqlTests` checks real cookie/CSRF/role boundaries and concurrent opposing
+decisions. `verify_purchasing_browser.py` exercises real delivered purchases,
+customer submissions, immediate ratings, both moderation decisions and public/
+private text isolation against MySQL; `verify_admin_browser.py` additionally uses
+a controlled queue for focused loading/row-removal/empty-state UI cases.

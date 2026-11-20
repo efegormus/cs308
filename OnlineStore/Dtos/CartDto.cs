@@ -10,7 +10,9 @@ public record CartLineDto(
     int StockQuantity,
     string? ImageUrl,
     decimal LineTotal,
-    bool Available);
+    bool Available,
+    decimal? ListUnitPrice = null,
+    decimal? DiscountRate = null);
 
 public record CartDto(IReadOnlyList<CartLineDto> Items, int ItemCount, decimal Total)
 {

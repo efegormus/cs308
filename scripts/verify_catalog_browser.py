@@ -97,7 +97,7 @@ def verify(base_url, executable=None, expect_seeded=False):
         if categories:
             tablets = next((category for category in categories if category["name"] == "Tablets"), categories[0])
             if tablets["name"] == "Tablets":
-                expect(page.get_by_role("link", name="Browse tablets")).to_have_attribute("href", f'/products#category-{tablets["id"]}')
+                expect(page.get_by_role("link", name="Browse tablets")).to_have_attribute("href", f'/products?categoryId={tablets["id"]}')
                 with page.expect_response(
                     lambda response: is_products_api_url(response.url)
                     and parse_qs(urlparse(response.url).query).get("page") == ["1"]
@@ -109,6 +109,8 @@ def verify(base_url, executable=None, expect_seeded=False):
                 page.goto(base_url + "/products")
         else:
             page.goto(base_url + "/products")
+        expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
+        page.goto(base_url + "/products")
         expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
         count_label = "product" if first_page["totalCount"] == 1 else "products"
         expect(page.locator("#catalog-status")).to_have_text(
@@ -159,7 +161,51 @@ def verify(base_url, executable=None, expect_seeded=False):
                 expect(page.get_by_role("button", name="Previous")).to_be_disabled()
         page.set_viewport_size({"width": 375, "height": 812})
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        first_categories = {p["categoryId"] for p in first_page["items"]}
+        off_page = next((p for p in products if p["categoryId"] not in first_categories), None)
+        if off_page:
+            category = next(c for c in categories if c["id"] == off_page["categoryId"])
+            page.goto(base_url + "/products")
+            page.locator("#category-nav").get_by_role("link", name=category["name"], exact=True).click()
+            expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
+            expect(page).to_have_url(re.compile(r"categoryId=" + str(category["id"])))
+            expected_products = page.request.get(base_url + f'/api/products?categoryId={category["id"]}').json()
+            expect(page.locator(".product-card")).to_have_count(min(24,len(expected_products)))
+            page.reload()
+            expect(page.locator(".product-card")).to_have_count(min(24,len(expected_products)))
+            page.goto(base_url + f'/products?verification=legacy#category-{category["id"]}')
+            expect(page.locator(".product-card")).to_have_count(min(24, len(expected_products)))
+            page.get_by_role("button", name="Clear filters", exact=True).click()
+            expect(page.locator("#catalog-status")).to_have_text(f'{len(products)} products found.')
+            assert urlparse(page.url).fragment == ""
+            assert parse_qs(urlparse(page.url).query).get("verification") == ["legacy"]
+            print("PASS: an off-first-page category loads its products, survives refresh and clears legacy hash filters")
         print(f"PASS: legacy array and paginated API; real browser → MySQL; {len(products)} products in {len(categories)} categories; all pages, stock, navigation, mobile layout")
+
+        # A top-level category includes subcategories: sorting must keep global server order.
+        stocked = next(p for p in products if p["stockQuantity"] > 0)
+        for sort, order in [("price", "asc"), ("price", "desc"), ("popularity", "desc")]:
+            page.goto(base_url + f'/products?categoryId={stocked["categoryId"]}&sort={sort}&order={order}')
+            expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
+            response = page.request.get(base_url + f'/api/products?categoryId={stocked["categoryId"]}&sort={sort}&order={order}').json()
+            expect(page.locator(".product-card h3")).to_have_text([p["name"] for p in response])
+            if sort == "price":
+                values = [p["price"] for p in response]
+                assert values == sorted(values, reverse=order == "desc")
+        detail = page.request.get(base_url + f'/api/products/{stocked["id"]}').json()
+        for term in [stocked["name"], detail["description"].split()[0]]:
+            page.goto(base_url + "/products")
+            page.locator("#main-content").get_by_label("Search products", exact=True).fill(term)
+            expect(page.locator(".product-card").filter(has=page.get_by_role("heading", name=stocked["name"], exact=True))).to_be_visible()
+        empty = next((p for p in products if p["stockQuantity"] == 0), None)
+        if empty:
+            page.goto(base_url + "/products")
+            page.locator("#main-content").get_by_label("Search products", exact=True).fill(empty["name"])
+            expect(page.locator(".product-card").filter(has=page.get_by_role("heading", name=empty["name"], exact=True))).to_be_visible()
+            page.goto(base_url + f'/product?id={empty["id"]}')
+            expect(page.locator(".stock")).to_have_text("Out of stock")
+            expect(page.get_by_role("button", name="Out of stock", exact=True)).to_be_disabled()
+        print("PASS: real name/description search, effective price/popularity sorting and out-of-stock purchase restriction")
 
         fixture_categories = [{"id": 41, "name": "Phones", "description": None}, {"id": 99, "name": "Tablets", "description": None}]
         fixture_products = [
@@ -178,13 +224,17 @@ def verify(base_url, executable=None, expect_seeded=False):
             page.route(PRODUCTS_API, lambda route: route.fulfill(json=mock_products_response(products_body, route.request.url)))
 
         mock(fixture_categories, fixture_products)
-        page.goto(base_url + "/products?verification=render#category-99")
+        page.goto(base_url + "/products?verification=render")
         expect(page.locator("#catalog-status")).to_have_text("3 products found.")
-        expect(page.locator("#category-99")).to_contain_text("No products available in this category yet.")
+        expect(page.locator("#category-99")).to_have_count(0)
         expect(page.locator(".product-card h3").first).to_have_text(fixture_products[0]["name"])
         expect(page.locator(".price").first).to_contain_text("43.000,50")
         expect(page.locator(".image-placeholder")).to_have_count(3)
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        page.locator("#category-nav").get_by_role("link",name="Tablets",exact=True).click()
+        expect(page.locator("#catalog-status")).to_have_text("No products match these filters.")
+        page.get_by_role("button",name="Clear filters",exact=True).click()
+        expect(page.locator(".product-card")).to_have_count(3)
         print("PASS: real category IDs, empty category, TRY prices, safe text and invalid/missing image fallbacks")
 
         mock([], [])

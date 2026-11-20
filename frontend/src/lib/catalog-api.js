@@ -1,3 +1,4 @@
+import { isCompleteProduct } from "./product-detail.js";
 // The catalog API client. Same-origin requests to the canonical list APIs (SCRUM-43 lists, SCRUM-50 search,
 // SCRUM-51 sorting): no mock inventory and no separate CORS origin. Ported from OnlineStore/wwwroot/js/catalog-api.js.
 
@@ -172,6 +173,6 @@ export async function fetchProduct(id, { signal } = {}) {
   } catch {
     throw new CatalogError("Invalid product response.");
   }
-  if (!isValidProduct(product)) throw new CatalogError("Invalid product response.");
+  if (!isValidProduct(product) || !isCompleteProduct(product)) throw new CatalogError("Invalid product response.");
   return product;
 }

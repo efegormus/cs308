@@ -8,6 +8,11 @@ public static class ReviewEndpoints
 {
     public static void MapReviewEndpoints(this WebApplication app)
     {
+        var manager = app.MapProductManagerApi().AddEndpointFilter<PurchaseErrorFilter>();
+        manager.MapPost("/comments/{id:long}/moderation", async (long id, ModerationRequest input,
+            ClaimsPrincipal user, ReviewService reviews, CancellationToken ct) =>
+            Results.Ok(await reviews.ModerateAsync(Owner(user), id, input, ct))).AddEndpointFilter<CsrfFilter>();
+
         app.MapGet("/api/products/{productId:long}/reviews", async (long productId, long? afterId,
             ReviewService reviews, CancellationToken ct) => Results.Ok(await reviews.PublicAsync(productId, afterId ?? 0, ct)))
             .AllowAnonymous().AddEndpointFilter<PurchaseErrorFilter>();

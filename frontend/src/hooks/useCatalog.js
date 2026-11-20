@@ -8,7 +8,7 @@ const REQUEST_TIMEOUT_MS = 15000;
 // status is "loading", "ready" or "error". While it reloads, the previous categories stay in place.
 export function useCatalog({ categoryId, brandId, minPrice, maxPrice, search, sort, order, page, pageSize } = {}) {
   const [state, setState] = useState({
-    status: "loading", categories: [], brands: [], totalCount: 0, page: 1, pageSize: 24, totalPages: 0
+    status: "loading", categories: [], brands: [], items: [], totalCount: 0, page: 1, pageSize: 24, totalPages: 0
   });
   const [attempt, setAttempt] = useState(0);
 
@@ -25,7 +25,7 @@ export function useCatalog({ categoryId, brandId, minPrice, maxPrice, search, so
     ])
       .then(([catalog, brands]) => { if (current) setState({ status: "ready", brands, ...catalog }); })
       .catch(() => {
-        if (current) setState(previous => ({ ...previous, status: "error", categories: [], totalCount: 0, totalPages: 0 }));
+        if (current) setState(previous => ({ ...previous, status: "error", categories: [], items: [], totalCount: 0, totalPages: 0 }));
       })
       .finally(() => clearTimeout(timeout));
     return () => {

@@ -100,7 +100,18 @@ jobs:
     env:
       ASPNETCORE_ENVIRONMENT: Development
       ASPNETCORE_URLS: http://127.0.0.1:5200
-      Email__Transport: Local
+      Email__Transport: Smtp
+      Email__From: store@example.test
+      Email__Smtp__Host: 127.0.0.1
+      Email__Smtp__Port: "1025"
+      Email__Smtp__EnableSsl: "false"
+    services:
+      # Disposable SMTP inbox: no real mailbox credentials are used in CI.
+      mailpit:
+        image: axllent/mailpit:v1.34.0
+        ports:
+          - 1025:1025
+          - 8025:8025
 
     steps:
       - name: Check out repository
@@ -150,10 +161,10 @@ jobs:
           dotnet tool restore
           dotnet ef database update --project OnlineStore --no-build
 
-      - name: Seed sample catalog
+      - name: Seed demo catalog and purchases
         env:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
-        run: dotnet run --project OnlineStore --no-build --no-launch-profile -- --seed
+        run: dotnet run --project OnlineStore --no-build --no-launch-profile -- --seed-demo
 
       - name: Publish the complete application
         run: dotnet publish OnlineStore --no-restore -c Release -o "$RUNNER_TEMP/published-app" /p:SkipFrontendBuild=true
@@ -189,7 +200,7 @@ jobs:
       - name: Verify React purchasing and protected invoices
         env:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
-        run: python3 scripts/verify_purchasing_browser.py --url http://127.0.0.1:5200 --operator-assembly "$RUNNER_TEMP/published-app/OnlineStore.dll"
+        run: python3 scripts/verify_purchasing_browser.py --url http://127.0.0.1:5200 --operator-assembly "$RUNNER_TEMP/published-app/OnlineStore.dll" --smtp-api-url http://127.0.0.1:8025
 
       - name: Verify the admin panel
         env:

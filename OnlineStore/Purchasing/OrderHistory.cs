@@ -6,7 +6,10 @@ namespace OnlineStore.Purchasing;
 
 // One row of the customer's order history (SCRUM-76). Status is Processing, InTransit, Delivered or Cancelled.
 public sealed record OrderSummary(long OrderId, string Status, string PaymentStatus, DateTime? PurchasedAt,
-    DateTime? DeliveredAt, int ItemCount, decimal Total, string InvoiceStatus, string? InvoiceUrl);
+    DateTime? DeliveredAt, int ItemCount, decimal Total, string InvoiceStatus, string? InvoiceUrl,
+    IReadOnlyList<OrderReviewItem>? ReviewItems = null);
+
+public sealed record OrderReviewItem(long ProductId, string Name, bool CanRate, bool CanComment);
 
 // NextBeforeId is the id to send as ?beforeId= for the next (older) page, or null on the last page.
 public sealed record OrderHistoryPage(IReadOnlyList<OrderSummary> Orders, long? NextBeforeId);
@@ -31,14 +34,18 @@ public static class OrderHistory
                 order.Id, order.Status, order.PaymentStatus, order.PurchasedAt, order.DeliveredAt,
                 ItemCount = order.OrderItems.Sum(line => line.Quantity),
                 Total = order.OrderItems.Sum(line => line.UnitPrice * line.Quantity),
-                InvoiceReady = order.Invoice != null && order.Invoice.ProtectedDocumentKey != null
+                InvoiceReady = order.Invoice != null && order.Invoice.ProtectedDocumentKey != null,
+                ReviewItems = order.OrderItems.Where(line => order.Status == OrderStatus.Delivered && line.DeliveredQuantity > 0)
+                    .Select(line => new OrderReviewItem(line.ProductId, line.ProductName,
+                        !db.Ratings.Any(r => r.UserId == userId && r.ProductId == line.ProductId),
+                        !db.Comments.Any(c => c.UserId == userId && c.ProductId == line.ProductId))).ToList()
             })
             .ToListAsync(cancellationToken);
 
         var page = rows.Take(pageSize).Select(row => new OrderSummary(row.Id, row.Status.ToString(),
             row.PaymentStatus.ToString(), row.PurchasedAt, row.DeliveredAt, row.ItemCount, row.Total,
             row.InvoiceReady ? "Ready" : "Pending",
-            row.InvoiceReady ? $"/api/customer/orders/{row.Id}/invoice" : null)).ToList();
+            row.InvoiceReady ? $"/api/customer/orders/{row.Id}/invoice" : null, row.ReviewItems)).ToList();
         return new OrderHistoryPage(page, rows.Count > pageSize ? page[^1].OrderId : null);
     }
 }

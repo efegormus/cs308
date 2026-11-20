@@ -1,10 +1,11 @@
+import Price from "./Price.jsx";
 import { useState } from "react";
 import { Link } from "react-router";
 import { formatPrice, safeImageUrl, stockLabel } from "../lib/product-display.js";
 import { specRows } from "../lib/product-detail.js";
 import AddToCart from "./AddToCart.jsx";
 import WishlistButton from "./WishlistButton.jsx";
-import ProductRatingSummary from "./ProductRatingSummary.jsx";
+import ProductReviews from "./ProductReviews.jsx";
 
 // One product with its stock count (SCRUM-45 / SCRUM-110). Give it key={product.id}, so a different product
 // starts without the "image failed" state of the previous one. Everything is rendered as text, never as HTML.
@@ -28,13 +29,12 @@ export default function ProductDetail({ product }) {
       </div>
       <div className="product-info">
         <p className="product-category">
-          <Link to={`/products#category-${product.categoryId}`}>{product.categoryName}</Link>
+          <Link to={`/products?categoryId=${product.categoryId}`}>{product.categoryName}</Link>
         </p>
         <h1>{product.name}</h1>
-        <ProductRatingSummary key={product.id} productId={product.id} />
         {product.brandName && <p className="product-brand">{product.brandName}</p>}
         {product.description && <p className="product-description">{product.description}</p>}
-        <p className="price">{formatPrice(product.price)}</p>
+        <p className="price"><Price price={product.price} listPrice={product.listPrice} /></p>
         <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>
         <AddToCart product={product} />
         <WishlistButton productId={product.id} />
@@ -46,6 +46,7 @@ export default function ProductDetail({ product }) {
             </div>
           ))}
         </dl>
+        <ProductReviews productId={product.id} />
       </div>
     </article>
   );

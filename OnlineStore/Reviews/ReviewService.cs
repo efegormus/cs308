@@ -11,6 +11,16 @@ public sealed class ReviewService(StoreDbContext db, TimeProvider clock)
 {
     public const int PageSize = 20;
 
+    // Preserve the versioned UI contract while sharing SCRUM-81's locking, role and decision rules.
+    public async Task<VersionedModerationResult> ModerateAsync(long managerId, long commentId, ModerationRequest input, CancellationToken ct)
+    {
+        if (input.Status is not ("Approved" or "Rejected") || string.IsNullOrWhiteSpace(input.Version))
+            throw new PurchaseException(400, "Use Approved or Rejected and the current comment version.");
+        var decision = new CommentDecision(input.Status == "Approved" ? "Approve" : "Reject", null);
+        var result = await new ModerationService(db, clock).DecideAsync(managerId, commentId, decision, ct, input.Version);
+        return new(result.Comment.Id, result.Comment.Status, result.Comment.Version);
+    }
+
     public async Task<ProductReviews> PublicAsync(long productId, long afterId, CancellationToken ct)
     {
         if (afterId < 0) throw new PurchaseException(400, "Use a non-negative comment cursor.");

@@ -37,6 +37,7 @@ def init_config(port, root=ROOT):
 
 
 def development_environment(root=ROOT):
+    from smtp_config import smtp_environment
     local = root / ".local"
     if not (local / "dev.json").is_file():
         raise ValueError("Run python3 scripts/dev.py init first.")
@@ -58,6 +59,7 @@ def development_environment(root=ROOT):
         "ConnectionStrings__DefaultConnection":
             f"Server=127.0.0.1;Port={port};Database=onlinestore;User ID=onlinestore;Password={connection_password}",
     })
+    env.update(smtp_environment(root, env))
     return env
 
 

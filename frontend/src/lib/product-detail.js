@@ -11,7 +11,9 @@ export function parseProductId(raw) {
 // The rows of the specification list. A row without a value is left out.
 export function specRows(product) {
   return [
+    ["Product ID", Number.isSafeInteger(product.id) && product.id > 0 ? String(product.id) : null],
     ["Model", product.model],
+    ["Serial number", product.serialNumber],
     ["Warranty", product.warrantyStatus],
     ["Distributor", product.distributorInformation]
   ].filter(([, value]) => typeof value === "string" && value.trim() !== "")
@@ -22,4 +24,13 @@ export function specRows(product) {
 // hook only accepts a non-null value, so the product is wrapped.
 export function isLoadedProduct(data) {
   return data !== null && typeof data === "object" && "product" in data;
+}
+
+// The nine required public fields must be present on a real product-detail response.
+export function isCompleteProduct(product) {
+  return Number.isSafeInteger(product?.id) && product.id > 0
+    && [product.name, product.model, product.serialNumber, product.description, product.warrantyStatus, product.distributorInformation]
+      .every(value => typeof value === "string" && value.trim().length > 0)
+    && Number.isFinite(product.price) && product.price >= 0
+    && Number.isSafeInteger(product.stockQuantity) && product.stockQuantity >= 0;
 }

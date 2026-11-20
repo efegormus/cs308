@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using OnlineStore.Data;
+using OnlineStore.Catalog;
+using OnlineStore.Dtos;
 using OnlineStore.Models;
 using OnlineStore.Purchasing;
 
@@ -39,14 +41,15 @@ public sealed class DashboardService(StoreDbContext db, TimeProvider clock) : ID
 
         var wishlistCount = await db.WishlistItems.AsNoTracking()
             .CountAsync(item => item.UserId == userId, cancellationToken);
-        var wishlistItems = await db.WishlistItems.AsNoTracking()
-            .Where(item => item.UserId == userId && item.Product.IsActive)
-            .OrderByDescending(item => item.AddedAt).ThenBy(item => item.ProductId)
-            .Take(WishlistPreviewLimit)
-            .Select(item => new WishlistProductSummary(item.ProductId, item.Product.Name, item.Product.Price,
-                item.Product.StockQuantity, item.Product.Images.OrderBy(image => image.SortOrder)
-                    .ThenBy(image => image.Id).Select(image => image.StorageKey).FirstOrDefault()))
-            .ToListAsync(cancellationToken);
+        var priced = ProductPricing.Query(db, clock.GetUtcNow().UtcDateTime)
+            .Where(p => p.Product.IsActive);
+        var wishlistItems = await (from item in db.WishlistItems.AsNoTracking()
+                                   join product in priced on item.ProductId equals product.Product.Id
+                                   where item.UserId == userId
+                                   orderby item.AddedAt descending, item.ProductId
+                                   select new WishlistProductSummary(product.Product.Id, product.Product.Name, product.Price,
+                                       product.Product.StockQuantity, product.Product.Images.Where(i => i.IsPrimary).OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.StorageKey).FirstOrDefault()))
+            .Take(WishlistPreviewLimit).ToListAsync(cancellationToken);
 
         return new CustomerDashboardResponse(profile, recentOrders, wishlistCount, wishlistItems);
     }
