@@ -33,5 +33,6 @@ export function sortDescription(sort, order) {
     return order === "asc" ? "Sorted by popularity (units sold), least sold first."
       : "Sorted by popularity (units sold), best sellers first.";
   }
-  return order === "desc" ? "Sorted by name, Z to A." : "Sorted by name, A to Z.";
+  // The API ignores `order` when no sort is chosen: the list is always by name, A to Z.
+  return "Sorted by name, A to Z.";
 }

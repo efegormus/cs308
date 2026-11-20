@@ -46,7 +46,9 @@ test("filters count as active for a search word, category, brand or price, but n
 
 test("the sort sentence names the field and the direction, with the API defaults", () => {
   assert.equal(sortDescription("", ""), "Sorted by name, A to Z.");
-  assert.equal(sortDescription("", "desc"), "Sorted by name, Z to A.");
+  // The API orders by name, A to Z, whatever `order` says when there is no sort.
+  assert.equal(sortDescription("", "desc"), "Sorted by name, A to Z.");
+  assert.equal(sortDescription("", "asc"), "Sorted by name, A to Z.");
   assert.equal(sortDescription("price", ""), "Sorted by price, lowest first.");
   assert.equal(sortDescription("price", "asc"), "Sorted by price, lowest first.");
   assert.equal(sortDescription("price", "desc"), "Sorted by price, highest first.");

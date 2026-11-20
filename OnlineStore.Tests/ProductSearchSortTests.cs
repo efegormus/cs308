@@ -217,6 +217,20 @@ public class ProductSearchSortTests
             await NamesAsync(client, "?sort=popularity&order=asc"));
     }
 
+    [Theory]
+    [InlineData("?order=desc")]
+    [InlineData("?order=asc")]
+    public async Task OrderWithoutASort_IsIgnoredAndTheListStaysByName(string query)
+    {
+        // The product list screen says "Sorted by name, A to Z." in this case, so the API must really do that.
+        using var factory = new SearchApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(SampleCatalog());
+
+        Assert.Equal(new[] { "Alpha Zero", "Google Pixel 9", "Samsung Galaxy S25", "Test Tablet" },
+            await NamesAsync(client, query));
+    }
+
     [Fact]
     public async Task Sort_ByPopularity_WithoutOrders_FallsBackToNameOrder()
     {
