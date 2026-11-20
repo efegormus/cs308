@@ -20,11 +20,10 @@ from playwright.sync_api import expect, sync_playwright
 
 PM_MENU = ["Overview", "Deliveries", "Reviews", "Low stock"]
 SM_MENU = ["Overview", "Invoices", "Discounts"]
-# Two pending reviews for the approval check. The real dashboard is fetched first and only its comment list is
-# replaced, because the seed has no comments and SCRUM-81 (approval API) does not exist yet.
+# Controlled UI cases complement the real moderation workflow in verify_purchasing_browser.py.
 REVIEWS = [
-    {"id": 900001, "productId": 1, "productName": "Browser check product A", "body": "First review", "createdAt": "2026-11-09T13:00:00Z"},
-    {"id": 900002, "productId": 2, "productName": "Browser check product B", "body": "Second review", "createdAt": "2026-11-10T13:00:00Z"},
+    {"id": 900001, "productId": 1, "productName": "Browser check product A", "customerName": "Buyer A", "rating": 5, "body": "First review", "createdAt": "2026-11-09T13:00:00Z", "version": "638982036000000000"},
+    {"id": 900002, "productId": 2, "productName": "Browser check product B", "customerName": "Buyer B", "rating": None, "body": "Second review", "createdAt": "2026-11-10T13:00:00Z", "version": "638982900000000000"},
 ]
 
 
@@ -132,26 +131,33 @@ def verify(url, assembly, executable=None):
             expect(page).to_have_url(url + "/manage")
             print("PASS: product manager sections load, the menu marks the current one, and a sales section sends back to the overview")
 
-            # Review approval with two pending reviews.
-            def with_reviews(route):
-                data = route.fetch().json()
-                data["commentsWaitingForApproval"] = REVIEWS
-                route.fulfill(status=200, json=data)
-
-            page.route("**/api/product-management/dashboard", with_reviews)
+            # Controlled queue cases check both decisions and removal without replacing the dashboard.
+            pending = REVIEWS.copy()
+            def comments(route):
+                route.fulfill(status=200, json={"items": pending, "nextAfterId": None})
+            def moderate(route):
+                body = route.request.post_data_json
+                comment_id = int(route.request.url.split("/")[-2])
+                item = next(row for row in pending if row["id"] == comment_id)
+                assert body["version"] == item["version"]
+                assert body["status"] in ("Approved", "Rejected")
+                pending.remove(item)
+                route.fulfill(status=200, json={"id": comment_id, "status": body["status"], "version": "638982900000000001"})
+            page.route("**/api/product-management/comments?*", comments)
+            page.route("**/api/product-management/comments/*/moderation", moderate)
             page.goto(url + "/manage/reviews")
-            rows = page.locator(".admin-review")
+            rows = page.locator(".ui-table tbody tr").filter(has=page.get_by_role("button", name="Approve", exact=True))
             expect(rows).to_have_count(2)
-            first = rows.first.get_by_role("button", name="Approve review")
-            first.click()
-            approved = rows.first.get_by_role("button", name="Review approved")
-            expect(approved).to_be_visible()
-            expect(approved).to_have_attribute("aria-disabled", "true")
-            approved.click(force=True)  # a second click must not start another approval
-            expect(page.locator(".admin-reviews[aria-live='polite']")).to_contain_text("Review approved")
+            rows.first.get_by_role("button", name="Approve", exact=True).click()
+            expect(page.get_by_role("status")).to_contain_text("approved")
             expect(rows).to_have_count(1)
             expect(rows.first).to_contain_text("Browser check product B")
-            print("PASS: approving a review turns the button into 'Review approved', announces it and removes only that row")
+            rows.first.get_by_role("button", name="Reject", exact=True).click()
+            expect(page.get_by_role("status").filter(has_text="Comment #900002")).to_contain_text("rejected")
+            expect(page.get_by_text("No comment is waiting for approval.", exact=True)).to_be_visible()
+            page.reload()
+            expect(page.get_by_text("No comment is waiting for approval.", exact=True)).to_be_visible()
+            print("PASS: controlled queue UI approves/rejects only the chosen row and stays empty after refresh")
 
             # Mobile: the menu is a disclosure at the top.
             page.set_viewport_size({"width": 375, "height": 812})

@@ -8,13 +8,15 @@ from pathlib import Path
 import re
 import secrets
 import subprocess
+import time
+from progress_demo_checks import invoice_proof, review_proof
 from urllib.parse import urlparse
 import uuid
 
 from playwright.sync_api import expect, sync_playwright
 
 
-def verify(url, assembly, executable=None, report=None):
+def verify(url, assembly, executable=None, report=None, smtp_url=None):
     if urlparse(url).hostname not in ("localhost", "127.0.0.1"):
         raise ValueError("Purchasing verification is restricted to a disposable local server.")
     url = url.rstrip("/")
@@ -30,8 +32,13 @@ def verify(url, assembly, executable=None, report=None):
         manager = browser.new_context(viewport={"width": 1440, "height": 1000})
 
         def post(context, path, body):
-            token = context.request.get(url + "/api/auth/csrf").json()["token"]
-            return context.request.post(url + path, data=body, headers={"X-CSRF-TOKEN": token})
+            for attempt in range(2):
+                token = context.request.get(url + "/api/auth/csrf").json()["token"]
+                response = context.request.post(url + path, data=body, headers={"X-CSRF-TOKEN": token})
+                if response.status != 429 or attempt:
+                    return response
+                time.sleep(61)
+
 
         try:
             for context, prefix in [(customer, "buyer"), (manager, "manager")]:
@@ -46,8 +53,10 @@ def verify(url, assembly, executable=None, report=None):
                            cwd=assembly.parent, env=os.environ.copy(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
             products = customer.request.get(url + "/api/products").json()
             product = next(item for item in products if item["stockQuantity"] >= 3)
+            second = next(item for item in products if item["stockQuantity"] >= 3 and item["id"] != product["id"])
             fixture.update(productId=product["id"], originalStock=product["stockQuantity"])
             assert post(customer, "/api/cart/items", {"productId": product["id"], "quantity": 1}).status == 200
+            assert post(customer, "/api/cart/items", {"productId": second["id"], "quantity": 1}).status == 200
             page = customer.new_page()
             errors, dialogs, checkout_posts = [], [], []
             page.on("pageerror", lambda error: errors.append(str(error)))
@@ -73,6 +82,7 @@ def verify(url, assembly, executable=None, report=None):
                 page.locator("#expiry-year").fill(str(datetime.now().year + 1))
                 page.locator("#security-code").fill("123")
 
+            assert post(customer, f'/api/customer/products/{product["id"]}/review', {"rating": 5}).status == 403
             fill("4000000000000002")
             page.locator("#purchase").click()
             expect(page.get_by_role("alert")).to_contain_text("declined")
@@ -90,6 +100,7 @@ def verify(url, assembly, executable=None, report=None):
             pdf = customer.request.get(url + page.locator("#invoice").get_attribute("href"))
             assert pdf.status == 200 and pdf.headers["content-type"] == "application/pdf"
             assert pdf.body().startswith(b"%PDF")
+            invoice_proof(page, customer, manager, browser, url, order, product, smtp_url, f"buyer-{suffix}@example.com")
             page.reload()
             expect(page.locator("#receipt")).to_be_visible()
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")
@@ -119,6 +130,7 @@ def verify(url, assembly, executable=None, report=None):
             expect(page.locator("#order-status")).to_contain_text("Delivered")
             print("PASS: React ProductManager delivery actions update the customer's receipt and remove terminal actions")
 
+            review_proof(page, staff, customer, manager, browser, url, order, [product, second], suffix, post)
             assert post(customer, "/api/cart/items", {"productId": product["id"], "quantity": 1}).status == 200
             page.goto(url + "/checkout")
             expect(page.locator("#checkout-form")).to_be_visible()
@@ -165,8 +177,9 @@ def main():
     parser.add_argument("--operator-assembly", required=True)
     parser.add_argument("--browser-executable")
     parser.add_argument("--report", help="optional local fixture IDs for cleanup; contains no credentials")
+    parser.add_argument("--smtp-api-url", help="optional disposable Mailpit API for exact PDF attachment evidence")
     args = parser.parse_args()
-    verify(args.url, args.operator_assembly, args.browser_executable, args.report)
+    verify(args.url, args.operator_assembly, args.browser_executable, args.report, args.smtp_api_url)
 
 
 if __name__ == "__main__":
