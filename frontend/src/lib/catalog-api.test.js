@@ -206,8 +206,9 @@ test("one caller aborting leaves the shared request to the others; the last one 
 });
 
 test("fetchProduct returns a valid product", async () => {
-  const calls = mockFetch({ "/api/products/10": pixel });
-  assert.deepEqual(await fetchProduct(10), pixel);
+  const detail = { ...pixel, model: "GP9", serialNumber: "SERIAL-10", description: "Phone", warrantyStatus: "2 years", distributorInformation: "Distributor" };
+  const calls = mockFetch({ "/api/products/10": detail });
+  assert.deepEqual(await fetchProduct(10), detail);
   assert.equal(calls[0].path, "/api/products/10");
 });
 

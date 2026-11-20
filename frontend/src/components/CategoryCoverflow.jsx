@@ -417,7 +417,7 @@ export default function CategoryCoverflow({
                   <span className="title">{name}</span>
                 </h2>
                 <p>{productCountLabel(total)}</p>
-                <Link ref={dom.panelLink} to={`/products#${categoryAnchorId(category.id)}`}>Browse {name.toLowerCase()}</Link>
+                <Link ref={dom.panelLink} to={`/products?categoryId=${category.id}`}>Browse {name.toLowerCase()}</Link>
               </div>
               {stable.map((product, stableIndex) => {
                 const position = list.indexOf(product);
