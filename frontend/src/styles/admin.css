@@ -120,6 +120,27 @@
   transition: stroke-dashoffset var(--admin-approve-tick-ms) ease var(--admin-approve-tick-delay-ms);
 }
 
+/* Reject (SCRUM-141): the secondary button (DESIGN.md: --surface fill, --link text) with the same morph as Approve,
+   into a neutral circle with a drawn cross. Once a decision is saved only the chosen button stays visible. */
+.admin-page .admin-review-actions { display: flex; flex: none; gap: var(--space-xs); }
+.admin-page .admin-review .admin-reject,
+.admin-page .admin-review .admin-reject:is(:hover, :active):not(:disabled) {
+  background: var(--surface); color: var(--link); box-shadow: inset 0 0 0 1px var(--field-line);
+}
+.admin-page .admin-review .admin-reject:is(:hover, :active):not(:disabled):not(.is-rejected) { box-shadow: inset 0 0 0 1px var(--link); }
+.admin-page .admin-review .admin-reject.is-rejected,
+.admin-page .admin-review .admin-reject.is-rejected:is(:hover, :active):not(:disabled) {
+  width: 44px; border-radius: 22px; background: var(--muted); box-shadow: none;
+}
+.admin-page .admin-reject .admin-approve-tick { stroke: var(--surface); }
+.admin-page .admin-reject.is-rejected .admin-approve-label { opacity: 0; }
+.admin-page .admin-reject.is-rejected .admin-approve-tick {
+  opacity: 1; stroke-dashoffset: 0;
+  transition: stroke-dashoffset var(--admin-approve-tick-ms) ease var(--admin-approve-tick-delay-ms);
+}
+.admin-page .admin-review-actions.is-approved .admin-reject,
+.admin-page .admin-review-actions.is-rejected .admin-accept { visibility: hidden; }
+
 /* Breakpoints 480 / 768 / 1024 / 1280 (DESIGN.md, Responsive). */
 @media (max-width: 1280px) {
   .admin-page .admin-main { padding-inline: var(--space-xl); }
@@ -147,11 +168,13 @@
 @media (max-width: 480px) {
   .admin-page .admin-main { padding: var(--space-md) var(--space-md) var(--space-xl); }
   .admin-page .admin-kpis { grid-template-columns: minmax(0, 1fr); }
-  .admin-page .admin-review-inner { align-items: flex-start; }
+  .admin-page .admin-review-inner { align-items: flex-start; flex-wrap: wrap; }
+  .admin-page .admin-review-text { flex-basis: 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .admin-page .admin-section, .admin-page .admin-kpi { animation: none; }
   .admin-page .admin-nav-link, .admin-page .admin-review, .admin-page .admin-approve,
-  .admin-page .admin-approve .admin-approve-tick, .admin-page .admin-approve.is-approved .admin-approve-tick { transition: none; }
+  .admin-page .admin-approve .admin-approve-tick, .admin-page .admin-approve.is-approved .admin-approve-tick,
+  .admin-page .admin-reject.is-rejected .admin-approve-tick { transition: none; }
 }

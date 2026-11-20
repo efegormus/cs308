@@ -760,7 +760,9 @@ still [Belirsiz]: the sales overview has no revenue chart yet.
   turns into a 44px `--ok` circle with a white tick and `aria-label` "Review approved", waits, then the row
   fades and closes; the list is `aria-live="polite"` and announces it. A failure brings the button back and
   shows a `--danger` message under the row. The fill is `--ok`, not `--ok-fg`: white on the dark `--ok-fg`
-  is 2.54:1.
+  is 2.54:1. "Reject" (SCRUM-141) sits next to it as the secondary button (`--surface` fill, `--link` text,
+  1px `--field-line` inset ring) with the same timings: a 44px `--muted` circle with a `--surface` cross and
+  `aria-label` "Review rejected". Only the chosen button stays visible while the row waits.
 
 | Pair | Ratio | Need | Result |
 | --- | --- | --- | --- |

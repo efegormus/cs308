@@ -232,16 +232,16 @@ DESIGN.md's Product card section holds the full rules.
 
 `pages/AdminPanelPage.jsx`, `components/admin/` (`AdminShell`, `KpiCard`, `ReviewApprovalRow`),
 `styles/admin.css`, and the pure helpers `lib/admin-menu.js`, `lib/admin-api.js`, `lib/count-up.js`,
-`lib/approval-row.js` and `lib/motion.js` (SCRUM-124). It replaces the SCRUM-130 landing page at `/manage`;
+`lib/approval-row.js`, `lib/moderation-api.js` and `lib/motion.js` (SCRUM-124, SCRUM-141). It replaces the SCRUM-130 landing page at `/manage`;
 DESIGN.md's Admin panel section holds the rules.
 
 | Part | Rule |
 | --- | --- |
 | Routes | `/manage` (Overview) and `/manage/<section>`. Product manager: `deliveries`, `reviews`, `low-stock`. Sales manager: `invoices`, `discounts`. Another role's section sends back to `/manage`; other roles get the `PurchaseAccess` message |
-| Data | `GET /api/product-management/dashboard` (one request serves Overview, Reviews and Low stock), `GET /api/product-management/deliveries` (the Deliveries table, read-only; status changes stay on `/deliveries`), `GET /api/sales/dashboard` for the last 30 days |
+| Data | `GET /api/product-management/dashboard` (one request serves Overview and Low stock), the moderation API for Reviews (below), `GET /api/product-management/deliveries` (the Deliveries table, read-only; status changes stay on `/deliveries`), `GET /api/sales/dashboard` for the last 30 days |
 | Menu | 240px from 768px up; below 768px a 44px "Menu" disclosure (`aria-expanded`), closed by a choice or Escape. Hover: 3px `--accent` inset line; current page: the line, `aria-current="page"` and `color-mix(in srgb, var(--accent) 10%, var(--surface))` |
 | KPI cards | `Card`; product manager: low-stock products, pending deliveries, reviews to approve; sales manager: gross revenue, refunds, net revenue, active discounts. tr-TR numbers, TRY amounts. A list at the API's cap says "The first N are shown." |
-| Review approval | `ReviewApprovalRow` takes `onApprove(review)`. There is no approval API until SCRUM-81, so the page passes a placeholder that resolves at once and the section says that nothing is saved yet |
+| Review moderation | Since SCRUM-141 the Reviews section uses the moderation API (`docs/reviews.md`): `GET /api/product-management/comments?status=Pending&afterId=…`, 20 a page, oldest first, "Load more reviews" with `nextAfterId`, rows merged by ID. A row shows product, author, stars ("No rating" when none), text and date, as React text only. Approve (primary) and Reject (secondary: `--surface` fill, `--link` text) `POST …/comments/{id}/decision` with `X-CSRF-TOKEN`; the row changes only after the 200, both buttons are blocked while one waits (15s limit). 401 ends the session; 403 says a product manager account is required; 404 closes the row; 409 says another manager decided first and reloads the list, never retrying; 400 and network errors leave the row with a message. A decided comment is dropped from the dashboard at once and the dashboard reloads, so the Overview stays in step |
 
 ### Admin motion
 
@@ -256,9 +256,9 @@ turns all of it off.
 | KPI card `admin-rise`: 8px from below | 220ms | index × 80ms | `cubic-bezier(0.22, 1, 0.36, 1)` |
 | KPI value counts from 0 (`requestAnimationFrame`) | 700ms | with its card | easeOutCubic |
 | Skeleton shimmer | 1.2s, repeats | 0 | linear |
-| Approve: width 110px to 44px, `--ok` fill, 22px corners | 200ms | after `onApprove` resolves | ease |
-| Approve: tick drawn (`stroke-dashoffset`) | 250ms | 120ms | ease |
-| Approved row waits (button blocked, `aria-label` "Review approved") | 800ms | 0 | — |
+| Approve: width 110px to 44px, `--ok` fill, 22px corners (Reject: the same with a `--muted` fill) | 200ms | after the server's 200 | ease |
+| Approve: tick drawn (`stroke-dashoffset`; Reject draws a cross) | 250ms | 120ms | ease |
+| Decided row waits (buttons blocked, `aria-label` "Review approved" or "Review rejected"; the other button is hidden) | 800ms | 0 | — |
 | Row closes: opacity, `max-height`, `min-height`, `border-top` to 0, then removed | 250ms | 0 | ease |
 
 With reduced motion the KPI value is final at once, the tick and green show at once, and the row goes
