@@ -97,10 +97,10 @@ test("registerHref passes on only a safe returnUrl", () => {
 
 test("validateEmail messages", () => {
   for (const value of ["", "   ", null, undefined]) assert.equal(validateEmail(value), "Enter your email address.");
-  for (const value of ["nope", "a@", "@b.com", "a b@c.com", "a@b@c.com", "a@b c.com"]) {
+  for (const value of ["nope", "a@", "@b.com", "a b@c.com", "a@b@c.com", "a@b c.com", '"a b@c.com', '""@c.com', '"a"b@c.com']) {
     assert.equal(validateEmail(value), "Enter a valid email address.", value);
   }
-  for (const value of ["a@b.com", "  a@b.com  ", "first.last+tag@example.co.uk", "user@localhost"]) {
+  for (const value of ["a@b.com", "  a@b.com  ", "first.last+tag@example.co.uk", "user@localhost", '"first last"@example.com']) {
     assert.equal(validateEmail(value), "", value);
   }
 });
