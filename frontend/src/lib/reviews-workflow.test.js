@@ -52,3 +52,24 @@ test("a stale moderation decision reports 409 without forwarding private details
   globalThis.fetch=async()=>new Response("PRIVATE",{status:409});
   await assert.rejects(moderateComment(pending,"Approved","csrf"),error=>error.status===409&&!JSON.stringify(error).includes("PRIVATE"));
 });
+
+
+test("moderation reads adapt the shared SCRUM-81 queue and retain the decision version", async () => {
+  globalThis.fetch = async (url) => {
+    assert.equal(url, "/api/product-management/comments?afterId=8");
+    return Response.json({ status: "Pending", comments: [{ ...pending, customerName: undefined, authorName: "Buyer", status: "Pending" }], nextAfterId: null });
+  };
+  const page = await fetchModeration(8);
+  assert.equal(page.items[0].customerName, "Buyer");
+  assert.equal(page.items[0].version, "123");
+});
+
+test("moderation reads reject a terminal queue or a missing version", async () => {
+  for (const queue of [
+    { status: "Approved", comments: [], nextAfterId: null },
+    { status: "Pending", comments: [{ ...pending, authorName: "Buyer", version: undefined }], nextAfterId: null }
+  ]) {
+    globalThis.fetch = async () => Response.json(queue);
+    await assert.rejects(fetchModeration(), { kind: "invalid-response" });
+  }
+});

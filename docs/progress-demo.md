@@ -79,3 +79,17 @@ committed. Disposable browser database/services were removed after verification.
 Review/merge and the final rehearsal on the resulting main revision remain the
 normal integration gate. Meeting participation and any grading evidence must be
 recorded from actual events by the team.
+
+## Integration with main — 20 November 2026
+
+Resolved PR #68 against main `8f71d8f` while retaining SCRUM-114 login validation,
+SCRUM-138 purchase colors and SCRUM-140 search hints/clear filters. The SCRUM-81
+moderation queue is shared with the React screen: duplicate routes/types were
+removed, both decision contracts use the same row lock, and versioned decisions
+retain stale-screen protection. Cross-contract concurrency and queue adaptation
+are covered by SQL/frontend tests.
+
+Verification after integration: 510 backend tests with real MySQL and zero skips,
+277 frontend tests, 31 Python tests, production publish and workflow lint passed.
+Published browser checks verified category paging, clearing legacy hash filters,
+global sorting and the actual purchase/delivery/review/moderation/SMTP PDF flow.

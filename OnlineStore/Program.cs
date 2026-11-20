@@ -58,6 +58,7 @@ builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<DeliveryService>();
 builder.Services.AddScoped<ReviewService>();
+builder.Services.AddScoped<ModerationService>();
 // Invoice PDFs live outside wwwroot (SCRUM-74).
 var invoiceRoot = builder.Configuration["Invoices:StoragePath"];
 builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsNullOrWhiteSpace(invoiceRoot)

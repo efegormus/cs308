@@ -2,9 +2,9 @@
 
 Course Project requirement 5: only a customer who purchased and received a product
 may review it. Ratings are public immediately. Written comments start Pending;
-only Approved comments are returned publicly. The moderator API belongs to
-SCRUM-81, its admin screen to SCRUM-141, and the full customer form to SCRUM-137.
-The product detail page already reads the public average supplied here.
+only Approved comments are returned publicly. The moderator API is SCRUM-81
+(section below), its admin screen is SCRUM-141, and the full customer form is
+SCRUM-137. The product detail page already reads the public average supplied here.
 
 ## API for SCRUM-137
 
@@ -51,10 +51,47 @@ comment/author values as React text, never injected HTML. Do not interpret user
 text as markup. Public comments contain only approved text; the private response
 is the source for an author's waiting-for-approval message.
 
+## Moderation API for SCRUM-141 (SCRUM-81)
+
+Only the ProductManager role can call these. Guests get 401. Customers, SalesManager and
+SupportAgent get 403. Responses have `Cache-Control: no-store`. They are the only moderation
+endpoints, so SCRUM-141 should not add its own.
+
+* `GET /api/product-management/comments?status=Pending&afterId=0` returns
+  `{status, comments, nextAfterId}`. `status` is `Pending` (default), `Approved` or
+  `Rejected`, case sensitive. Comments are ordered by ascending ID (oldest first), 20 per
+  page. Use `nextAfterId` until it is null. An unknown status or a negative cursor gives 400.
+  Each comment is `{id, productId, productName, authorName, rating, body, status, createdAt,
+  moderatedAt, moderationNote}`. `rating` is the author's own star rating or null. It has no
+  e-mail, address, tax ID or other account data.
+* `POST /api/product-management/comments/{commentId}/decision` needs the identity's CSRF
+  cookie plus `X-CSRF-TOKEN`. Body: `{ "decision": "Approve", "note": "optional" }`.
+  `decision` is `Approve` or `Reject`. `note` is optional, at most 500 characters, and is
+  stored trimmed (blank becomes null). Unknown fields, such as `status`, are rejected with 400.
+  Success returns 200 and the updated comment in the same shape as the list.
+
+Behaviour the screen can rely on:
+
+* Only a Pending comment changes. It records the moderator, the time and the note.
+* Repeating the same decision returns 200 and the stored comment unchanged. Use it to retry a
+  request whose answer was lost.
+* The opposite decision on a decided comment returns 409. Another manager decided it first, so
+  refresh the list. Do not retry automatically.
+* An unknown comment ID returns 404. A missing CSRF token or an invalid body returns 400.
+* The decision changes comments only. Ratings and the public average and count never change.
+* An approved comment appears in `GET /api/products/{id}/reviews`. A rejected one never does.
+  The author's private response shows the new status, and the UI shows Pending as
+  "Waiting for approval".
+* The list can be filtered by `status`, so the same screen can show decided comments.
+* Not in this version: changing a decision after it was made, editing a comment, and
+  e-mailing the author about the result.
+
 ## Integrity and tests
 
 MySQL row-locks the customer before checking/inserting reviews; existing unique
-user/product keys also prevent duplicates. Rating plus comment are atomic.
+user/product keys also prevent duplicates. Rating plus comment are atomic. A moderation
+decision row-locks the comment (`SELECT ... FOR UPDATE`), so two managers deciding at the same
+time take turns: one wins and the other gets 409, or 200 if it is the same decision.
 Timestamps are normalized to MySQL microseconds. In-memory tests cover validation,
 eligibility, ownership, moderation filtering, paging and retries. Real MySQL tests
 cover identical/conflicting concurrent submissions and real cookie/CSRF HTTP
@@ -75,11 +112,15 @@ public summary after success, keeps failed mutations explicit, and clears privat
 views when the session expires or the identity/product changes.
 
 Product managers use `/manage/reviews`. `GET /api/product-management/comments?afterId=0`
-returns `{items,nextAfterId}`, 20 pending comments per page. Each item contains
-`id`, `productId`, `productName`, `customerName`, nullable `rating`, `body`,
-`createdAt` and an opaque string `version`. No email, tax ID or address is exposed.
+uses the shared SCRUM-81 queue contract `{status,comments,nextAfterId}`, 20 pending
+comments per page. Each comment contains `id`, `productId`, `productName`,
+`authorName`, nullable `rating`, `body`, `status`, `createdAt`, moderation metadata
+and an opaque string `version`. The React client maps authorName to its customer
+column. No email, tax ID or address is exposed.
 `POST /api/product-management/comments/{id}/moderation` requires ProductManager
 and CSRF, with `{status:"Approved"|"Rejected",version}`. It returns `{id,status,version}`.
+Both this versioned UI action and SCRUM-81’s `/decision` action share
+`ModerationService`; there is one queue route and one locking/decision implementation.
 A row lock and version check prevent competing decisions from overwriting each
 other. An exact repeated decision succeeds; an opposite terminal decision or
 stale pending version returns 409. Only Approved text becomes public. Ratings

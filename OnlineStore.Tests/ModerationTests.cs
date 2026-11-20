@@ -17,7 +17,7 @@ public class ModerationTests
         var g = await ReviewFixture.SeedAsync(db); g.Other.Role = UserRole.ProductManager; await db.SaveChangesAsync();
         var service = new ReviewService(db, TimeProvider.System);
         await service.SubmitAsync(g.Buyer.Id, g.Product.Id, new(5,"Review text"), default);
-        var pending = Assert.Single((await service.PendingAsync(0, default)).Items);
+        var pending = Assert.Single((await new ModerationService(db, TimeProvider.System).ListAsync(null, 0, default)).Comments);
         var result = await service.ModerateAsync(g.Other.Id, pending.Id, new(status,pending.Version),default);
         Assert.Equal(status,result.Status); Assert.NotEqual(pending.Version,result.Version);
         Assert.Equal(visible,(await service.PublicAsync(g.Product.Id,0,default)).Comments.Count);

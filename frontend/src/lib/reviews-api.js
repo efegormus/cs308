@@ -75,7 +75,11 @@ export function isModerationPage(value) {
 
 export async function fetchModeration(afterId = 0, { signal } = {}) {
   if (!Number.isSafeInteger(afterId) || afterId < 0) throw { kind: "invalid-request" };
-  return read(await fetch(`/api/product-management/comments?afterId=${afterId}`, { signal }), isModerationPage);
+  const queue = await read(await fetch(`/api/product-management/comments?afterId=${afterId}`, { signal }),
+    value => value?.status === "Pending" && Array.isArray(value.comments));
+  const page = { items: queue.comments.map(comment => ({ ...comment, customerName: comment?.authorName })), nextAfterId: queue.nextAfterId };
+  if (!isModerationPage(page)) throw { kind: "invalid-response" };
+  return page;
 }
 
 export async function moderateComment(comment, status, token, { signal } = {}) {

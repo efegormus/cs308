@@ -134,7 +134,7 @@ def verify(url, assembly, executable=None):
             # Controlled queue cases check both decisions and removal without replacing the dashboard.
             pending = REVIEWS.copy()
             def comments(route):
-                route.fulfill(status=200, json={"items": pending, "nextAfterId": None})
+                route.fulfill(status=200, json={"status": "Pending", "comments": [{**row, "authorName": row["customerName"], "status": "Pending"} for row in pending], "nextAfterId": None})
             def moderate(route):
                 body = route.request.post_data_json
                 comment_id = int(route.request.url.split("/")[-2])

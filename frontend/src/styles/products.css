@@ -27,6 +27,8 @@
 .catalog-page .product-filters input, .catalog-page .product-filters select {
   min-width: 0; padding: .65rem; border: 1px solid #b9c4d2; border-radius: .4rem; background: var(--surface);
   color: inherit; font: inherit; }
+.catalog-page .sort-note, .catalog-page .empty-hint { margin: .5rem 0; color: var(--muted); line-height: 1.5; }
+.catalog-page .clear-filters { margin: .25rem 0 1rem; }
 .catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2rem 0; }
 .catalog-page .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
   gap: 1rem; padding: 0; list-style: none; }

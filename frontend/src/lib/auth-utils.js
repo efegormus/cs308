@@ -43,11 +43,14 @@ export function registerHref(returnUrl) {
   return safe === "/" ? REGISTER_PATH : `${REGISTER_PATH}?returnUrl=${encodeURIComponent(safe)}`;
 }
 
-// Deliberately loose: registration accepts addresses such as user@localhost, and they must still be able to log in.
+// Deliberately loose: registration accepts addresses such as user@localhost and "first last"@example.com (a quoted
+// local part may contain spaces), and they must still be able to log in.
+const EMAIL_PATTERN = /^(?:[^\s@"]+|"[^"@\r\n]+")@[^\s@]+$/;
+
 export function validateEmail(value) {
   const email = String(value ?? "").trim();
   if (!email) return "Enter your email address.";
-  return /^[^\s@]+@[^\s@]+$/.test(email) ? "" : "Enter a valid email address.";
+  return EMAIL_PATTERN.test(email) ? "" : "Enter a valid email address.";
 }
 
 // The password policy is not enforced or revealed here. Only an empty value is an error.

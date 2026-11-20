@@ -26,7 +26,4 @@ public sealed record ReviewResult(CustomerReview Review, bool Created);
 
 [JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
 public sealed record ModerationRequest(string? Status, string? Version);
-public sealed record ModerationComment(long Id, long ProductId, string ProductName, string CustomerName,
-    int? Rating, string Body, DateTime CreatedAt, string Version);
-public sealed record ModerationPage(IReadOnlyList<ModerationComment> Items, long? NextAfterId);
-public sealed record ModerationResult(long Id, string Status, string Version);
+public sealed record VersionedModerationResult(long Id, string Status, string Version);

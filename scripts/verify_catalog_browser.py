@@ -173,7 +173,13 @@ def verify(base_url, executable=None, expect_seeded=False):
             expect(page.locator(".product-card")).to_have_count(min(24,len(expected_products)))
             page.reload()
             expect(page.locator(".product-card")).to_have_count(min(24,len(expected_products)))
-            print("PASS: an off-first-page category loads its products and survives refresh")
+            page.goto(base_url + f'/products?verification=legacy#category-{category["id"]}')
+            expect(page.locator(".product-card")).to_have_count(min(24, len(expected_products)))
+            page.get_by_role("button", name="Clear filters", exact=True).click()
+            expect(page.locator("#catalog-status")).to_have_text(f'{len(products)} products found.')
+            assert urlparse(page.url).fragment == ""
+            assert parse_qs(urlparse(page.url).query).get("verification") == ["legacy"]
+            print("PASS: an off-first-page category loads its products, survives refresh and clears legacy hash filters")
         print(f"PASS: legacy array and paginated API; real browser → MySQL; {len(products)} products in {len(categories)} categories; all pages, stock, navigation, mobile layout")
 
         # A top-level category includes subcategories: sorting must keep global server order.
@@ -227,7 +233,7 @@ def verify(base_url, executable=None, expect_seeded=False):
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
         page.locator("#category-nav").get_by_role("link",name="Tablets",exact=True).click()
         expect(page.locator("#catalog-status")).to_have_text("No products match these filters.")
-        page.get_by_role("link",name="Clear filters",exact=True).click()
+        page.get_by_role("button",name="Clear filters",exact=True).click()
         expect(page.locator(".product-card")).to_have_count(3)
         print("PASS: real category IDs, empty category, TRY prices, safe text and invalid/missing image fallbacks")
 
