@@ -10,7 +10,7 @@ import secrets
 import subprocess
 import time
 from progress_demo_checks import invoice_proof, review_proof
-from urllib.parse import urlparse
+from urllib.parse import urlparse, urlencode
 import uuid
 
 from playwright.sync_api import expect, sync_playwright
@@ -52,7 +52,8 @@ def verify(url, assembly, executable=None, report=None, smtp_url=None):
             subprocess.run(["dotnet", str(assembly), "--set-role", f"manager-{suffix}@example.com", "ProductManager"],
                            cwd=assembly.parent, env=os.environ.copy(), stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL, check=True)
             products = customer.request.get(url + "/api/products").json()
-            product = next(item for item in products if item["stockQuantity"] >= 3)
+            product = next((item for item in products if item["stockQuantity"] >= 3 and item.get("listPrice", item["price"]) > item["price"]),
+                           next(item for item in products if item["stockQuantity"] >= 3))
             second = next(item for item in products if item["stockQuantity"] >= 3 and item["id"] != product["id"])
             fixture.update(productId=product["id"], originalStock=product["stockQuantity"])
             assert post(customer, "/api/cart/items", {"productId": product["id"], "quantity": 1}).status == 200
@@ -63,6 +64,18 @@ def verify(url, assembly, executable=None, report=None, smtp_url=None):
             page.on("dialog", lambda dialog: (dialogs.append(dialog.message), dialog.dismiss()))
             page.on("request", lambda request: checkout_posts.append(1)
                     if request.method == "POST" and request.url.split("?")[0].endswith("/api/customer/checkout") else None)
+            # Compare the same server-owned price across all published shopping surfaces.
+            money = lambda value: page.evaluate("value => new Intl.NumberFormat('tr-TR', {style:'currency', currency:'TRY'}).format(value)", value)
+            page.goto(url + "/products?" + urlencode({"search": product["name"]}))
+            tile = page.locator(".product-card").filter(has=page.get_by_role("heading", name=product["name"], exact=True))
+            expect(tile.locator(".price-current")).to_have_text(money(product["price"]))
+            if product.get("listPrice", product["price"]) > product["price"]:
+                expect(tile.locator(".price-original")).to_have_text(money(product["listPrice"]))
+            page.goto(url + f'/product?id={product["id"]}')
+            expect(page.locator(".product-detail .price-current")).to_have_text(money(product["price"]))
+            page.goto(url + "/cart")
+            cart_row = page.locator(".cart-line").filter(has=page.get_by_role("link", name=product["name"], exact=True))
+            expect(cart_row.locator(".price-current")).to_have_text(money(product["price"]))
             page.goto(url + "/checkout")
             expect(page).to_have_url(re.compile(r"/login\?returnUrl="))
             expect(page.locator("#login-form")).to_be_visible()
@@ -72,6 +85,13 @@ def verify(url, assembly, executable=None, report=None, smtp_url=None):
             expect(page).to_have_url(url + "/checkout")
             expect(page.locator("#checkout-form")).to_be_visible()
             expect(page.locator("#lines")).to_contain_text(product["name"])
+            cart = customer.request.get(url + "/api/cart").json()
+            quote = customer.request.get(url + "/api/customer/checkout").json()
+            assert next(line for line in cart["items"] if line["productId"] == product["id"])["unitPrice"] == product["price"]
+            assert next(line for line in quote["items"] if line["productId"] == product["id"])["unitPrice"] == product["price"]
+            assert cart["total"] == quote["total"]
+            expect(page.locator("#total")).to_have_text(money(quote["total"]))
+            print("PASS: published catalog/detail/cart/checkout agree on the effective unit price and total")
             expect(page.locator("#address")).to_contain_text("<img src=x onerror=alert(1)>")
             assert page.locator("#address img").count() == 0
             assert page.evaluate("document.documentElement.scrollWidth <= innerWidth")

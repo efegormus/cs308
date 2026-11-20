@@ -161,10 +161,10 @@ jobs:
           dotnet tool restore
           dotnet ef database update --project OnlineStore --no-build
 
-      - name: Seed sample catalog
+      - name: Seed demo catalog and purchases
         env:
           ConnectionStrings__DefaultConnection: Server=127.0.0.1;Port=3306;Database=onlinestore;User ID=onlinestore;Password=${{ env.MYSQL_APP_PASSWORD }}
-        run: dotnet run --project OnlineStore --no-build --no-launch-profile -- --seed
+        run: dotnet run --project OnlineStore --no-build --no-launch-profile -- --seed-demo
 
       - name: Publish the complete application
         run: dotnet publish OnlineStore --no-restore -c Release -o "$RUNNER_TEMP/published-app" /p:SkipFrontendBuild=true
