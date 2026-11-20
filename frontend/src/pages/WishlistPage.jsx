@@ -1,15 +1,46 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
 import { loginHref } from "../lib/auth-utils.js";
-import { formatPrice, safeImageUrl } from "../lib/product-display.js";
+import { formatPrice, safeImageUrl, specRow, stockStatus } from "../lib/product-display.js";
 import { fetchWishlist, removeWishlistItem, WishlistError } from "../lib/wishlist-api.js";
+import { newestFirst, removeButtonLabel, removeErrorMessage, wishlistCountLabel } from "../lib/wishlist-display.js";
+import Button from "../components/ui/Button.jsx";
+import Card from "../components/ui/Card.jsx";
 import { useRequest } from "../lib/useRequest.js";
 import "../styles/request-states.css";
 import "../styles/products.css";
+
+// One saved product. It has the look of the product card on /products (same Card, same grid, same stock line); its
+// one action is to take the product off the list.
+function WishlistCard({ product, removing, disabled, onRemove }) {
+  const nameId = useId();
+  const [imageFailed, setImageFailed] = useState(false);
+  const image = safeImageUrl(product.imageUrl);
+  const spec = specRow(product);
+  const stock = stockStatus(product.stockQuantity);
+  return (
+    <li>
+      <Card as="article" className="product-card">
+        {image && !imageFailed ? (
+          <img className="product-image" src={image} alt={product.name} loading="lazy" onError={() => setImageFailed(true)} />
+        ) : (
+          <div className="image-placeholder">No image available</div>
+        )}
+        <h2 id={nameId}><Link to={`/product?id=${product.id}`}>{product.name}</Link></h2>
+        {spec && <p className={`product-spec ${spec.kind === "brand" ? "product-brand" : "product-description"}`}>{spec.text}</p>}
+        <p className="price">{formatPrice(product.price)}</p>
+        <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>
+        <div className="product-card-actions">
+          <Button disabled={disabled} onClick={onRemove} aria-describedby={nameId}>{removeButtonLabel(removing)}</Button>
+        </div>
+      </Card>
+    </li>
+  );
+}
 
 function WishlistContents() {
   const { csrfToken } = useAuth();
@@ -43,9 +74,7 @@ function WishlistContents() {
     } catch (error) {
       setWriteError({
         status: error instanceof WishlistError ? error.status : undefined,
-        message: error instanceof WishlistError && error.status === 401
-          ? "Your session expired. Log in again to manage your wishlist."
-          : "We couldn't remove this product. Please try again."
+        message: removeErrorMessage(error instanceof WishlistError ? error.status : undefined)
       });
     } finally {
       setRemovingId(null);
@@ -59,24 +88,13 @@ function WishlistContents() {
       {writeError && <p role="alert">{writeError.message}
         {writeError.status === 401 && <> <Link to={loginHref(location)}>Log in</Link></>}
       </p>}
-      {loaded && items.length === 0 && <p role="status">Your wishlist is empty. <Link to="/products">Browse products</Link></p>}
-      <ul className="wishlist-grid" aria-busy={request.status === "loading"}>
-        {items.map(({ productId, product }) => {
-          const image = safeImageUrl(product.imageUrl);
-          return (
-            <li key={productId}>
-              <article className="wishlist-card">
-                {image ? <img src={image} alt={product.name} loading="lazy" /> : <div className="image-placeholder">No image available</div>}
-                <h2><Link to={`/product?id=${product.id}`}>{product.name}</Link></h2>
-                {product.brandName && <p>{product.brandName}</p>}
-                <p className="price">{formatPrice(product.price)}</p>
-                <button type="button" disabled={removingId !== null} onClick={() => remove(productId)}>
-                  {removingId === productId ? "Removing…" : "Remove"}
-                </button>
-              </article>
-            </li>
-          );
-        })}
+      {loaded && items.length === 0 && <p role="status">{wishlistCountLabel(0)} <Link to="/products">Browse products</Link></p>}
+      {loaded && items.length > 0 && <p role="status" className="intro">{wishlistCountLabel(items.length)}</p>}
+      <ul className="product-grid" aria-busy={request.status === "loading"}>
+        {newestFirst(items).map(({ productId, product }) => (
+          <WishlistCard key={productId} product={product} removing={removingId === productId}
+            disabled={removingId !== null} onRemove={() => remove(productId)} />
+        ))}
       </ul>
     </>
   );

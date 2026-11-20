@@ -28,13 +28,6 @@
   min-width: 0; padding: .65rem; border: 1px solid #b9c4d2; border-radius: .4rem; background: var(--surface);
   color: inherit; font: inherit; }
 .catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2rem 0; }
-.catalog-page .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  gap: 1rem; padding: 0; list-style: none; }
-.catalog-page .wishlist-card { display: flex; height: 100%; flex-direction: column; gap: .5rem; padding: 1rem;
-  border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); }
-.catalog-page .wishlist-card img, .catalog-page .wishlist-card .image-placeholder {
-  width: 100%; height: 180px; object-fit: contain; border-radius: .3rem; background: var(--bg); }
-.catalog-page .wishlist-card h2 { font-size: 1.1rem; }
 .catalog-page .category-section { margin-top: 2.5rem; scroll-margin-top: 1.5rem; }
 .catalog-page .category-section h2 { margin-bottom: .5rem; overflow-wrap: anywhere; }
 .catalog-page .product-count { font-size: .9rem; font-weight: normal; color: var(--muted); }
@@ -60,8 +53,8 @@
 .catalog-page .product-card .product-image, .catalog-page .product-card .image-placeholder {
   height: auto; aspect-ratio: 1 / 1; border-radius: var(--radius-tile); background: var(--bg); }
 .catalog-page .product-card .image-placeholder { padding: var(--space-md); font: var(--type-body-sm); text-align: center; }
-.catalog-page .product-card h3 { margin: var(--space-md) 0 var(--space-xs); font: var(--type-heading-sm); }
-.catalog-page .product-card h3 a { color: inherit; }
+.catalog-page .product-card :is(h2, h3) { margin: var(--space-md) 0 var(--space-xs); font: var(--type-heading-sm); }
+.catalog-page .product-card :is(h2, h3) a { color: inherit; }
 .catalog-page .product-card .product-spec { margin: 0; font: var(--type-body-sm); color: var(--muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* The price, stock and actions sit at the bottom, so they line up across a row. */

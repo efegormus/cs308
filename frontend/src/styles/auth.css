@@ -38,6 +38,8 @@
   background: var(--danger-bg); color: var(--danger-fg); font-size: 14px; font-weight: 600;
 }
 .auth-page .switch { margin: 24px 0 0; text-align: center; color: var(--muted); }
+/* The link to the other form is 44px high, like the buttons, so a thumb can hit it. */
+.auth-page .switch a { display: inline-flex; align-items: center; min-height: var(--touch-target, 44px); }
 
 /* Primary button: spotlight follows the cursor, spinner while loading, green fill then check on success. */
 .auth-page .submit {
