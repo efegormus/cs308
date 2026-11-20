@@ -3,11 +3,13 @@ import { Link, useLocation, useSearchParams } from "react-router";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import PurchaseLines from "../components/PurchaseLines.jsx";
+import InvoicePanel from "../components/InvoicePanel.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
 import { loginHref } from "../lib/auth-utils.js";
 import { fetchReceipt } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
 import { useRequest } from "../lib/useRequest.js";
+import { parseProductId } from "../lib/product-detail.js";
 import "../styles/request-states.css";
 
 const date = value => value ? new Date(value).toLocaleString() : "Unknown";
@@ -30,13 +32,14 @@ function Receipt({ orderId }) {
         ? <a id="invoice" href={`/api/customer/orders/${data.orderId}/invoice`}>Download invoice PDF</a>
         : <p id="invoice-pending">Your invoice is being prepared. Refresh to check its availability.</p>}
     </section>}
+    {data?.invoiceStatus === "Ready" && <InvoicePanel key={orderId} orderId={orderId} />}
     {data && <button id="retry" type="button" disabled={status === "loading"} onClick={load}>Refresh order</button>}
   </>;
 }
 export default function OrderConfirmationPage() {
   const [params] = useSearchParams();
   const raw = params.get("orderId");
-  const id = /^[1-9]\d*$/.test(raw ?? "") && Number(raw) <= 2147483647 ? Number(raw) : null;
+  const id = parseProductId(raw);
   return <div className="route-page catalog-page purchase-page">
     <title>Order confirmation | Online Store</title>
     <main id="main-content" className="purchase-layout">

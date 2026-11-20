@@ -10,6 +10,15 @@ public static class InvoiceEndpoints
 {
     public static void MapInvoiceEndpoints(this WebApplication app)
     {
+        app.MapCustomerApi().AddEndpointFilter<PurchaseErrorFilter>().MapGet("/orders/{id:long}/invoice/details",
+            async (long id, ClaimsPrincipal user, StoreDbContext db, InvoiceService invoices, CancellationToken ct) =>
+            {
+                var owner = long.Parse(user.FindFirstValue(ClaimTypes.NameIdentifier)!);
+                if (!await db.Orders.AnyAsync(order => order.Id == id && order.UserId == owner, ct)) return Results.NotFound();
+                var data = await invoices.GetDataAsync(id, ct);
+                return data is null ? Results.NotFound() : Results.Ok(data);
+            });
+
         // The owning customer only. Another customer's order answers 404, so order IDs cannot be probed.
         app.MapCustomerApi().AddEndpointFilter<PurchaseErrorFilter>().MapGet("/orders/{id:long}/invoice",
             async (long id, ClaimsPrincipal user, StoreDbContext db, InvoiceService invoices, CancellationToken ct) =>

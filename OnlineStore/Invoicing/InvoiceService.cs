@@ -67,6 +67,13 @@ public sealed class InvoiceService(StoreDbContext db, IInvoiceStorage storage, T
         return true;
     }
 
+    public async Task<InvoiceData?> GetDataAsync(long orderId, CancellationToken ct)
+    {
+        if (!await EnsureAsync(orderId, ct)) return null;
+        var order = await LoadAsync(orderId, ct);
+        return DataFor(order!, order!.Invoice!);
+    }
+
     // Callers check who may read the order before calling this.
     public async Task<InvoiceFile?> GetPdfAsync(long orderId, CancellationToken ct)
     {

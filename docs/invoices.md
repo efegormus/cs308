@@ -124,3 +124,42 @@ successful delivery evidence. There is no public retry/reset endpoint.
 `InvoiceEmailTests` covers the credential-free local sink, snapshot enqueue and capped backoff.
 `InvoiceEmailMySqlTests` uses the existing guarded local disposable `*_tests` fixture for real
 atomic claims, concurrency, retries, crash recovery, PDF identity and purchase isolation.
+
+## Invoice displayed on screen (SCRUM-145)
+
+The React order confirmation includes the full invoice, rather than only a PDF
+link: invoice number, issue/purchase dates, customer/tax/address snapshots, paid
+line prices, quantities and TRY total. `GET /api/customer/orders/{id}/invoice/details`
+returns the same `InvoiceData` used by the PDF renderer, with `Cache-Control: no-store`.
+It requires Customer and order ownership; another customer gets 404, staff 403,
+and anonymous callers 401. Profile/product edits cannot alter these snapshots.
+Print and protected PDF download actions remain available.
+
+## Private Gmail SMTP setup
+
+Use a sender account with two-step verification and an available Google app
+password. Managed school accounts may restrict this; a personal Gmail account
+can be the sender while the buyer's school address receives the invoice. Google
+instructions: [app passwords](https://support.google.com/mail/answer/185833?hl=en).
+Never paste either the ordinary account password or app password into chat/Jira.
+
+```sh
+python3 scripts/configure_smtp.py --sender sender@gmail.com --recipient buyer@example.com
+```
+
+This prompts invisibly, verifies STARTTLS/login against `smtp.gmail.com:587`,
+then atomically saves the working settings in ignored `.local/smtp.json` (0600
+on Unix). Both `scripts/dev.py run` and `scripts/redesign_db.py run` load it;
+explicit process variables take precedence. `ONLINESTORE_SMTP_FILE` selects a
+private file outside the current checkout. Direct `dotnet` launches still need
+User Secrets or SMTP environment settings. The `--recipient` value is a setup
+note only: actual invoices go to the purchasing account's immutable email
+snapshot. Register/sign in with the intended receiving address before purchasing.
+Do not change an existing order's recipient or reset a Sent outbox row to test
+SMTP; create a new controlled purchase.
+
+CI uses pinned Mailpit v1.34.0 as an isolated SMTP inbox, without real credentials.
+The purchasing browser verifier polls that inbox and compares the decoded PDF
+attachment byte-for-byte with the protected customer download. This proves SMTP
+and attachment behavior; delivery to a real Gmail/school inbox additionally
+requires successful sender authentication and a new purchase with that recipient.

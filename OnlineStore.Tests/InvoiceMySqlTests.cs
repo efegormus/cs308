@@ -84,6 +84,18 @@ public class InvoiceMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixtur
         Assert.Equal("no-store", download.Headers.CacheControl!.ToString());
         Assert.StartsWith("%PDF", System.Text.Encoding.ASCII.GetString(await download.Content.ReadAsByteArrayAsync(), 0, 4));
 
+        var detailPath = $"/api/customer/orders/{receipt.OrderId}/invoice/details";
+        var onScreen = await buyer.GetAsync(detailPath);
+        Assert.Equal(HttpStatusCode.OK, onScreen.StatusCode);
+        Assert.Equal("no-store", onScreen.Headers.CacheControl!.ToString());
+        var invoiceData = (await onScreen.Content.ReadFromJsonAsync<InvoiceData>())!;
+        Assert.Equal(receipt.OrderId, invoiceData.OrderId); Assert.Equal(receipt.Total, invoiceData.Total);
+        Assert.Equal("Original address", invoiceData.Address); Assert.NotEmpty(invoiceData.InvoiceNumber);
+        Assert.Equal(HttpStatusCode.Unauthorized,(await anonymous.GetAsync(detailPath)).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound,(await other.GetAsync(detailPath)).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden,(await productManager.GetAsync(detailPath)).StatusCode);
+        Assert.DoesNotContain("unitCost",await onScreen.Content.ReadAsStringAsync(),StringComparison.OrdinalIgnoreCase);
+
         Assert.Equal(HttpStatusCode.Unauthorized, (await anonymous.GetAsync(receipt.InvoiceUrl)).StatusCode);
         Assert.Equal(HttpStatusCode.NotFound, (await other.GetAsync(receipt.InvoiceUrl)).StatusCode);
         Assert.Equal(HttpStatusCode.Forbidden, (await productManager.GetAsync(receipt.InvoiceUrl)).StatusCode);
@@ -105,6 +117,7 @@ public class InvoiceMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixtur
         Assert.Equal("Original address", invoice.AddressSnapshot);
         Assert.Equal($"INV-{DateTime.UtcNow.Year}-{receipt.OrderId:D6}", invoice.InvoiceNumber);
         Assert.True(File.Exists(Path.Combine(storageRoot, invoice.ProtectedDocumentKey!)));
+        Assert.Equal("Original address", (await buyer.GetFromJsonAsync<InvoiceData>(detailPath))!.Address);
     }
 
     [MySqlFact]

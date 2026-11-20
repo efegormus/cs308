@@ -8,6 +8,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+from smtp_config import smtp_environment
 
 ROOT = Path(__file__).resolve().parents[1]
 LOCAL = ROOT / '.local' / 'db-redesign'
@@ -30,15 +31,18 @@ def environment(c, admin=False, tests=False):
     env = os.environ.copy()
     env.update(ASPNETCORE_ENVIRONMENT='Development', MySql__ServerVersion='8.4.11',
                ONLINESTORE_DATA_KEYS_FILE=str(LOCAL / 'data-keys.json'),
-               Email__Transport='Local')
+               )
     env['Logging__LogLevel__Microsoft.EntityFrameworkCore'] = 'Warning'
     user = 'root' if admin else c['user']
     password = c['rootPassword'] if admin else c['password']
     env['ConnectionStrings__DefaultConnection'] = f"Server={c['host']};Port={c['port']};Database={c['database']};User ID={user};Password={password}"
     if tests:
+        env['Email__Transport'] = 'Local'
         env['ONLINESTORE_TEST_MYSQL'] = f"Server={c['host']};Port={c['port']};Database=onlinestore_tests;User ID=onlinestore_test;Password={c['testPassword']}"
         # Tests create their own temporary key, never use demo data keys.
         env.pop('ONLINESTORE_DATA_KEYS_FILE', None)
+    else:
+        env.update(smtp_environment(ROOT, env))
     return env
 
 
