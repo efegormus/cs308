@@ -66,6 +66,8 @@ public class ModerationServiceTests
     [InlineData("pending")]
     [InlineData("Unknown")]
     [InlineData("7")]
+    [InlineData("0")]
+    [InlineData("")]
     public async Task List_RejectsAnUnknownStatus(string status)
     {
         await using var db = NewDb();

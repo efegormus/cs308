@@ -35,10 +35,11 @@ public sealed class ModerationService(StoreDbContext db, TimeProvider clock)
 
     public async Task<ModerationPage> ListAsync(string? status, long afterId, CancellationToken ct)
     {
+        // Only the three names count. Enum.TryParse would also accept a number such as "0".
         var wanted = ApprovalStatus.Pending;
-        if (status is not null && !Enum.TryParse(status, ignoreCase: false, out wanted))
+        if (status is not null && (!Enum.GetNames<ApprovalStatus>().Contains(status)
+                || !Enum.TryParse(status, ignoreCase: false, out wanted)))
             throw new PurchaseException(400, "Use Pending, Approved or Rejected.");
-        if (!Enum.IsDefined(wanted)) throw new PurchaseException(400, "Use Pending, Approved or Rejected.");
         if (afterId < 0) throw new PurchaseException(400, "Use a non-negative comment cursor.");
         var rows = await View(db.Comments.AsNoTracking().Where(c => c.ApprovalStatus == wanted && c.Id > afterId)
             .OrderBy(c => c.Id).Take(PageSize + 1)).ToListAsync(ct);
