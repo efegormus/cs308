@@ -1,19 +1,29 @@
 import { useEffect, useLayoutEffect, useReducer, useRef } from "react";
 import Button from "../ui/Button.jsx";
-import { approvalButton, approvalReducer, initialApproval, runApproval } from "../../lib/approval-row.js";
+import { approvalButton, approvalReducer, initialApproval, rejectButton, runApproval } from "../../lib/approval-row.js";
 import { reducedMotion } from "../../lib/motion.js";
 
 const date = value => new Date(value).toLocaleDateString("tr-TR");
 
-// One review waiting for approval (SCRUM-124). The flow and its timings live in lib/approval-row.js and lib/motion.js:
-// Approve -> onApprove() -> the button turns into a green circle with a tick -> the row waits, then fades and closes
-// -> onRemoved(id). If onApprove fails the button comes back and an error shows under the row.
-// onApprove is the real approval call once SCRUM-81 adds the API; until then the page passes a placeholder.
-export default function ReviewApprovalRow({ review, onApprove, onApproved, onRemoved }) {
+function Rating({ value }) {
+  if (value === null) return <span className="admin-review-rating">No rating</span>;
+  return <span className="admin-review-rating">
+    <span aria-hidden="true">{"★".repeat(value)}{"☆".repeat(5 - value)}</span>
+    <span className="admin-sr">{value} out of 5 stars</span>
+  </span>;
+}
+
+// One review waiting for a decision (SCRUM-124, real decisions since SCRUM-141). The flow and its timings live in
+// lib/approval-row.js and lib/motion.js: Approve or Reject -> onDecide(review, decision) -> the clicked button turns
+// into a circle with a mark -> the row waits, then fades and closes -> onRemoved(id, result). Nothing changes before
+// onDecide resolves, that is before the server's 200. A 404 closes the row at once; any other failure brings the
+// buttons back and shows a message under the row. Comment and author are rendered as text, never as HTML.
+export default function ReviewApprovalRow({ review, onDecide, onDecided, onFailed, onRemoved }) {
   const [state, dispatch] = useReducer(approvalReducer, initialApproval);
   const row = useRef(null);
   const mounted = useRef(true);
-  const button = approvalButton(state);
+  const approve = approvalButton(state);
+  const reject = rejectButton(state);
 
   useEffect(() => () => { mounted.current = false; }, []);
 
@@ -28,35 +38,56 @@ export default function ReviewApprovalRow({ review, onApprove, onApproved, onRem
   }, [state.phase]);
 
   useEffect(() => {
-    if (state.phase === "approved") onApproved?.(review);
-    if (state.phase === "removed") onRemoved?.(review.id);
+    if (state.phase === "approved") onDecided?.(review, state.decision);
+    if (state.phase === "removed") onRemoved?.(review.id, state.gone ? "gone" : "decided");
   }, [state.phase]);
 
-  function approve() {
-    if (button.blocked) return; // a second click while the flow runs does nothing
+  function decide(decision) {
+    if (approve.blocked) return; // a second click on either button while the flow runs does nothing
     void runApproval({
-      onApprove: () => onApprove(review),
+      decision,
+      onApprove: async () => {
+        try {
+          await onDecide(review, decision);
+        } catch (error) {
+          if (mounted.current) onFailed?.(review, error);
+          throw error;
+        }
+      },
       dispatch: event => { if (mounted.current) dispatch(event); },
       reduced: reducedMotion()
     });
   }
 
   const errorId = `review-${review.id}-error`;
+  // Both buttons share the Approve morph (lib/motion.js); Reject is the neutral, secondary one.
+  const props = (view, done, className, doneClass) => ({
+    className: done ? `admin-approve ${className} ${doneClass}` : `admin-approve ${className}`,
+    "aria-label": view.ariaLabel, "aria-disabled": view.blocked || undefined, "aria-busy": view.busy || undefined,
+    "aria-describedby": state.error ? errorId : undefined
+  });
+  const chosen = approve.approved ? " is-approved" : reject.rejected ? " is-rejected" : "";
   return <li ref={row} className={`admin-review admin-review--${state.phase}`} data-id={review.id}>
     <div className="admin-review-inner">
       <div className="admin-review-text">
         <h3 className="admin-review-product">{review.productName}</h3>
         <p className="admin-review-body">{review.body}</p>
-        <p className="admin-review-meta">Product #{review.productId} · {date(review.createdAt)}</p>
+        <p className="admin-review-meta">{review.authorName} · <Rating value={review.rating} /> · {date(review.createdAt)}</p>
       </div>
-      <Button className={button.approved ? "admin-approve is-approved" : "admin-approve"}
-        aria-label={button.ariaLabel} aria-disabled={button.blocked || undefined} aria-busy={button.busy || undefined}
-        aria-describedby={state.error ? errorId : undefined} onClick={approve}>
-        <span className="admin-approve-label">{button.label}</span>
-        <svg className="admin-approve-tick" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
-          <path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1" />
-        </svg>
-      </Button>
+      <div className={`admin-review-actions${chosen}`}>
+        <Button {...props(approve, approve.approved, "admin-accept", "is-approved")} onClick={() => decide("Approve")}>
+          <span className="admin-approve-label">{approve.label}</span>
+          <svg className="admin-approve-tick" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1" />
+          </svg>
+        </Button>
+        <Button {...props(reject, reject.rejected, "admin-reject", "is-rejected")} onClick={() => decide("Reject")}>
+          <span className="admin-approve-label">{reject.label}</span>
+          <svg className="admin-approve-tick" viewBox="0 0 24 24" width="24" height="24" aria-hidden="true" focusable="false">
+            <path d="M7 7l10 10M17 7L7 17" pathLength="1" />
+          </svg>
+        </Button>
+      </div>
     </div>
     {state.error && <p id={errorId} className="admin-review-error" role="alert">{state.error}</p>}
   </li>;
