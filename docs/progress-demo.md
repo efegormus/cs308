@@ -93,3 +93,12 @@ Verification after integration: 510 backend tests with real MySQL and zero skips
 277 frontend tests, 31 Python tests, production publish and workflow lint passed.
 Published browser checks verified category paging, clearing legacy hash filters,
 global sorting and the actual purchase/delivery/review/moderation/SMTP PDF flow.
+
+## SCRUM-141 integration — 20 November 2026
+
+After PR #73 advanced main to `abd6d51`, PR #68 was reconciled again. The shared
+SCRUM-141 review screen and its approve/reject animations, author/rating display,
+queue paging, conflict recovery and dashboard updates are retained. The real
+purchase-to-review browser check now targets that screen and the shared decision
+API. Its real MySQL/SMTP flow and the detailed admin browser checks passed;
+289 frontend tests, 31 Python tests and the production publish also passed.
