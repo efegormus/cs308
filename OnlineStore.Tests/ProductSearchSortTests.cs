@@ -186,6 +186,52 @@ public class ProductSearchSortTests
     }
 
     [Fact]
+    public async Task Sort_ByPopularity_SubtractsRefundedUnitsAndBreaksEqualCountsByName()
+    {
+        using var factory = new SearchApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(SampleCatalog());
+        using (var scope = factory.Services.CreateScope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<StoreDbContext>();
+            var user = new User { Name = "Buyer", Email = "buyer@example.com", PasswordHash = "x" };
+            db.Users.Add(user);
+            var products = await db.Products.ToDictionaryAsync(product => product.Id);
+            var order = new Order { User = user }.WithCustomerSnapshot(user);
+            Assert.True(order.ConfirmPayment(DateTime.UtcNow));
+            // Pixel sold 5 and 4 came back (net 1). Tablet and Galaxy both net 3.
+            var pixel = OrderItem.Snapshot(products[3], 5);
+            pixel.RefundedQuantity = 4;
+            order.OrderItems.Add(pixel);
+            order.OrderItems.Add(OrderItem.Snapshot(products[4], 3));
+            order.OrderItems.Add(OrderItem.Snapshot(products[2], 3));
+            db.Orders.Add(order);
+            await db.SaveChangesAsync();
+        }
+
+        // Equal counts (Galaxy, Tablet) are ordered by name, so the list is the same on every request.
+        var expected = new[] { "Samsung Galaxy S25", "Test Tablet", "Google Pixel 9", "Alpha Zero" };
+        Assert.Equal(expected, await NamesAsync(client, "?sort=popularity"));
+        Assert.Equal(expected, await NamesAsync(client, "?sort=popularity&order=desc"));
+        Assert.Equal(new[] { "Alpha Zero", "Google Pixel 9", "Samsung Galaxy S25", "Test Tablet" },
+            await NamesAsync(client, "?sort=popularity&order=asc"));
+    }
+
+    [Theory]
+    [InlineData("?order=desc")]
+    [InlineData("?order=asc")]
+    public async Task OrderWithoutASort_IsIgnoredAndTheListStaysByName(string query)
+    {
+        // The product list screen says "Sorted by name, A to Z." in this case, so the API must really do that.
+        using var factory = new SearchApplication();
+        using var client = factory.CreateClient();
+        await factory.SeedAsync(SampleCatalog());
+
+        Assert.Equal(new[] { "Alpha Zero", "Google Pixel 9", "Samsung Galaxy S25", "Test Tablet" },
+            await NamesAsync(client, query));
+    }
+
+    [Fact]
     public async Task Sort_ByPopularity_WithoutOrders_FallsBackToNameOrder()
     {
         using var factory = new SearchApplication();
