@@ -324,12 +324,18 @@ hiding a button in the page is not enough.
 
 - An unknown `sort` or `order` value returns `400` (`application/problem+json`). `sort` and `order` are not case-sensitive.
 - Ties are broken by `name`, then `id`, so the order is stable.
-- Meaning of "popularity": net units sold in `OrderItems` whose
-  order has `PaymentStatus = Confirmed` and is not cancelled, highest first.
-  Fulfillment and payment are separate; do not filter by the removed Paid/Pending
-  fulfillment names. Fully refunded orders are excluded; partial-return accounting
-  is defined by the later return/refund tasks. Until orders exist every
-  product has 0, so the order falls back to name, then id.
+- Meaning of "popularity": paid units sold minus refunded units. For each product it
+  adds `Quantity - RefundedQuantity` of every `OrderItems` row whose order has
+  `PaymentStatus = Confirmed` and is not cancelled, highest first. Pending or failed
+  payments and cancelled orders add nothing, and a returned and refunded unit is taken
+  off again. Fulfillment and payment are separate; do not filter by the removed
+  Paid/Pending fulfillment names. Ratings are not part of it. Changing the definition
+  needs matching changes to the fixtures, the API and the tests. Until orders exist
+  every product has 0, so the order falls back to name, then id.
+- The product list screen shows a sentence under the filters that names the sort in use
+  (for example "Sorted by popularity (units sold), best sellers first."), and a
+  "Clear filters" button that removes the search word, category, brand, price bounds,
+  sort and page together. When nothing matches it says so and offers the same button.
 
 ### 5.4 Wishlist
 
