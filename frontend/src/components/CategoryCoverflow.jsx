@@ -1,3 +1,4 @@
+import Price from "./Price.jsx";
 import { useLayoutEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { categoryAnchorId, productCountLabel } from "../lib/category-display.js";
@@ -321,7 +322,7 @@ function CoverflowCard({ product, position, total, isFront, enterDelay, iconKind
         </span>
         <span className="cf-info">
           <span className="cf-name">{product.name}</span>
-          <span className="cf-price">{formatPrice(product.price)}</span>
+          <span className="cf-price"><Price price={product.price} listPrice={product.listPrice} /></span>
           <span className={stock.inStock ? "cf-stock" : "cf-stock out"}>{stock.text}</span>
         </span>
       </span>

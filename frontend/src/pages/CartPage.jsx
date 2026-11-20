@@ -1,3 +1,4 @@
+import Price from "../components/Price.jsx";
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
@@ -18,7 +19,7 @@ function CartLine({ line, busy, onRemove, onQuantity }) {
       </div>
       <div className="cart-line-info">
         <Link to={`/product?id=${line.productId}`}>{line.name}</Link>
-        <p>{formatPrice(line.unitPrice)} each</p>
+        <p><Price price={line.unitPrice} listPrice={line.listUnitPrice} /> each</p>
         <div className="cart-quantity" role="group" aria-label={`Quantity of ${line.name}`}>
           <button type="button" disabled={busy || line.quantity <= 1} aria-label={`Decrease quantity of ${line.name}`}
             onClick={() => onQuantity(line, line.quantity - 1)}>&minus;</button>

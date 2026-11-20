@@ -1,3 +1,4 @@
+import Price from "../components/Price.jsx";
 import { useCallback, useEffect, useState } from "react";
 import { Link, useLocation } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
@@ -69,7 +70,7 @@ function WishlistContents() {
                 {image ? <img src={image} alt={product.name} loading="lazy" /> : <div className="image-placeholder">No image available</div>}
                 <h2><Link to={`/product?id=${product.id}`}>{product.name}</Link></h2>
                 {product.brandName && <p>{product.brandName}</p>}
-                <p className="price">{formatPrice(product.price)}</p>
+                <p className="price"><Price price={product.price} listPrice={product.listPrice} /></p>
                 <button type="button" disabled={removingId !== null} onClick={() => remove(productId)}>
                   {removingId === productId ? "Removing…" : "Remove"}
                 </button>

@@ -1,3 +1,4 @@
+import Price from "./Price.jsx";
 import { useId, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
@@ -53,7 +54,7 @@ export default function ProductCard({ product }) {
         {spec && (
           <p className={`product-spec ${spec.kind === "brand" ? "product-brand" : "product-description"}`}>{spec.text}</p>
         )}
-        <p className="price">{formatPrice(product.price)}</p>
+        <p className="price"><Price price={product.price} listPrice={product.listPrice} /></p>
         <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>
         {added && (
           <p role="status" className="product-card-message">

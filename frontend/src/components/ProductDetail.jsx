@@ -1,3 +1,4 @@
+import Price from "./Price.jsx";
 import { useState } from "react";
 import { Link } from "react-router";
 import { formatPrice, safeImageUrl, stockLabel } from "../lib/product-display.js";
@@ -34,7 +35,7 @@ export default function ProductDetail({ product }) {
         <ProductRatingSummary key={product.id} productId={product.id} />
         {product.brandName && <p className="product-brand">{product.brandName}</p>}
         {product.description && <p className="product-description">{product.description}</p>}
-        <p className="price">{formatPrice(product.price)}</p>
+        <p className="price"><Price price={product.price} listPrice={product.listPrice} /></p>
         <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>
         <AddToCart product={product} />
         <WishlistButton productId={product.id} />

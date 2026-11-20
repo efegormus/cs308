@@ -1,0 +1,3 @@
+.price-quote { display: inline-flex; flex-wrap: wrap; align-items: baseline; gap: .35em; }
+.price-original { color: var(--muted); font-size: .8em; font-weight: 400; }
+.price-current { font-weight: inherit; }
