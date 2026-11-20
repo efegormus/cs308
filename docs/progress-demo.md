@@ -59,3 +59,23 @@ The purchasing check includes decline/success/double-submit/lost-response recove
 actual approve/reject decisions, safe literal comment rendering, protected invoice
 screens/PDFs and layouts at 1280/480/375px. The separate admin check uses controlled
 response cases for its queue UI; it does not substitute for actual moderation.
+
+## Verification record — 20 November 2026
+
+On implementation revision `e39daa0`, 482 backend tests passed against real local
+MySQL with zero skipped tests; 270 frontend and 31 Python tests also passed. The
+production React build, workflow lint and complete-history secret scan passed.
+All four browser verifiers passed, including the real delivered-review approval/
+rejection flow, effective sale-price comparison and exact SMTP PDF attachment
+comparison. A separate authenticated Gmail SMTP run accepted a new controlled
+invoice email; confirmation in the recipient inbox is recorded in Jira.
+
+The existing local demo was backed up before fixture upgrade. All five fixture
+accounts could sign in, their previous passwords were retained and all product
+images loaded from the published application. A separate customer/order was
+created for the external SMTP rehearsal. Private SMTP/account files were not
+committed. Disposable browser database/services were removed after verification.
+
+Review/merge and the final rehearsal on the resulting main revision remain the
+normal integration gate. Meeting participation and any grading evidence must be
+recorded from actual events by the team.
