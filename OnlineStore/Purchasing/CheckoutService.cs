@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using OnlineStore.Accounts;
 using OnlineStore.Data;
 using OnlineStore.Models;
+using OnlineStore.Catalog;
 
 namespace OnlineStore.Purchasing;
 
@@ -148,8 +149,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
         if (cart.Items.Any(line => line.Quantity <= 0 || !line.Product.IsActive || line.Quantity > line.Product.StockQuantity))
             throw new PurchaseException(409, "Some products are unavailable or exceed stock. Update your cart before checkout.");
         var productIds = cart.Items.Select(line => line.ProductId).ToArray();
-        var active = await db.DiscountProducts.AsNoTracking().Where(link => productIds.Contains(link.ProductId)
-                && link.Discount.StartsAt <= now && link.Discount.EndsAt > now)
+        var active = await ProductPricing.ActiveLinks(db, now).Where(link => productIds.Contains(link.ProductId))
             .Include(link => link.Discount).ToListAsync(ct);
         // Overlapping campaigns use the best single rate, never stack discounts.
         var discounts = active.GroupBy(link => link.ProductId).ToDictionary(group => group.Key,
@@ -157,7 +157,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
         var lines = cart.Items.OrderBy(line => line.ProductId).Select(line =>
         {
             var rate = discounts.GetValueOrDefault(line.ProductId)?.Rate ?? 0;
-            var price = Math.Round(line.Product.Price * (1 - rate), 2, MidpointRounding.AwayFromZero);
+            var price = ProductPricing.Calculate(line.Product.Price, rate);
             return new CheckoutLine(line.ProductId, line.Product.Name, line.Quantity, price, price * line.Quantity);
         }).ToList();
         var total = lines.Sum(line => line.Total);

@@ -8,6 +8,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 using OnlineStore.Accounts;
 using OnlineStore.Data;
 using OnlineStore.Dtos;
+using OnlineStore.Catalog;
 using OnlineStore.Models;
 
 namespace OnlineStore.Shopping;
@@ -40,7 +41,7 @@ public static class CartEndpoints
             if (!MayUseCart(context)) return NotForStaff();
             var (found, mergeRequired) = await FindCartAsync(context, db, cancellationToken);
             if (mergeRequired) return MergeRequired();
-            return Results.Ok(found is null ? CartDto.Empty : await LoadAsync(db, found.Id, cancellationToken));
+            return Results.Ok(found is null ? CartDto.Empty : await LoadAsync(db, found.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken));
         }).AllowAnonymous();
 
         // POST /api/cart/items { productId, quantity } -> adds units to the cart.
@@ -100,7 +101,7 @@ public static class CartEndpoints
             await db.SaveChangesAsync(cancellationToken);
             if (transaction is not null) await transaction.CommitAsync(cancellationToken);
 
-            return Results.Ok(await LoadAsync(db, current.Id, cancellationToken));
+            return Results.Ok(await LoadAsync(db, current.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken));
         }).AllowAnonymous().AddEndpointFilter<CsrfFilter>();
 
         // DELETE /api/cart/items/{productId} -> removes the whole line. Removing a product that is
@@ -145,7 +146,7 @@ public static class CartEndpoints
             await db.SaveChangesAsync(cancellationToken);
             if (transaction is not null) await transaction.CommitAsync(cancellationToken);
 
-            return Results.Ok(await LoadAsync(db, current.Id, cancellationToken));
+            return Results.Ok(await LoadAsync(db, current.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken));
         }).AllowAnonymous().AddEndpointFilter<CsrfFilter>();
 
         cart.MapDelete("/items/{productId:long}", async (
@@ -169,7 +170,7 @@ public static class CartEndpoints
             }
             if (transaction is not null) await transaction.CommitAsync(cancellationToken);
 
-            return Results.Ok(await LoadAsync(db, current.Id, cancellationToken));
+            return Results.Ok(await LoadAsync(db, current.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken));
         }).AllowAnonymous().AddEndpointFilter<CsrfFilter>();
 
         // POST /api/cart/merge -> moves the guest cart (found through the cookie) into the customer's cart.
@@ -202,7 +203,7 @@ public static class CartEndpoints
                 // Nothing to move. A cookie that points to no open guest cart is stale, so it is dropped.
                 if (token is not null) DeleteGuestCookie(context);
                 return Results.Ok(new CartMergeDto(
-                    customerFound is null ? CartDto.Empty : await LoadAsync(db, customerFound.Id, cancellationToken),
+                    customerFound is null ? CartDto.Empty : await LoadAsync(db, customerFound.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken),
                     false, Array.Empty<CartMergeConflictDto>()));
             }
 
@@ -226,7 +227,7 @@ public static class CartEndpoints
                 await db.SaveChangesAsync(cancellationToken);
                 if (transaction is not null) await transaction.CommitAsync(cancellationToken);
                 DeleteGuestCookie(context);
-                return Results.Ok(new CartMergeDto(await LoadAsync(db, guest.Id, cancellationToken), true, conflicts));
+                return Results.Ok(new CartMergeDto(await LoadAsync(db, guest.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken), true, conflicts));
             }
 
             var customerItems = await db.CartItems.Where(item => item.CartId == customer.Id).ToListAsync(cancellationToken);
@@ -266,7 +267,7 @@ public static class CartEndpoints
             await db.SaveChangesAsync(cancellationToken);
             if (transaction is not null) await transaction.CommitAsync(cancellationToken);
             if (!leftOver) DeleteGuestCookie(context);
-            return Results.Ok(new CartMergeDto(await LoadAsync(db, customer.Id, cancellationToken), true, conflicts));
+            return Results.Ok(new CartMergeDto(await LoadAsync(db, customer.Id, ProductPricing.UtcNow(context.RequestServices), cancellationToken), true, conflicts));
         }).RequireAuthorization().AddEndpointFilter<CsrfFilter>();
     }
 
@@ -374,21 +375,18 @@ public static class CartEndpoints
     private static string HashToken(string token) =>
         Convert.ToHexString(SHA256.HashData(Encoding.ASCII.GetBytes(token)));
 
-    private static async Task<CartDto> LoadAsync(StoreDbContext db, long cartId, CancellationToken cancellationToken)
+    private static async Task<CartDto> LoadAsync(StoreDbContext db, long cartId, DateTime now, CancellationToken cancellationToken)
     {
-        var rows = await db.CartItems.AsNoTracking()
-            .Where(item => item.CartId == cartId)
-            .OrderBy(item => item.Id)
-            .Select(item => new
-            {
-                item.ProductId, item.Product.Name, item.Product.Price, item.Quantity,
-                item.Product.StockQuantity, ImageUrl = item.Product.Images.Where(i => i.IsPrimary).Select(i => i.StorageKey).FirstOrDefault(), item.Product.IsActive
-            })
-            .ToListAsync(cancellationToken);
-
-        var lines = rows.Select(row => new CartLineDto(
-            row.ProductId, row.Name, row.Price, row.Quantity, row.StockQuantity, row.ImageUrl,
-            row.Price * row.Quantity, row.IsActive && row.StockQuantity >= row.Quantity)).ToList();
+        var lines = await (from item in db.CartItems.AsNoTracking()
+                           join price in ProductPricing.Query(db, now) on item.ProductId equals price.Product.Id
+                           where item.CartId == cartId
+                           orderby item.Id
+                           select new CartLineDto(item.ProductId, price.Product.Name, price.Price, item.Quantity,
+                               price.Product.StockQuantity,
+                               price.Product.Images.Where(i => i.IsPrimary).OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.StorageKey).FirstOrDefault(),
+                               price.Price * item.Quantity,
+                               price.Product.IsActive && price.Product.Category.IsActive && price.Product.StockQuantity >= item.Quantity,
+                               price.ListPrice, price.DiscountRate)).ToListAsync(cancellationToken);
         return CartDto.FromLines(lines);
     }
 
