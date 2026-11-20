@@ -1,8 +1,9 @@
 // The admin panel for product and sales managers (SCRUM-124) at /manage and /manage/<section>. It replaces the small
 // landing page of SCRUM-130. Data comes from the existing APIs only (docs/api-contract-dashboards.md and the
-// deliveries API); review approval waits for SCRUM-81.
+// deliveries API); the Reviews section uses the moderation API (SCRUM-141, docs/reviews.md).
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useParams } from "react-router";
+import { useAuth } from "../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import AdminShell from "../components/admin/AdminShell.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
@@ -13,6 +14,8 @@ import Button from "../components/ui/Button.jsx";
 import Table from "../components/ui/Table.js";
 import { fetchProductManagementDashboard, fetchSalesDashboard, salesPeriod } from "../lib/admin-api.js";
 import { resolveSection } from "../lib/admin-menu.js";
+import { CONFLICT_ERROR, failureOutcome } from "../lib/approval-row.js";
+import { decideComment, fetchComments } from "../lib/moderation-api.js";
 import { fetchDeliveries } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
 import { useRequest } from "../lib/useRequest.js";
@@ -25,8 +28,8 @@ const day = value => new Date(value).toLocaleDateString("tr-TR");
 const percent = new Intl.NumberFormat("tr-TR", { style: "percent", maximumFractionDigits: 1 });
 const SALES_DAYS = 30;
 
-/** Placeholder for SCRUM-81: there is no approval API yet, so nothing is saved and this resolves at once. */
-const approveReviewPlaceholder = () => Promise.resolve();
+/** A decision's loading state is bounded like every request (useRequest's 15s): after it the buttons come back. */
+const DECISION_TIMEOUT_MS = 15000;
 
 // Loads one resource when the section opens; a 401 ends the session.
 function useResource(fetcher) {
@@ -136,40 +139,94 @@ function DeliveriesSection() {
 }
 
 function ReviewsSection({ dashboard }) {
-  const { data, setData, error, loading, retry } = dashboard;
+  const { setData: setDashboard, retry: refreshDashboard } = dashboard;
+  const { csrfToken } = useAuth();
+  const read = useRequest();
+  const [expired, setExpired] = useState(null);
+  useSessionExpiry(read.error, expired);
+  const [reviews, setReviews] = useState(null);
+  const [cursor, setCursor] = useState(null);
+  const [notice, setNotice] = useState("");
   const [announcement, setAnnouncement] = useState("");
   const list = useRef(null);
-  const reviews = data?.commentsWaitingForApproval ?? [];
+  const loading = read.status === "loading";
+
+  // Pending comments, oldest first, 20 a page. "Load more" adds the next page; rows are merged by ID, so none shows twice.
+  const load = useCallback(async (afterId = 0) => {
+    const result = await read.run(({ signal }) => fetchComments({ afterId, signal }));
+    if (result.status !== "success") return;
+    setReviews(previous => afterId === 0 || !previous ? result.data.comments
+      : [...new Map([...previous, ...result.data.comments].map(review => [review.id, review])).values()]);
+    setCursor(result.data.nextAfterId);
+  }, [read.run]);
+  useEffect(() => { void load(); return () => read.cancel(); }, [load, read.cancel]);
+
+  // The Overview's "Reviews to approve" card and panel come from the dashboard: drop a decided comment from it at once,
+  // then reload it, so the count also takes in comments beyond the dashboard's first ten.
+  const settled = useCallback(id => {
+    setDashboard(previous => previous && ({
+      ...previous, commentsWaitingForApproval: previous.commentsWaitingForApproval.filter(review => review.id !== id)
+    }));
+    void refreshDashboard();
+  }, [setDashboard, refreshDashboard]);
+
+  // The row changes only after this resolves, that is after the server's 200. It is never retried automatically.
+  const decide = useCallback(async (review, decision) => {
+    setNotice("");
+    const token = await csrfToken();
+    await decideComment(review.id, decision, token, { signal: AbortSignal.timeout(DECISION_TIMEOUT_MS) });
+  }, [csrfToken]);
+
+  const decided = useCallback((review, decision) => {
+    setAnnouncement(`Review ${decision === "Reject" ? "rejected" : "approved"}: ${review.productName}`);
+    settled(review.id);
+  }, [settled]);
+
+  const failed = useCallback((review, error) => {
+    const outcome = failureOutcome(error);
+    if (outcome === "expired") setExpired(error);
+    if (outcome === "gone") {
+      setAnnouncement(`This review no longer exists and was removed from the list: ${review.productName}`);
+      settled(review.id);
+    }
+    if (outcome === "conflict") {
+      // Another manager decided first. Say so and show the current queue; the decision is not sent again.
+      setNotice(CONFLICT_ERROR);
+      settled(review.id);
+      void load(0);
+    }
+  }, [settled, load]);
 
   const removed = useCallback(id => {
     const rows = [...(list.current?.querySelectorAll(".admin-review") ?? [])];
     const index = rows.findIndex(element => element.dataset.id === String(id));
-    setData(previous => previous && ({
-      ...previous, commentsWaitingForApproval: previous.commentsWaitingForApproval.filter(review => review.id !== id)
-    }));
+    setReviews(previous => previous && previous.filter(review => review.id !== id));
     // The removed row held the focus; hand it to the next row's button, or to the heading when the list is empty.
     requestAnimationFrame(() => {
       if (document.activeElement && document.activeElement !== document.body) return;
-      const rest = list.current?.querySelectorAll(".admin-approve") ?? [];
+      const rest = list.current?.querySelectorAll(".admin-accept") ?? [];
       (rest[Math.min(Math.max(index, 0), rest.length - 1)] ?? document.querySelector(".admin-section h1"))?.focus();
     });
-  }, [setData]);
+  }, []);
 
   return <>
     <SectionHead title="Reviews">
-      Reviews wait here until a product manager approves them. Approving is not saved yet: the approval API comes
-      with SCRUM-81, so an approved review comes back after a reload.
+      Reviews wait here, oldest first, until a product manager approves or rejects them. Approved reviews appear on the
+      product page; rejected ones stay private.
     </SectionHead>
-    <ErrorState error={error} onRetry={retry} retrying={loading} />
+    <ErrorState error={read.error} onRetry={() => load(0)} retrying={loading} />
+    {notice && <div className="request-state request-state--error admin-review-notice" role="alert"><p>{notice}</p></div>}
     <div className="admin-reviews" aria-live="polite">
-      {loading && !data && <Table columns={reviewColumns} loading loadingLabel="Loading reviews…" />}
-      {data && reviews.length === 0 && <p className="admin-empty" role="status">No review is waiting for approval.</p>}
-      {reviews.length > 0 && <ul ref={list} className="admin-review-list">
-        {reviews.map(review => <ReviewApprovalRow key={review.id} review={review} onApprove={approveReviewPlaceholder}
-          onRemoved={removed} onApproved={() => setAnnouncement(`Review approved: ${review.productName}`)} />)}
+      {loading && !reviews && <Table columns={reviewColumns} loading loadingLabel="Loading reviews…" />}
+      {reviews && reviews.length === 0 && cursor === null &&
+        <p className="admin-empty" role="status">No review is waiting for approval.</p>}
+      {reviews?.length > 0 && <ul ref={list} className="admin-review-list">
+        {reviews.map(review => <ReviewApprovalRow key={review.id} review={review} onDecide={decide}
+          onDecided={decided} onFailed={failed} onRemoved={removed} />)}
       </ul>}
       <p className="admin-sr">{announcement}</p>
     </div>
+    {cursor !== null && reviews && <Button className="admin-more" disabled={loading} onClick={() => load(cursor)}>Load more reviews</Button>}
   </>;
 }
 

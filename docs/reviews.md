@@ -83,6 +83,8 @@ Behaviour the screen can rely on:
   The author's private response shows the new status, and the UI shows Pending as
   "Waiting for approval".
 * The list can be filtered by `status`, so the same screen can show decided comments.
+* The admin screen `/manage/reviews` uses these endpoints since SCRUM-141 (client: `frontend/src/lib/moderation-api.js`;
+  screen rules: `docs/ui-design.md`, Admin panel). It lists Pending comments and sends Approve or Reject without a note.
 * Not in this version: changing a decision after it was made, editing a comment, and
   e-mailing the author about the result.
 
