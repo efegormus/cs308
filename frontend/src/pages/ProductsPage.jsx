@@ -4,7 +4,9 @@ import CategoryNav from "../components/CategoryNav.jsx";
 import CategorySection from "../components/CategorySection.jsx";
 import { useCatalog } from "../hooks/useCatalog.js";
 import { catalogSummary, categoryAnchorId, categoryIdFromHash, visibleCategories } from "../lib/category-display.js";
-import { catalogFiltersFromSearchParams, updateCatalogSearchParams } from "../lib/catalog-query.js";
+import {
+  catalogFiltersFromSearchParams, clearCatalogSearchParams, hasCatalogFilters, sortDescription, updateCatalogSearchParams
+} from "../lib/catalog-query.js";
 
 // The product list, grouped by category (SCRUM-109). The home page links here as /products#category-<id>.
 export default function ProductsPage() {
@@ -22,13 +24,17 @@ export default function ProductsPage() {
     page,
     pageSize: 24
   });
-  const hasFilters = Boolean(search.trim() || categoryId || brandId || minPrice || maxPrice);
+  const hasFilters = hasCatalogFilters({ search, categoryId, brandId, minPrice, maxPrice });
   const displayedCategories = visibleCategories(categories, hasFilters ? "filtered" : "");
   const { hash } = useLocation();
   const scrolledTo = useRef(null);
 
   function updateQuery(name, value, resetPage = true) {
     setSearchParams(previous => updateCatalogSearchParams(previous, name, value, resetPage), { replace: true });
+  }
+
+  function clearFilters() {
+    setSearchParams(previous => clearCatalogSearchParams(previous), { replace: true });
   }
 
   // A page opened with a saved category link scrolls to that category once its section exists.
@@ -95,6 +101,13 @@ export default function ProductsPage() {
         </form>
         <CategoryNav categories={displayedCategories} />
         <p id="catalog-status" role="status" aria-live="polite">{message}</p>
+        {status === "ready" && totalCount > 0 && <p className="sort-note">{sortDescription(sort, order)}</p>}
+        {status === "ready" && hasFilters && (
+          <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>
+        )}
+        {status === "ready" && totalCount === 0 && hasFilters && (
+          <p className="empty-hint">Try a different word, a wider price range or another category, or clear the filters to see everything.</p>
+        )}
         {status === "error" && <button type="button" onClick={retry}>Try again</button>}
         <div id="catalog" aria-busy={status === "loading"}>
           {displayedCategories.map(category => <CategorySection key={category.id} category={category} />)}
