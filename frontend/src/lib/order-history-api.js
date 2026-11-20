@@ -11,7 +11,10 @@ export function isOrderSummary(value) {
     && instant(value.purchasedAt) && instant(value.deliveredAt)
     && Number.isSafeInteger(value.itemCount) && value.itemCount >= 0 && money(value.total)
     && ["Pending", "Ready"].includes(value.invoiceStatus)
-    && (value.invoiceUrl === null || typeof value.invoiceUrl === "string");
+    && (value.invoiceUrl === null || typeof value.invoiceUrl === "string")
+    && (value.reviewItems == null || Array.isArray(value.reviewItems) && value.reviewItems.length <= 100
+      && value.reviewItems.every(i => id(i?.productId) && typeof i.name === "string"
+        && typeof i.canRate === "boolean" && typeof i.canComment === "boolean"));
 }
 
 export function isOrderHistoryPage(value) {

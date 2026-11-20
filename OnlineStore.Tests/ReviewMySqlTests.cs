@@ -18,6 +18,87 @@ namespace OnlineStore.Tests;
 public class ReviewMySqlTests(MySqlFixture fixture) : IClassFixture<MySqlFixture>
 {
     [MySqlFact]
+    public async Task MySql_ModerationRequiresCsrfPublishesApprovedOnlyAndDoesNotChangeRatings()
+    {
+        await fixture.ResetAsync(); ReviewFixture.Graph g;
+        await using (var seed = fixture.Create())
+        {
+            g = await ReviewFixture.SeedAsync(seed); g.Other.Role = UserRole.ProductManager; await seed.SaveChangesAsync();
+            await new ReviewService(seed, TimeProvider.System).SubmitAsync(g.Buyer.Id, g.Product.Id, new(4, "Waiting for manager"), default);
+        }
+        using var app = new ReviewApplication(fixture); using var manager = app.CreateClient(); using var customer = app.CreateClient(); using var guest = app.CreateClient();
+        await Login(manager, g.Other.Email); await Login(customer, g.Buyer.Email);
+        Assert.Equal(HttpStatusCode.Unauthorized, (await guest.GetAsync("/api/product-management/comments")).StatusCode);
+        Assert.Equal(HttpStatusCode.Forbidden, (await customer.GetAsync("/api/product-management/comments")).StatusCode);
+        var page = (await manager.GetFromJsonAsync<ModerationPage>("/api/product-management/comments"))!;
+        var comment = Assert.Single(page.Items); Assert.Equal(4, comment.Rating); Assert.Equal(g.Buyer.Name, comment.CustomerName);
+        var path = $"/api/product-management/comments/{comment.Id}/moderation";
+        Assert.Equal(HttpStatusCode.Forbidden, (await Post(customer, path, new ModerationRequest("Approved", comment.Version))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await manager.PostAsJsonAsync(path, new ModerationRequest("Approved", comment.Version))).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await Post(manager, path, new ModerationRequest("Approved", "0"))).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Post(manager, path, new { status = "Approved", version = comment.Version, userId = g.Buyer.Id })).StatusCode);
+        Assert.Empty((await guest.GetFromJsonAsync<ProductReviews>($"/api/products/{g.Product.Id}/reviews"))!.Comments);
+        var approved = await Post(manager, path, new ModerationRequest("Approved", comment.Version)); Assert.Equal(HttpStatusCode.OK, approved.StatusCode);
+        var decision = (await approved.Content.ReadFromJsonAsync<ModerationResult>())!;
+        Assert.NotEqual(comment.Version, decision.Version);
+        Assert.Equal(HttpStatusCode.OK, (await Post(manager, path, new ModerationRequest("Approved", comment.Version))).StatusCode);
+        Assert.Equal(HttpStatusCode.Conflict, (await Post(manager, path, new ModerationRequest("Rejected", decision.Version))).StatusCode);
+        var published = (await guest.GetFromJsonAsync<ProductReviews>($"/api/products/{g.Product.Id}/reviews"))!;
+        Assert.Equal("Waiting for manager", Assert.Single(published.Comments).Body); Assert.Equal(4d, published.AverageRating);
+        Assert.Empty((await manager.GetFromJsonAsync<ModerationPage>("/api/product-management/comments"))!.Items);
+        Assert.Equal("Approved", (await customer.GetFromJsonAsync<CustomerReview>($"/api/customer/products/{g.Product.Id}/review"))!.Comment!.Status);
+    }
+
+    [MySqlFact]
+    public async Task MySql_ConcurrentOppositeModerationHasOneWinnerAndRejectedTextStaysPrivate()
+    {
+        await fixture.ResetAsync(); ReviewFixture.Graph g; ModerationComment comment;
+        await using (var seed = fixture.Create())
+        {
+            g = await ReviewFixture.SeedAsync(seed); g.Other.Role = UserRole.ProductManager; await seed.SaveChangesAsync();
+            var service = new ReviewService(seed, TimeProvider.System);
+            await service.SubmitAsync(g.Buyer.Id, g.Product.Id, new(3, "Private until approved"), default);
+            comment = Assert.Single((await service.PendingAsync(0, default)).Items);
+        }
+        async Task<int> Decide(string status)
+        {
+            await using var db = fixture.Create();
+            try { await new ReviewService(db, TimeProvider.System).ModerateAsync(g.Other.Id, comment.Id, new(status, comment.Version), default); return 200; }
+            catch (PurchaseException error) { return error.Status; }
+        }
+        Assert.Equal([200,409], (await Task.WhenAll(Decide("Approved"), Decide("Rejected"))).Order());
+        await using var check = fixture.Create();
+        var stored = await check.Comments.SingleAsync(); Assert.Equal(g.Other.Id, stored.ModeratedByUserId); Assert.NotNull(stored.ModeratedAt);
+        var publicPage = await new ReviewService(check, TimeProvider.System).PublicAsync(g.Product.Id, 0, default);
+        Assert.Equal(stored.ApprovalStatus == ApprovalStatus.Approved ? 1 : 0, publicPage.Comments.Count);
+        Assert.Equal(3d, publicPage.AverageRating);
+    }
+
+    [MySqlFact]
+    public async Task MySql_SalesAndSupportCannotModerateAndRejectedCommentsNeverAppearPublicly()
+    {
+        await fixture.ResetAsync(); ReviewFixture.Graph g;
+        await using (var seed = fixture.Create())
+        {
+            g = await ReviewFixture.SeedAsync(seed);
+            await new ReviewService(seed, TimeProvider.System).SubmitAsync(g.Buyer.Id, g.Product.Id, new(null, "Rejected body"), default);
+        }
+        using var app = new ReviewApplication(fixture);
+        foreach (var role in new[] { UserRole.SalesManager, UserRole.SupportAgent })
+        {
+            await using (var db = fixture.Create()) { var user = await db.Users.SingleAsync(u => u.Id == g.Other.Id); user.Role = role; user.SecurityStamp = Guid.NewGuid().ToString("N"); await db.SaveChangesAsync(); }
+            using var staff = app.CreateClient(); await Login(staff, g.Other.Email);
+            Assert.Equal(HttpStatusCode.Forbidden, (await staff.GetAsync("/api/product-management/comments")).StatusCode);
+            Assert.Equal(HttpStatusCode.Forbidden, (await Post(staff, "/api/product-management/comments/1/moderation", new ModerationRequest("Approved", "1"))).StatusCode);
+        }
+        await using var check = fixture.Create(); var manager = await check.Users.SingleAsync(u => u.Id == g.Other.Id); manager.Role = UserRole.ProductManager; await check.SaveChangesAsync();
+        var service = new ReviewService(check, TimeProvider.System); var pending = Assert.Single((await service.PendingAsync(0, default)).Items);
+        await service.ModerateAsync(manager.Id, pending.Id, new("Rejected", pending.Version), default);
+        Assert.Empty((await service.PublicAsync(g.Product.Id, 0, default)).Comments);
+        Assert.Equal("Rejected", (await service.OwnAsync(g.Buyer.Id, g.Product.Id, default)).Comment!.Status);
+    }
+
+    [MySqlFact]
     public async Task MySql_ConcurrentIdenticalReviewsCommitOneRatingAndOnePendingComment()
     {
         await fixture.ResetAsync();

@@ -1,3 +1,4 @@
+import CommentModeration from "../components/admin/CommentModeration.jsx";
 // The admin panel for product and sales managers (SCRUM-124) at /manage and /manage/<section>. It replaces the small
 // landing page of SCRUM-130. Data comes from the existing APIs only (docs/api-contract-dashboards.md and the
 // deliveries API); review approval waits for SCRUM-81.
@@ -6,7 +7,6 @@ import { Link, Navigate, useParams } from "react-router";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import AdminShell from "../components/admin/AdminShell.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
-import ReviewApprovalRow from "../components/admin/ReviewApprovalRow.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState } from "../components/RequestStates.js";
 import Button from "../components/ui/Button.jsx";
@@ -25,8 +25,6 @@ const day = value => new Date(value).toLocaleDateString("tr-TR");
 const percent = new Intl.NumberFormat("tr-TR", { style: "percent", maximumFractionDigits: 1 });
 const SALES_DAYS = 30;
 
-/** Placeholder for SCRUM-81: there is no approval API yet, so nothing is saved and this resolves at once. */
-const approveReviewPlaceholder = () => Promise.resolve();
 
 // Loads one resource when the section opens; a 401 ends the session.
 function useResource(fetcher) {
@@ -136,41 +134,7 @@ function DeliveriesSection() {
 }
 
 function ReviewsSection({ dashboard }) {
-  const { data, setData, error, loading, retry } = dashboard;
-  const [announcement, setAnnouncement] = useState("");
-  const list = useRef(null);
-  const reviews = data?.commentsWaitingForApproval ?? [];
-
-  const removed = useCallback(id => {
-    const rows = [...(list.current?.querySelectorAll(".admin-review") ?? [])];
-    const index = rows.findIndex(element => element.dataset.id === String(id));
-    setData(previous => previous && ({
-      ...previous, commentsWaitingForApproval: previous.commentsWaitingForApproval.filter(review => review.id !== id)
-    }));
-    // The removed row held the focus; hand it to the next row's button, or to the heading when the list is empty.
-    requestAnimationFrame(() => {
-      if (document.activeElement && document.activeElement !== document.body) return;
-      const rest = list.current?.querySelectorAll(".admin-approve") ?? [];
-      (rest[Math.min(Math.max(index, 0), rest.length - 1)] ?? document.querySelector(".admin-section h1"))?.focus();
-    });
-  }, [setData]);
-
-  return <>
-    <SectionHead title="Reviews">
-      Reviews wait here until a product manager approves them. Approving is not saved yet: the approval API comes
-      with SCRUM-81, so an approved review comes back after a reload.
-    </SectionHead>
-    <ErrorState error={error} onRetry={retry} retrying={loading} />
-    <div className="admin-reviews" aria-live="polite">
-      {loading && !data && <Table columns={reviewColumns} loading loadingLabel="Loading reviews…" />}
-      {data && reviews.length === 0 && <p className="admin-empty" role="status">No review is waiting for approval.</p>}
-      {reviews.length > 0 && <ul ref={list} className="admin-review-list">
-        {reviews.map(review => <ReviewApprovalRow key={review.id} review={review} onApprove={approveReviewPlaceholder}
-          onRemoved={removed} onApproved={() => setAnnouncement(`Review approved: ${review.productName}`)} />)}
-      </ul>}
-      <p className="admin-sr">{announcement}</p>
-    </div>
-  </>;
+  return <CommentModeration onChanged={dashboard.retry} />;
 }
 
 function LowStockSection({ dashboard }) {

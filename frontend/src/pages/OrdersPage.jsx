@@ -39,6 +39,11 @@ function OrderCard({ order }) {
         {order.invoiceUrl && <> · <a href={order.invoiceUrl}>Download invoice (PDF)</a></>}
         {!order.invoiceUrl && <> · <span>Invoice is being prepared</span></>}
       </p>
+      {order.status === "Delivered" && order.reviewItems?.length > 0 && <ul className="order-review-links">
+        {order.reviewItems.map(item => <li key={item.productId}>
+          <Link to={`/product?id=${item.productId}#reviews`}>{item.canRate || item.canComment ? "Rate / Comment" : "View your review"}: {item.name}</Link>
+        </li>)}
+      </ul>}
     </li>
   );
 }

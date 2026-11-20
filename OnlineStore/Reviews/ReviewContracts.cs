@@ -23,3 +23,10 @@ public sealed record OwnComment(long Id, string Body, string Status, DateTime Cr
 public sealed record CustomerReview(long ProductId, bool Eligible, long? OrderItemId, int? Rating,
     OwnComment? Comment, bool CanRate, bool CanComment);
 public sealed record ReviewResult(CustomerReview Review, bool Created);
+
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record ModerationRequest(string? Status, string? Version);
+public sealed record ModerationComment(long Id, long ProductId, string ProductName, string CustomerName,
+    int? Rating, string Body, DateTime CreatedAt, string Version);
+public sealed record ModerationPage(IReadOnlyList<ModerationComment> Items, long? NextAfterId);
+public sealed record ModerationResult(long Id, string Status, string Version);
