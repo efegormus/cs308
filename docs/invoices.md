@@ -163,3 +163,53 @@ The purchasing browser verifier polls that inbox and compares the decoded PDF
 attachment byte-for-byte with the protected customer download. This proves SMTP
 and attachment behavior; delivery to a real Gmail/school inbox additionally
 requires successful sender authentication and a new purchase with that recipient.
+
+## Demo: send the invoice email to a real inbox with environment variables (SCRUM-144)
+
+This is the quick way to run the demo without a settings file; `scripts/configure_smtp.py` (see Private Gmail SMTP setup above) is the alternative. Progress Demo requirement: a PDF copy of the invoice is emailed to the customer. With the default
+`Email:Transport=Local` nothing leaves the machine, so for the demo switch to SMTP on the demo
+computer. Nothing in this section is committed: the credentials only live in the terminal that
+starts the app.
+
+1. **Mailbox.** Use a demo Gmail account that is not anyone's main mailbox. Turn on 2-Step
+   Verification, then create an app password at <https://myaccount.google.com/apppasswords> (16
+   letters; remove the spaces when you use it). Revoke it after the demo.
+2. **Settings.** In the same PowerShell window that starts the app (repository root), replace the
+   two example values:
+
+   ```powershell
+   $env:Email__Transport = "Smtp"
+   $env:Email__From = "demo.account@gmail.com"
+   $env:Email__Smtp__Host = "smtp.gmail.com"
+   $env:Email__Smtp__Port = "587"
+   $env:Email__Smtp__EnableSsl = "true"
+   $env:Email__Smtp__Username = "demo.account@gmail.com"
+   $env:Email__Smtp__Password = Read-Host "App password"
+   py scripts/dev.py run
+   ```
+
+   `Email__From` must be the same Gmail address as the username, Gmail rejects or rewrites other
+   senders. The helper passes the terminal's environment on to the app. In a bash shell use
+   `export Email__Transport=Smtp` and so on.
+3. **Customer.** The invoice goes to the email address stored on the order at checkout
+   (`Order.EmailSnapshot`). The seeded demo accounts use `@onlinestore.invalid` addresses, which can
+   never receive mail, so register a new customer with an inbox you can open, add a product to the
+   cart and pay with the mock test card.
+4. **Check.** The worker polls every 10 seconds, so the email arrives within about a minute: subject
+   `Invoice for order <id>` with the invoice PDF attached (look in Spam the first time). Seeded
+   orders for `@onlinestore.invalid` recipients cannot be delivered and may end up as `Failed`; that
+   is expected and does not affect purchases.
+5. **If nothing arrives.** Look at the newest outbox rows. `LastError` is a safe error code, never
+   the server's message:
+
+   ```powershell
+   $pw = (Get-Content .local\mysql-password -Raw).Trim()
+   docker exec -e MYSQL_PWD=$pw cs308-mysql-1 mysql -uonlinestore onlinestore -e "SELECT Id, Status, AttemptCount, LastError, NextAttemptAt, SentAt FROM EmailOutbox ORDER BY Id DESC LIMIT 5;"
+   ```
+
+   `Sent` means the SMTP server accepted the mail. `Pending` with a `LastError` is a retry in
+   progress. `Failed` usually means a wrong password, a wrong `Email__From` or a refused recipient;
+   fix the setting, restart the app and, only for a `Failed` row that was never sent, follow the reset
+   steps above.
+6. **Back to normal.** Close the terminal (or start the app without the `Email__` variables) to
+   return to `Local`. Never put the app password in a committed file, a screenshot or a chat.
