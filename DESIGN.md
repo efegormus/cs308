@@ -893,6 +893,9 @@ Decision pending.
 - Existing max widths stay (see Layout) [Proje].
 - Thresholds that belong to a component stay as they are: the coverflow's 700px track width and
   733px status height [Proje]. Other current thresholds are in "Migration status".
+- `scripts/verify_responsive_browser.py` opens every route of `App.jsx` at 375, 768, 1024 and 1280px, as a
+  guest or as the demo account that may see it, and fails when the page is wider than the window. CI runs it.
+  It also lists controls under 44px, for information.
 
 ## Iteration guide
 
@@ -960,8 +963,9 @@ Mistakes in it, corrected here:
 12. **Body line height.** 1.5 [Proje]; the login lead uses 1.55, the catalog 1.6, HP 1.38.
 13. **Breakpoints in the code.** The cart switches at 576px (36rem) and the product detail at
     700px. Move them to 480 / 768 or keep them.
-14. **Touch targets under 44px.** Cart quantity buttons (36px) and the sort select (40px). Logout
-    and the profile icon are 44px since SCRUM-123.
+14. **Touch targets under 44px.** The home sort select (40px). The cart quantity and Remove buttons
+    are 44px since SCRUM-138, Logout and the profile icon since SCRUM-123. The full list is in
+    "Migration status" (Touch targets).
 15. **Header search and mega menu.** Decided in SCRUM-123: two header rows, a 200px search field,
     and a full-width panel per top-level category (see Header). The number stays so the numbers
     below do not change.
@@ -1049,6 +1053,7 @@ the dark theme too.
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 480 / 768 / 1024 (product grid), 576 (cart), 700 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `home.css` |
-| Touch targets | 44px | Header, footer and card buttons 44px; cart quantity buttons 2.25rem (36px); sort select 40px; catalog filter inputs 41px and selects 42px; card title links 28px high (inline text links) | `cart.css`, `home.css`, `products.css` |
+| Touch targets | 44px | Header, footer, card and cart buttons 44px. Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px; `/products` filter inputs 41px and selects 42px, card title links 28px; product page quantity input 36px, category, back and wishlist login links 17px; order review links 28px; invoice PDF link 18px; wishlist card title link 20px; dashboard section links 18px | `home.css`, `products.css`, `add-to-cart.css`, `purchases.css`, `orders.css`, `role-home.css` |
+| No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks) | `scripts/verify_responsive_browser.py` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
 | Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Matches, through `Card` | `design-system.css`, `components/ui/Card.css` |
