@@ -102,12 +102,3 @@ queue paging, conflict recovery and dashboard updates are retained. The real
 purchase-to-review browser check now targets that screen and the shared decision
 API. Its real MySQL/SMTP flow and the detailed admin browser checks passed;
 289 frontend tests, 31 Python tests and the production publish also passed.
-
-## SCRUM-142 verification — 26 November 2026
-
-The required detail fields shipped in merged PR #68. RequiredProductFieldsTests
-now explicitly checks all nine public fields, large IDs/serials, undiscounted and
-discounted DTO projections, stock visibility at zero, and exclusion of internal
-inventory fields. Six mapping tests pass. Seed regression tests verify every
-product's nonempty required text, unique serial, nonnegative price and stock.
-The existing frontend validation/spec-row suite remains the browser contract.
