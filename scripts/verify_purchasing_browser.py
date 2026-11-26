@@ -182,6 +182,31 @@ def verify(url, assembly, executable=None, report=None, smtp_url=None):
             expect(page.get_by_role("alert")).to_contain_text("ProductManager account is required")
             page.goto(url + "/order-confirmation?orderId=invalid")
             expect(page.get_by_role("alert")).to_contain_text("valid order ID")
+            # SCRUM-148: the route accepts every positive safe integer (orders use long IDs). The API answers are controlled
+            # responses for an ID above the signed 32-bit range, so no shared data changes; the browser only has to open it.
+            large_id = 2147483648
+            receipt = {
+                "orderId": large_id, "cartId": None, "currency": "TRY", "status": "Processing", "paymentStatus": "Confirmed",
+                "purchasedAt": "2026-11-20T10:00:00Z", "deliveredAt": None, "name": "Buyer", "taxId": "Tax",
+                "address": "Address", "invoiceStatus": "Pending",
+                "items": [{"productId": 1, "name": "Phone", "quantity": 1, "unitPrice": 90, "total": 90}], "total": 90,
+            }
+            large_requests = []
+
+            def large_order(route):
+                large_requests.append(route.request.url)
+                route.fulfill(status=200, content_type="application/json", body=json.dumps(receipt))
+
+            page.route(f"**/api/customer/orders/{large_id}", large_order)
+            page.goto(url + f"/order-confirmation?orderId={large_id}")
+            expect(page.locator("#order-heading")).to_have_text(f"Order #{large_id}")
+            expect(page.locator("#receipt")).to_be_visible()
+            assert large_requests, "the large order ID must reach the owner-only API"
+            page.unroute(f"**/api/customer/orders/{large_id}", large_order)
+            for rejected in ("0", "-1", "1.5", "9007199254740992", "1e3"):
+                page.goto(url + f"/order-confirmation?orderId={rejected}")
+                expect(page.get_by_role("alert")).to_contain_text("valid order ID")
+            print("PASS: order ID 2147483648 opens its receipt and zero, negative, fractional and unsafe IDs stay rejected")
             assert not errors, errors
             assert not dialogs, dialogs
             print("PASS: role isolation, invalid order IDs and literal snapshot rendering without browser exceptions")
