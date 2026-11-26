@@ -74,6 +74,20 @@ class SeedProductImageTests(unittest.TestCase):
             for field in ("brand", "model", "warrantyStatus", "distributorInformation"):
                 self.assertTrue(product[field].strip(), product["seedKey"] + " has no " + field)
 
+class RequiredProductFieldTests(unittest.TestCase):
+    def test_serial_numbers_are_present_and_unique(self):
+        serials = [p['serialNumber'] for p in PRODUCTS]
+        self.assertTrue(all(isinstance(s, str) and s.strip() for s in serials))
+        self.assertEqual(len(serials), len(set(serials)))
+
+    def test_required_seed_values_are_not_missing(self):
+        for product in PRODUCTS:
+            for field in ('name', 'model', 'serialNumber', 'description', 'warrantyStatus', 'distributorInformation'):
+                self.assertTrue(isinstance(product[field], str) and product[field].strip(), (product['seedKey'], field))
+            self.assertIsInstance(product['quantityInStock'], int)
+            self.assertGreaterEqual(product['quantityInStock'], 0)
+            self.assertGreaterEqual(product['price'], 0)
+
 
 if __name__ == "__main__":
     unittest.main()
