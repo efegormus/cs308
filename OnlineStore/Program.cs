@@ -1,3 +1,4 @@
+using OnlineStore.Support;
 using Microsoft.EntityFrameworkCore;
 using MySqlConnector;
 using OnlineStore.Data;
@@ -54,6 +55,8 @@ builder.Services.AddDbContext<StoreDbContext>(options =>
     options.UseMySql(connectionOptions.ConnectionString, new MySqlServerVersion(serverVersion)));
 builder.AddStoreAccounts();
 builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddSignalR(options => { options.MaximumReceiveMessageSize = 8192; options.EnableDetailedErrors = false; });
+builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<DeliveryService>();
@@ -121,6 +124,7 @@ app.MapWishlistEndpoints();
 app.MapInvoiceEndpoints();
 app.MapDashboardEndpoints();
 app.MapReviewEndpoints();
+app.MapSupportChat();
 
 app.Run();
 
