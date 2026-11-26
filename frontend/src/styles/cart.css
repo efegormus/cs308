@@ -43,3 +43,10 @@
 .cart-page .cart-quantity button:disabled { opacity: .5; cursor: default; }
 .cart-page .cart-quantity button:focus-visible { outline: 3px solid var(--focus, #b66d00); outline-offset: 3px; }
 .cart-page .cart-quantity output { min-width: 2rem; text-align: center; font-weight: 600; }
+
+/* UI polish (SCRUM-138): aligned quantity controls, secondary Remove button, a full-width checkout action on phones. */
+.cart-page .cart-line { box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.cart-page .cart-quantity button { display: inline-grid; place-items: center; line-height: 1; min-width: 2.75rem; min-height: 2.75rem; }
+.cart-page .cart-line .cart-remove { min-height: 2.75rem; color: var(--link, #174a8b); }
+.cart-page .cart-total { padding: 1rem; background: var(--surface, #fff); border: 1px solid var(--line, #dce0e6); border-radius: .5rem; font-weight: 600; }
+@media (max-width: 36rem) { .cart-page .cart-checkout { display: flex; width: 100%; } }
