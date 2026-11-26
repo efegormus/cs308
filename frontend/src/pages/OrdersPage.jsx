@@ -88,7 +88,7 @@ function OrderHistory() {
       )}
       {orders.length > 0 && <ul className="order-list" aria-busy={loading}>{orders.map(order => <OrderCard key={order.orderId} order={order} />)}</ul>}
       {next !== null && (
-        <button id="more-orders" type="button" disabled={loading} onClick={() => load(next)}>
+        <button id="more-orders" className="ui-button" type="button" disabled={loading} onClick={() => load(next)}>
           {loading ? "Loading…" : "Load older orders"}
         </button>
       )}

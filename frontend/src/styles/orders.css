@@ -27,3 +27,13 @@
 }
 .orders-page #more-orders { margin: .5rem 0 1.5rem; padding: .6rem 1.2rem; font: inherit; cursor: pointer; }
 .orders-page #more-orders:disabled { opacity: .6; cursor: wait; }
+
+/* UI polish (SCRUM-138): review links become compact chips instead of a bulleted list. */
+.orders-page .order-card { box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
+.orders-page .order-card-links { color: var(--muted, #5d6877); }
+.orders-page .order-review-links { list-style: none; display: flex; flex-wrap: wrap; gap: .5rem; margin: .75rem 0 0; padding: 0; }
+.orders-page .order-review-links a {
+  display: inline-block; padding: .35rem .75rem; border: 1px solid var(--field-line, #7b8799); border-radius: 999px;
+  font-size: .85rem; text-decoration: none;
+}
+.orders-page .order-review-links a:hover { border-color: var(--link, #174a8b); }

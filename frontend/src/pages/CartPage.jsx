@@ -129,10 +129,10 @@ export default function CartPage() {
               {blocked
                 ? <p role="status">Remove the unavailable items to continue to checkout.</p>
                 : account
-                  ? <p><Link className="cart-checkout" to="/checkout">Proceed to checkout</Link></p>
+                  ? <p><Link className="ui-button cart-checkout" to="/checkout">Proceed to checkout</Link></p>
                   : authReady && (
                     <p>
-                      <Link className="cart-checkout" to={loginHref({ pathname: "/checkout" })}>Log in to check out</Link>
+                      <Link className="ui-button cart-checkout" to={loginHref({ pathname: "/checkout" })}>Log in to check out</Link>
                     </p>
                   )}
             </>

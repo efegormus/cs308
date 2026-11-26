@@ -133,7 +133,7 @@ function Checkout({ account }) {
           <div><label htmlFor="security-code">Test security code</label>
             <input id="security-code" name="securityCode" inputMode="numeric" autoComplete="cc-csc" pattern="[0-9]{3,4}" minLength="3" maxLength="4" required /></div>
         </fieldset>
-        <button id="purchase" className="purchase-submit" type="submit" disabled={busy}>
+        <button id="purchase" className="ui-button purchase-submit" type="submit" disabled={busy}>
           {busy ? "Confirming mock payment…" : "Confirm mock payment"}
         </button>
       </section>

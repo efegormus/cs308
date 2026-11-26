@@ -30,10 +30,10 @@ function Receipt({ orderId }) {
       <p className="purchase-total">Total: <span id="total">{formatPrice(data.total)}</span></p>
       {data.invoiceStatus === "Ready"
         ? <a id="invoice" href={`/api/customer/orders/${data.orderId}/invoice`}>Download invoice PDF</a>
-        : <p id="invoice-pending">Your invoice is being prepared. Refresh to check its availability.</p>}
+        : <p id="invoice-pending" className="invoice-pending" role="status">Your invoice is being prepared. Refresh to check its availability. Your payment is already confirmed and will not be charged again.</p>}
     </section>}
     {data?.invoiceStatus === "Ready" && <InvoicePanel key={orderId} orderId={orderId} />}
-    {data && <button id="retry" type="button" disabled={status === "loading"} onClick={load}>Refresh order</button>}
+    {data && <button id="retry" className="ui-button" type="button" disabled={status === "loading"} onClick={load}>Refresh order</button>}
   </>;
 }
 export default function OrderConfirmationPage() {
