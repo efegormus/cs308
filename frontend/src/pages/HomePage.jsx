@@ -48,7 +48,7 @@ export default function HomePage() {
 
   return (
     <div className="route-page home-page">
-      <title>Online Store</title>
+      <title>Siesta</title>
       <main id="main-content">
         <div className="intro">
           <h1 className="r"><span className="ri" style={{ "--i": 0 }}>Shop by category</span></h1>

@@ -100,7 +100,7 @@ function OrderHistory() {
 export default function OrdersPage() {
   return (
     <div className="route-page catalog-page purchase-page orders-page">
-      <title>My orders | Online Store</title>
+      <title>My orders | Siesta</title>
       <main id="main-content" className="purchase-layout">
         <h1>My orders</h1>
         <p className="intro">Follow your orders from processing to delivery.</p>

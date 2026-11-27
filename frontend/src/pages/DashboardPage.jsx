@@ -86,7 +86,7 @@ function ProfileSummary() {
 // The customer's account page (SCRUM-125), opened as /dashboard from the profile icon in the header.
 export default function DashboardPage() {
   return <div className="route-page catalog-page purchase-page role-home-page">
-    <title>My account | Online Store</title>
+    <title>My account | Siesta</title>
     <main id="main-content" className="purchase-layout">
       <PurchaseAccess role="Customer">{account => <>
         <header className="role-home-head">

@@ -61,7 +61,7 @@ export default function ProductsPage() {
 
   return (
     <div className="route-page catalog-page">
-      <title>Products by category | Online Store</title>
+      <title>Products by category | Siesta</title>
       <main id="main-content">
         <h1>Shop by category</h1>
         <p className="intro">Explore electronics across all departments. Prices are in Turkish lira.</p>

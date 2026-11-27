@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { accountLabel, accountPath, canAccess, canUseCart, footerLinks, headerLinks, isPublicPath, landingLabel, landingPath, postLoginPath, roleLinks } from "./role-routes.js";
+import { accountLabel, accountMenuLinks, accountPath, canAccess, canUseCart, canUseWishlist, footerLinks, headerLinks, isPublicPath, landingLabel, landingPath, postLoginPath, roleLinks } from "./role-routes.js";
 
 const customer = { id: 1, role: "Customer" };
 const productManager = { id: 2, role: "ProductManager" };
@@ -138,4 +138,22 @@ test("the profile page (SCRUM-103) is for customers; after login it keeps its ow
   assert.equal(postLoginPath(productManager, "/profile?returnUrl=%2Fcheckout"), "/manage");
   assert.equal(postLoginPath(support, "/profile"), "/support");
   assert.equal(isPublicPath("/profile"), false);
+});
+
+test("the header's account menu (SCRUM-164): customers get My orders, Wishlist and Profile; staff keep their panel and shortcuts", () => {
+  assert.deepEqual(accountMenuLinks("Customer"), [["/orders", "My orders"], ["/wishlist", "Wishlist"], ["/dashboard", "Profile"]]);
+  assert.deepEqual(accountMenuLinks("ProductManager"),
+    [["/manage", "Management"], ["/deliveries", "Deliveries"], ["/products", "Product catalog"]]);
+  assert.deepEqual(accountMenuLinks("SalesManager"), [["/manage", "Management"], ["/products", "Product catalog"]]);
+  assert.deepEqual(accountMenuLinks("SupportAgent"), [["/support", "Support"], ["/products", "Product catalog"]]);
+  for (const role of [null, undefined, "Admin", "customer"]) assert.deepEqual(accountMenuLinks(role), [], String(role));
+  for (const role of ["Customer", "ProductManager", "SalesManager", "SupportAgent"]) {
+    for (const [to] of accountMenuLinks(role)) assert.equal(canAccess(role, to), true, `${role} ${to}`);
+  }
+});
+
+test("the header's wishlist link is for guests and customers, like the cart", () => {
+  assert.equal(canUseWishlist(null), true);
+  assert.equal(canUseWishlist("Customer"), true);
+  for (const role of ["ProductManager", "SalesManager", "SupportAgent"]) assert.equal(canUseWishlist(role), false, role);
 });
