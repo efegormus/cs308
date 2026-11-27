@@ -122,6 +122,80 @@ public class CatalogManagementMySqlTests(MySqlFixture fixture) : IClassFixture<M
         Assert.Single(await check.Distributors.Where(d => d.Name == "Race Dist").ToListAsync());
     }
 
+    [MySqlFact]
+    public async Task MySql_StockHttpIsProductManagerOnlyNeverBelowZeroAndShownAtOnceToShoppers()
+    {
+        await fixture.ResetAsync(); ReviewFixture.Graph g;
+        await using (var seed = fixture.Create()) g = await ReviewFixture.SeedAsync(seed);
+        using var app = new ManagementApplication(fixture);
+        using var guest = app.CreateClient(); using var customer = app.CreateClient(); using var manager = app.CreateClient();
+        var path = $"{Root}/products/{g.Product.Id}/stock";
+        long productId = g.Product.Id;
+        int current;
+        await using (var read = fixture.Create()) current = (await read.Products.SingleAsync(p => p.Id == productId)).StockQuantity;
+
+        // Guests and customers cannot change the stock.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await Send(guest, HttpMethod.Put, path, new { quantity = 5, expectedQuantity = current })).StatusCode);
+        await Login(customer, g.Buyer.Email);
+        Assert.Equal(HttpStatusCode.Forbidden, (await Send(customer, HttpMethod.Put, path, new { quantity = 5, expectedQuantity = current })).StatusCode);
+
+        await SetRole(g.Other.Id, UserRole.ProductManager);
+        await Login(manager, g.Other.Email);
+        // No CSRF token, a negative count, an unknown field, a missing expected count: all refused, the stock stays.
+        Assert.Equal(HttpStatusCode.BadRequest, (await manager.PutAsJsonAsync(path, new { quantity = 5, expectedQuantity = current })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Send(manager, HttpMethod.Put, path, new { quantity = -1, expectedQuantity = current })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Send(manager, HttpMethod.Put, path, new { quantity = 5 })).StatusCode);
+        Assert.Equal(HttpStatusCode.BadRequest, (await Send(manager, HttpMethod.Put, path, new { quantity = 5, expectedQuantity = current, price = 1 })).StatusCode);
+        Assert.Equal(HttpStatusCode.NotFound, (await Send(manager, HttpMethod.Put, $"{Root}/products/9999999/stock", new { quantity = 5, expectedQuantity = 0 })).StatusCode);
+        Assert.Equal(current, (await guest.GetFromJsonAsync<JsonElement>($"/api/products/{productId}")).GetProperty("stockQuantity").GetInt32());
+
+        // A stale screen is refused, the right count is accepted, and shoppers see the new count at once.
+        Assert.Equal(HttpStatusCode.Conflict, (await Send(manager, HttpMethod.Put, path, new { quantity = 5, expectedQuantity = current + 1 })).StatusCode);
+        var ok = await Send(manager, HttpMethod.Put, path, new { quantity = 7, expectedQuantity = current });
+        Assert.Equal(HttpStatusCode.OK, ok.StatusCode);
+        Assert.Equal(7, (await ok.Content.ReadFromJsonAsync<ManagedProduct>())!.StockQuantity);
+        var detail = await guest.GetFromJsonAsync<JsonElement>($"/api/products/{productId}");
+        Assert.Equal(7, detail.GetProperty("stockQuantity").GetInt32()); Assert.True(detail.GetProperty("inStock").GetBoolean());
+
+        // At zero the product shows as out of stock and a customer cannot put it in the cart.
+        Assert.Equal(HttpStatusCode.OK, (await Send(manager, HttpMethod.Put, path, new { quantity = 0, expectedQuantity = 7 })).StatusCode);
+        Assert.False((await guest.GetFromJsonAsync<JsonElement>($"/api/products/{productId}")).GetProperty("inStock").GetBoolean());
+        Assert.Equal(HttpStatusCode.Conflict, (await Send(customer, HttpMethod.Post, "/api/cart/items", new { productId, quantity = 1 })).StatusCode);
+    }
+
+    [MySqlFact]
+    public async Task MySql_TwoStockChangesAtOnceHaveOneWinnerAndASaleIsNeverOverwritten()
+    {
+        await fixture.ResetAsync(); User manager; long productId;
+        await using (var seed = fixture.Create())
+        {
+            manager = new User { Name = "Manager", Email = "pm-stock@example.com", PasswordHash = "hash", TaxId = "-", HomeAddress = "-", Role = UserRole.ProductManager };
+            seed.Users.Add(manager); await seed.SaveChangesAsync();
+            var service = new CatalogManagementService(seed, TimeProvider.System);
+            var category = await service.CreateCategoryAsync(manager.Id, new("Stock race", null, null), default);
+            productId = (await service.CreateProductAsync(manager.Id, new ProductCreate(category.Id, null, "STOCK-1", "Stock phone", "S-1", "SN-S", "Stock description", 10m, 10, "1 year", "Stock Dist", "s@example.com"), default)).Id;
+        }
+        async Task<int> Set(int quantity, int expected)
+        {
+            await using var db = fixture.Create();
+            try { await new CatalogManagementService(db, TimeProvider.System).SetStockAsync(manager.Id, productId, new(quantity, expected), default); return 200; }
+            catch (PurchaseException error) { return error.Status; }
+        }
+        // Two managers saw 10 and save different counts at once: one wins, the other is told to look again.
+        Assert.Equal([200, 409], (await Task.WhenAll(Set(20, 10), Set(30, 10))).Order().ToArray());
+        int winner;
+        await using (var read = fixture.Create()) winner = (await read.Products.SingleAsync(p => p.Id == productId)).StockQuantity;
+        Assert.Contains(winner, new[] { 20, 30 });
+
+        // A checkout takes 3 units (the same guarded UPDATE as CheckoutService) while a manager still sees the old count.
+        await using (var sale = fixture.Create())
+            Assert.Equal(1, await sale.Products.Where(p => p.Id == productId && p.StockQuantity >= 3)
+                .ExecuteUpdateAsync(u => u.SetProperty(p => p.StockQuantity, p => p.StockQuantity - 3)));
+        Assert.Equal(409, await Set(100, winner));
+        await using var check = fixture.Create();
+        Assert.Equal(winner - 3, (await check.Products.SingleAsync(p => p.Id == productId)).StockQuantity);
+    }
+
     private async Task SetRole(long userId, UserRole role)
     {
         await using var db = fixture.Create();
