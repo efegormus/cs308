@@ -14,8 +14,9 @@ export function ErrorState({ error, onRetry, retrying = false } = {}) {
   if (safe.kind === "cancelled") return null;
   return h("div", { className: "request-state request-state--error", role: "alert", "aria-atomic": true },
     h("p", null, safe.message),
+    // The shared secondary Button's classes (ui/Button.css, loaded by the header); this file stays plain JavaScript.
     typeof onRetry === "function" && h("button", {
-      type: "button", onClick: onRetry, disabled: retrying
+      type: "button", className: "ui-button ui-button--secondary", onClick: onRetry, disabled: retrying
     }, "Try again")
   );
 }
