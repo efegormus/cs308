@@ -32,3 +32,7 @@
   border: 1px solid var(--field-line); border-radius: var(--radius-full); font: var(--type-body-sm); text-decoration: none;
 }
 .orders-page .order-review-links a:hover { border-color: var(--link); }
+
+/* SCRUM-158: the Cancel button sits under the links; the confirmation dialog uses the shared Modal. */
+.orders-page .order-cancel { margin-top: var(--space-xs); }
+.order-cancel-error { color: var(--danger-fg); background: var(--danger-bg); border: 1px solid var(--danger); border-radius: var(--radius-button); padding: var(--space-xs) var(--space-sm); }

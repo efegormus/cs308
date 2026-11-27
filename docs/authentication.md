@@ -137,14 +137,15 @@ landing page of the role:
 
 | Role | Landing page |
 | --- | --- |
-| Customer | `/` (home page; the profile icon in the header opens `/dashboard`) |
+| Customer | `/` (home page; the account menu's Profile entry in the header opens `/dashboard`) |
 | ProductManager, SalesManager | `/manage` |
 | SupportAgent | `/support` |
 
 The customer's `/dashboard` page (SCRUM-125) shows the three newest orders from
 `GET /api/customer/orders` and the profile from `GET /api/customer/profile`; each section
-loads on its own, so one failing request does not hide the other. The profile icon's
-menu lists "My account" (the role's own page), the role's shortcuts and Logout.
+loads on its own, so one failing request does not hide the other. The header's name pill
+opens the account menu (SCRUM-164): My orders, Wishlist and Profile (the role's own page) for a customer,
+the role's own page and shortcuts for staff, then Sign out.
 
 The same file lists which role may open which page (`canAccess`). It only chooses where
 the browser goes; the server still enforces every role. `PurchaseAccess` guards each

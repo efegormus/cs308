@@ -1,7 +1,7 @@
 ---
 version: alpha
-name: Online Store
-description: The CS 308 online store's design system. A light catalog UI on a pale gray page with white surfaces, one blue action color (#024ad8), Poppins for headings, buttons and the header, Open Sans for text and forms, and an unchanged dark theme. It adapts parts of an HP design analysis (docs/design/reference-hp-DESIGN.md) to the project's existing tokens; HP brand elements are not used. This file is the target. The code does not fully match it yet; see "Migration status".
+name: Siesta
+description: The design system of Siesta, the CS 308 online store. A light catalog UI under a dark header, on a pale gray page with white surfaces, one blue action color (#024ad8), Poppins for headings, buttons and the header, Open Sans for text and forms, and an unchanged dark theme. It adapts parts of an HP design analysis (docs/design/reference-hp-DESIGN.md) to the project's existing tokens; HP brand elements are not used. This file is the target. The code does not fully match it yet; see "Migration status".
 
 # Labels used in the comments below:
 #   [HP]         taken from the HP reference as is
@@ -28,10 +28,14 @@ colors:
   danger-fg: "#7a1f0d"        # [Proje] error banner text
   ok: "#1a7f37"               # [Proje] success fill
   ok-fg: "#1a7f37"            # [Uyarlandı] new; success text such as "In stock" (dark #3fb950)
-  header: "#ffffff"           # [Uyarlandı] white nav bar
-  header-fg: "#222222"        # [Uyarlandı] = fg
-  header-fg-soft: "#505966"   # [Uyarlandı] = muted; signed-in name
-  header-hover: "#f6f7f9"     # [Uyarlandı] = bg; logout hover
+  header: "#0a0f17"           # [Uyarlandı] dark nav bar in both themes since SCRUM-164 (the dark theme's value)
+  header-fg: "#ffffff"        # [Uyarlandı] header text
+  header-fg-soft: "#cfd5df"   # [Uyarlandı] secondary header text, panel links
+  header-hover: "rgba(255, 255, 255, 0.12)"  # [Uyarlandı] hover fill and the panel's highlight pill
+  header-panel: "#111826"     # [Uyarlandı] new; categories panel, search field, open account menu
+  header-line: "#2f3b50"      # [Uyarlandı] new; header bottom line, Categories button and name pill edge
+  header-accent: "#3b78f5"    # [Uyarlandı] new; search focus, avatar, cart count, active lines in the header
+  header-danger: "#ff8a73"    # [Uyarlandı] new; "Sign out" in the account menu
   footer: "#1f2937"           # [Uyarlandı] new; the old light --header value
   footer-fg: "#ffffff"        # [Uyarlandı] new; the old light --header-fg value
   footer-fg-soft: "#e5e7eb"   # [Uyarlandı] new; the old light --header-fg-soft value
@@ -139,7 +143,8 @@ spacing:
   xl: 24px                    # [Proje]
   xxl: 32px                   # [Proje] header side padding, gap between home rows
   form-card-y: 36px           # [Proje] form card padding top and bottom
-  header-height: 64px         # [Uyarlandı] minimum header height
+  header-height: 72px         # [Uyarlandı] header bar height (SCRUM-164)
+  header-height-compact: 56px # [Uyarlandı] header bar while scrolling down
   touch-target: 44px          # [Uyarlandı] minimum touch target
   form-max: 420px             # [Proje] form card max width
   catalog-max: 1200px         # [Proje] catalog main max width
@@ -218,22 +223,41 @@ components:
     typography: "{typography.badge}"
     rounded: "{rounded.badge}"
     padding: 4px 8px
-  nav-bar:                    # [Uyarlandı]
+  nav-bar:                    # [Uyarlandı] SCRUM-164: dark, one row, 56px while scrolling down
     backgroundColor: "{colors.header}"
     textColor: "{colors.header-fg}"
     typography: "{typography.nav-link}"
     padding: 0 32px
-    height: 64px
+    height: 72px
   nav-logo:                   # [Proje]
     textColor: "{colors.header-fg}"
     typography: "{typography.logo}"
-  nav-user-name:              # [Proje]
-    textColor: "{colors.header-fg-soft}"
-    typography: "{typography.body-md}"
-  nav-logout-hover:           # [Proje]
-    backgroundColor: "{colors.header-hover}"
+  nav-user-name:              # [Uyarlandı] the name in the account pill (SCRUM-164)
     textColor: "{colors.header-fg}"
-  nav-link-active:            # [Uyarlandı] plus a 2px accent underline
+    typography: "{typography.label}"
+  nav-logout-hover:           # [Proje] a hovered account menu entry: the header-hover fill over header-panel
+    backgroundColor: "{colors.header-panel}"
+    textColor: "{colors.header-fg}"
+  nav-signout:                # [Uyarlandı] SCRUM-164 "Sign out" in the account menu
+    backgroundColor: "{colors.header-panel}"
+    textColor: "{colors.header-danger}"
+    typography: "{typography.nav-link}"
+  nav-divider:                # [Uyarlandı] SCRUM-164 header bottom line, pill and button edges, menu divider
+    backgroundColor: "{colors.header-line}"
+  nav-highlight:              # [Uyarlandı] SCRUM-164 hover fill and the categories panel's highlight pill
+    backgroundColor: "{colors.header-hover}"
+  nav-panel:                  # [Uyarlandı] SCRUM-164 categories panel and account menu
+    backgroundColor: "{colors.header-panel}"
+    textColor: "{colors.header-fg-soft}"
+    typography: "{typography.nav-link}"
+  nav-avatar:                 # [Uyarlandı] SCRUM-164 initials avatar, 34px circle
+    backgroundColor: "{colors.header-accent}"
+    textColor: "{colors.header}"
+    typography: "{typography.caption}"
+    rounded: "{rounded.full}"
+    width: 34px
+    height: 34px
+  nav-link-active:            # [Uyarlandı] plus a 2px header-accent underline
     textColor: "{colors.header-fg}"
     typography: "{typography.nav-link}"
   footer:                     # [Uyarlandı]
@@ -274,7 +298,7 @@ components:
     textColor: "{colors.accent-fg}"
 ---
 
-# Online Store design system
+# Siesta design system
 
 This file describes how the store should look. It is the target for the React frontend in
 `frontend/`. It does not change any code: the "Migration status" table at the end lists every
@@ -302,7 +326,8 @@ on a screen. Headings, buttons and the header use Poppins; text, labels and inpu
 Buttons are nearly square (4px corners) while product cards are soft (16px corners). Depth comes
 from borders and one light shadow, not from heavy elevation.
 
-- The header is a white bar with a thin line under it. The footer is dark.
+- The header is a dark bar (SCRUM-164) with the Siesta wordmark, a Categories panel and the search. The footer is dark
+  too.
 - The home page keeps its coverflow rows exactly as they are [Proje].
 - The `/products` grid uses the HP product card layout [Uyarlandı].
 - The dark theme keeps every current dark token [Proje].
@@ -321,7 +346,7 @@ from borders and one light shadow, not from heavy elevation.
 | `--surface` | `#ffffff` | [Proje] | Cards, inputs, form card |
 | `--fg` | `#222222` | [Proje] | Main text |
 | `--muted` | `#505966` | [Proje] | Secondary text, spec rows, counts |
-| `--line` | `#dce0e6` | [Proje] | Card borders, header bottom line |
+| `--line` | `#dce0e6` | [Proje] | Card borders |
 | `--field-line` | `#6b7280` | [Proje] | Input, textarea and select border |
 | `--link` | `#174a8b` | [Proje] | Links |
 | `--focus` | `#b66d00` | [Proje] | Focus ring |
@@ -330,10 +355,16 @@ from borders and one light shadow, not from heavy elevation.
 | `--danger-fg` | `#7a1f0d` | [Proje] | Error banner text |
 | `--ok` | `#1a7f37` | [Proje] | Success fill |
 | `--ok-fg` | `#1a7f37` (dark `#3fb950`) | Matches; in-stock text on the product list and product page, approved review status | `design-system.css`, `products.css`, `product-detail.css`, `reviews.css` |
-| `--header` | `#ffffff` | [Uyarlandı] | Header bar |
-| `--header-fg` | `#222222` | [Uyarlandı] | Header text, same as `--fg` |
-| `--header-fg-soft` | `#505966` | [Uyarlandı] | Signed-in name, same as `--muted` |
-| `--header-hover` | `#f6f7f9` | [Uyarlandı] | Logout hover, same as `--bg` |
+| `--header` | `#0a0f17` | [Uyarlandı] | Header bar. Dark in both themes since SCRUM-164 (the dark theme's value) |
+| `--header-fg` | `#ffffff` | [Uyarlandı] | Header text |
+| `--header-fg-soft` | `#cfd5df` | [Uyarlandı] | Secondary header text, panel and menu links, search hint label |
+| `--header-hover` | `rgba(255, 255, 255, 0.12)` | [Uyarlandı] | Hover fill in the header, the panel's highlight pill |
+| `--header-panel` | `#111826` | [Uyarlandı] | New (SCRUM-164). Categories panel, search field, open account pill and menu |
+| `--header-line` | `#2f3b50` | [Uyarlandı] | New. Header bottom line, Categories button and name pill edge, panel dividers |
+| `--header-accent` | `#3b78f5` | [Uyarlandı] | New. Search focus edge, avatar, cart count, search button, active lines in the header |
+| `--header-accent-ring` | `rgba(59, 120, 245, 0.28)` | [Uyarlandı] | New. The 3px ring around the focused search field, the logo's sun |
+| `--header-danger` | `#ff8a73` | [Uyarlandı] | New. "Sign out" (the dark theme's `--danger`) |
+| `--header-scrim` | `rgba(10, 15, 26, 0.5)` | [Uyarlandı] | New. The veil behind the categories panel, with `blur(4px)` |
 | `--footer` | `#1f2937` | [Uyarlandı] | New. Footer background (the old light `--header`) |
 | `--footer-fg` | `#ffffff` | [Uyarlandı] | New. Footer text and links |
 | `--footer-fg-soft` | `#e5e7eb` | [Uyarlandı] | New. Footer secondary text |
@@ -349,9 +380,9 @@ and the home page's `--halo` are tints of the old accent `#174a8b`; see Open que
 
 The dark values stay as they are. They live in `frontend/src/styles/design-system.css` with every
 other token (moved from `auth.css` in SCRUM-123). Each dark value is written twice: in the
-`prefers-color-scheme: dark` block and in the `[data-theme="dark"]` block. `--header-hover` is now
-written in both dark blocks too, because its light value changed and the dark theme must keep
-`rgba(255, 255, 255, 0.12)`.
+`prefers-color-scheme: dark` block and in the `[data-theme="dark"]` block. Since SCRUM-164 the header
+is dark in both themes: the light `--header`, `--header-fg`, `--header-fg-soft` and `--header-hover`
+now hold the dark values below, and the new `--header-*` tokens have one value for both themes.
 
 | Token | Dark value | Label |
 | --- | --- | --- |
@@ -412,9 +443,17 @@ lighter color. Ratios are rounded to two decimals. Example, dark `--ok-fg` `#3fb
 | `--sale-fg` `#ffffff` on `--sale-bg` `#b3262b` (badge text) | 6.50:1 | 4.5 | Pass |
 | `--sale-bg` `#b3262b` on `--bg` `#f6f7f9` (badge edge) | 6.07:1 | 3 | Pass |
 | `--sale-bg` `#b3262b` on dark `--surface` `#18202c` (badge edge) | 2.52:1 | 3 | Below 3; text inside still 6.50:1 |
-| `--header-fg` `#222222` on `--header` `#ffffff` | 15.91:1 | 4.5 | Pass |
-| `--header-fg-soft` `#505966` on `--header` `#ffffff` | 7.09:1 | 4.5 | Pass |
-| `--header-fg` `#222222` on `--header-hover` `#f6f7f9` | 14.84:1 | 4.5 | Pass |
+| `--header-fg` `#ffffff` on `--header` `#0a0f17` / `--header-panel` `#111826` | 19.20:1 / 17.76:1 | 4.5 | Pass |
+| `--header-fg-soft` `#cfd5df` on `--header` / `--header-panel` | 13.02:1 / 12.04:1 | 4.5 | Pass |
+| `--header-fg` on `--header-hover` over `--header-panel` (`#2e3440`, highlight pill, menu hover) | 12.49:1 | 4.5 | Pass |
+| `--header-accent` `#3b78f5` on `--header` / `--header-panel` (focus edge, active lines) | 4.75:1 / 4.39:1 | 3 | Pass |
+| `--header` `#0a0f17` on `--header-accent` `#3b78f5` (initials, cart count) | 4.75:1 | 4.5 | Pass; white would be 4.05:1, so the text is dark |
+| `#ffffff` icon on `--header-accent` (search button) | 4.05:1 | 3 | Pass (icon only) |
+| `--field-line` `#6b7280` / dark `#7b8799` on `--header` (search field edge; 3.67:1 / 4.88:1 against the field) | 3.97:1 / 5.27:1 | 3 | Pass |
+| `--header-line` `#2f3b50` on `--header` | 1.70:1 | — | Decorative only: the Categories button and the pill are known by their text and icons |
+| `--header-danger` `#ff8a73` on `--header-panel` / on the hover fill | 7.73:1 / 5.43:1 | 4.5 | Pass |
+| `--focus` `#b66d00` / dark `#f0a64a` on `--header` | 4.73:1 / 9.38:1 | 3 | Pass |
+| `--focus` `#b66d00` / dark `#f0a64a` on `--header-panel` | 4.38:1 / 8.68:1 | 3 | Pass |
 | `--footer-fg` `#ffffff` on `--footer` `#1f2937` | 14.68:1 | 4.5 | Pass |
 | `--footer-fg-soft` `#e5e7eb` on `--footer` `#1f2937` | 11.86:1 | 4.5 | Pass |
 | `--focus` `#b66d00` on `--footer` `#1f2937` | 3.62:1 | 3 | Pass |
@@ -489,7 +528,7 @@ nothing is planned.
 
 | Area | Max width | Padding |
 | --- | --- | --- |
-| Header inner, home `main` | 1280px | 32px sides in the header; at least 16px sides on the page |
+| Header inner, home `main` | 1280px | 32px sides in the header (16px up to 768px); at least 16px sides on the page |
 | Catalog `main` | 1200px | 40px 24px (32px 16px up to 480px) |
 | Purchase layout | 920px | `clamp(16px, 3vw, 32px)` in the card |
 | Form card (login, register) | 420px | 36px 32px (28px 20px up to 480px) |
@@ -517,7 +556,7 @@ load at once.
 | 2, card | 1px `--line` border and `--shadow` `0 1px 3px rgba(31, 41, 55, 0.08)` | Form card, coverflow row | [Proje] |
 | 2, product card | `0 2px 8px rgba(26, 26, 26, 0.08)` | `/products` product card | [HP] |
 | 3, front card | `--card-shadow` `0 22px 44px rgba(31, 41, 55, 0.18)` | Coverflow front card | [Proje] |
-| 3, menu | `--shadow-menu` `0 10px 28px rgba(31, 41, 55, 0.18)`; dark `0 10px 28px rgba(0, 0, 0, 0.55)` | Header account menu, category mega menu panel, Modal, Toast | [Uyarlandı] |
+| 3, menu | `--shadow-menu` `0 10px 28px rgba(31, 41, 55, 0.18)`; dark `0 10px 28px rgba(0, 0, 0, 0.55)` | Header account menu, categories panel, Modal, Toast | [Uyarlandı] |
 
 The product card shadow is the token `--shadow-product`. It has no dark value yet, so the dark
 theme uses the same value; see Open questions. HP's modal level
@@ -593,46 +632,92 @@ From `cart.css`, `purchases.css` and `docs/ui-design.md`:
 
 ### Header [Uyarlandı]
 
-The first draft put the categories in the middle of one bar. Ten category names, the logo, the
-search and the account area do not fit on one line at 1280px, so the header has two rows at every
-width (decided in SCRUM-123):
+SCRUM-164 replaced SCRUM-123's white two-row header (logo, search and account, then a category bar
+that wrapped onto two lines) with the Siesta header: one dark row, with every category in a panel.
+`components/Header.jsx`, `CategoryMenu.jsx`, `HeaderSearch.jsx`, `AccountMenu.jsx` and
+`styles/site-header.css`.
 
-- White bar (`--header`), at least 64px high, inner width up to 1280px with 32px side padding
-  (16px up to 480px), and a 1px `--line` line at the bottom.
-- Row 1: the logo on the left (Poppins 23px 600, `--header-fg`), then on the right the search, the
-  account area and the cart.
-- Row 2: the category bar: "All products", then every top-level category from
-  `GET /api/categories` (`parentId` null), in the API's order.
-- Up to 768px: row 1 holds the logo, the account area and the cart; the search takes the full
-  width under it; the category bar wraps onto as many lines as it needs (four at 375px).
-- **Search:** always open, a 200px `Input` (44px, hidden label "Search products") and a 44px
-  primary `Button` with a search icon. It opens `/products?search=<text>`, the same name as the API
-  parameter, and shows the current search on that page. At most 100 characters, as in the API.
-- **Account area:** Login for a guest; for a signed-in visitor the 44px profile icon with its
-  shortcut menu (SCRUM-130) and Logout (44px, 1px `--header-fg` border, 4px corners). A product
-  manager also gets a Deliveries link. Home is the logo and Checkout starts from the cart, so
-  neither is a header link.
-- **Cart:** a 44px icon link to `/cart` with the item count in an `--accent` bubble (hidden at 0;
-  the link's label says the count). Only guests and customers see it: the cart API answers 403 to
-  staff. The count reloads on every page change, login, logout and cart change.
-- **Mega menu:** a top-level category with subcategories is a button with a chevron and
-  `aria-expanded`; it opens a full-width panel under the header listing "All <category>" and
-  every category below it. A top-level category without subcategories is a plain link. All links
-  go to `/products#category-<id>`.
-  - Mouse: hovering opens the panel, leaving closes it. Touch: a tap opens it, a second tap or a
-    tap outside closes it.
-  - Keyboard: Enter, Space or Down arrow opens it (Down also moves into it); Tab alone never opens
-    a panel. Up and Down move between the panel's links; Escape closes it and returns focus to the
-    button; tabbing out closes it.
-  - Without `parentId` (an older server, a test fixture) every category is a plain link.
-- The current page's link has a 2px `--accent` line under it (an inset shadow, so the height does
-  not change) and keeps `aria-current="page"`. On `/products#category-<id>` the category's
-  top-level item is marked.
-- Every link and button in the header is at least 44px high.
-- No strip above the header.
-- No hamburger menu or drawer. At 375px there is no sideways scroll; the browser check in CI
-  enforces this.
-- Dark theme: today's dark header tokens [Proje].
+- **Bar.** `--header` in both themes, a 1px `--header-line` line at the bottom, inner width up to
+  1280px with 32px side padding. 72px high; while the visitor scrolls down past 72px it shrinks to
+  56px, and it grows back as soon as they scroll up (240ms, `--ease-standard`; moves under 6px are
+  ignored). It is sticky at the top of the window. The `<header>` keeps its 72px in the page flow and
+  only the bar inside shrinks, so the page never moves under the visitor (a moving page would scroll
+  the window and flip the header back); the free strip lets clicks through.
+- **Order, left to right:** the Siesta wordmark (`logo` type with a 14px `--header-accent` sun), the
+  Categories button, the search (up to 560px), then on the right the product manager's Deliveries link,
+  the wishlist, the account area and the cart.
+- **Categories button.** Menu icon, "Categories" and a chevron that turns 180° while the panel is
+  open (200ms). 44px high, 10px corners, 1px `--header-line` edge (`--header-accent` while open). It is a
+  disclosure: `aria-expanded`, `aria-controls="category-panel"`. Down arrow opens the panel and moves
+  into it.
+- **Categories panel.** Full width under the bar, `--header-panel`, revealed from the top with
+  `clip-path` (260ms, `--ease-standard`). Behind it a scrim covers the page: `--header-scrim` with
+  `blur(4px)`, fading in over 240ms. Escape (wherever the focus is) or a click on the scrim closes it
+  and returns the focus to the button; a click elsewhere, tabbing out and a new page close it too.
+  - **Left column (260px):** every top-level category of `GET /api/categories` in the API's order (the
+    request the product pages share), each a real `<button>`, then an "All products" link. The active
+    item has a highlight pill (`--header-hover` with a 3px `--header-accent` line) that slides to it
+    (`top`, 240ms). The items are one Tab stop: Up, Down, Home and End move (wrapping), focus makes an
+    item active at once, Enter or a click opens `/products#category-<id>`. Hovering makes an item
+    active after 150ms, and leaving it cancels that, so a quick pass changes nothing. On a touch screen
+    the first tap on another item with subcategories only makes it active, so its links can be reached;
+    a tap on the active item opens it. The current category keeps `aria-current="page"` and an
+    underline.
+  - **Middle:** the active category's name (`heading-sm`), then "All <category>" and its
+    subcategories (every category below it). The links come in one after another: 8px up and a fade,
+    240ms, 35ms apart, again whenever the panel opens or the active category changes. Hover turns a
+    link `--header-fg` and moves it 4px to the right (200ms).
+  - **Right (280px, from 1025px):** a featured card with the active category's best seller
+    (`GET /api/products?categoryId=<id>&sort=popularity&pageSize=1`, asked only while the panel is open,
+    200ms after the active category settles, kept per category): image, "Popular in <category>", name
+    and price, linking to the product page. 1px `--header-line`, 14px corners; on hover it rises 4px
+    (320ms) and the image zooms to 1.06. No product, or a failed request, means no card: never a
+    placeholder.
+- **Search.** The same form as before: a hidden label "Search products", at most 100 characters,
+  submitting `/products?search=<text>`, the current search shown on `/products`. 44px, 10px corners,
+  `--header-panel` fill, 1px `--field-line` edge; focus: a `--header-accent` edge and a 3px
+  `--header-accent-ring` ring. The submit button is 44px with `--header-accent`.
+  - **Hint.** While the field is empty and not focused, an overlay (`aria-hidden`, no pointer events)
+    reads "Search" and types a term after it: 65ms a character, 1.5s on screen, deleted at 28ms a
+    character, then the next term, with a blinking `--header-accent` caret. The terms alternate products
+    and categories: the category names come from the categories the header already loads; the product
+    names are a constant list of seeded products in `lib/search-hints.js` (asking for best sellers would
+    add a request to every page). The real placeholder "Search products" stays for screen readers (it is
+    transparent while the hint shows). Focus or text stops and hides the hint; it goes on when the field
+    is empty and blurred. With reduced motion it shows one term and no caret. Every timer is cleared on
+    unmount.
+  - **Ctrl K.** Ctrl+K (Cmd+K on a Mac) focuses and selects the field from anywhere
+    (`aria-keyshortcuts`); a "Ctrl K" chip sits in the field while it is empty and not focused (not
+    below 769px).
+- **Account area.** A guest gets the Login link (`#auth-link`) as before. A signed-in visitor gets the
+  name pill (`#user-name`): 44px high, 22px corners, 1px `--header-line` edge, a 34px initials avatar
+  (`--header-accent`, dark `--header` letters) and the full name in `label` type, cut with "…" at
+  130px, and a chevron. On sign-in it grows from 44px to 210px (320ms) and the name fades in from 6px
+  to the left (240ms, 80ms later). Its label is "Account menu, <name>"; `title` shows the full name.
+  - **Menu.** The pill is a disclosure (`aria-expanded`, `aria-controls`); a click or Down arrow opens
+    the account menu right under it: the same 210px and right edge, no gap, no top border,
+    `--header-panel`, bottom corners 16px, revealed from the top (`clip-path`, 200ms). While it is open
+    the pill's bottom corners are square and its bottom edge is gone, so the two read as one shape.
+    Entries come in one after another (6px down and a fade, 220ms, 50ms apart from 60ms): a customer
+    gets My orders, Wishlist and Profile (the role's own page, `/dashboard`); staff keep their panel and
+    shortcuts (`accountMenuLinks` in `lib/role-routes.js`); then a thin `--header-line` line and
+    "Sign out" (`#logout`) in `--header-danger`, with the same logout as before. Escape closes it and
+    focuses the pill; a click outside, tabbing out or a new page close it.
+- **Wishlist and cart.** 44px round icon links for guests and customers (the wishlist page asks a guest
+  to log in; the cart API answers 403 to staff). The cart count sits in a `--header-accent` bubble with
+  dark `--header` text (hidden at 0; the link's label says the count) and reloads on every page change,
+  login, logout and cart change.
+- **Current page.** A header link of the current page has a 2px `--header-accent` line under it (an
+  inset shadow) and `aria-current="page"`.
+- **Up to 1024px** the Categories label is visually hidden (the button keeps its name) and the pill
+  shows only the avatar, so the search keeps its room; the featured card is left out.
+- **Up to 768px** the header has two rows and keeps its height while scrolling: the logo, the
+  Categories button and the actions, then the search over the full width. The panel stacks the list
+  and the links in one column and scrolls inside itself. Up to 480px the Categories button is a 44px
+  icon.
+- Every link and button in the header is at least 44px high. No strip above the header. The panel is
+  not a drawer: it opens under the header and does not slide over the page from a side. There is no
+  sideways scroll at 360, 768 and 1280px.
 
 ### Footer [Uyarlandı]
 
@@ -743,7 +828,7 @@ still [Belirsiz]: the sales overview has no revenue chart yet.
 - **Frame.** From 768px up, a 240px menu on the left (`--surface`, 1px `--line`, 8px corners) and the
   content on the right. Page titles `heading-lg` (Poppins), text `body-md` (Open Sans). Inner width up to
   1280px.
-- **Menu.** Product manager: Overview, Deliveries, Reviews, Low stock. Sales manager: Overview, Invoices,
+- **Menu.** Product manager: Overview, Deliveries, Reviews, Low stock, Catalog. Sales manager: Overview, Invoices,
   Discounts. Every item is 44px high. Hover shows a 3px `--accent` line on the left (an inset shadow, 200ms).
   The current page keeps `aria-current="page"`, the same line and a light `--accent` tint,
   `color-mix(in srgb, var(--accent) 10%, var(--surface))` (light `#e6edfb`, dark `#1a283c`). The tint is
@@ -751,7 +836,7 @@ still [Belirsiz]: the sales overview has no revenue chart yet.
 - **Below 768px** the menu is a disclosure at the top: a 44px "Menu" button with `aria-expanded` that shows
   the current section and opens the same list under it; choosing an item or Escape closes it. This is the
   one exception to "no hamburger drawer": it is not a drawer and does not cover the page, like the
-  header's mega menu.
+  header's Categories panel.
 - **KPI cards.** `Card` with a 1px `--line` border, `--shadow` and 10px corners; label in `label`, value in
   `heading-md` with tabular numbers, tr-TR format (amounts in TRY). 4 columns, 2 up to 1024px, 1 up to
   480px.
@@ -880,6 +965,13 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
   and the button; shake; spotlight; spinner; the 0.95s `--ok` fill and the check), plus the two cards rising 24px
   in 0.85s on the same curve, 140ms apart (`profile-card-in`). After a save the check and "Saved" stay about 1.8s,
   then the button reads "Save changes" again.
+- Header (SCRUM-164): the tokens `--ease-standard` `cubic-bezier(0.4, 0, 0.2, 1)`, `--dur-fast` 200ms and
+  `--dur-base` 320ms (`design-system.css`) drive every header transition; the header's own steps are custom
+  properties on `.site-header` in `site-header.css`. Bar height 240ms; Categories chevron 200ms; panel reveal
+  (`clip-path`) 260ms; scrim fade 240ms; highlight pill `top` 240ms; panel links 8px up and a fade, 240ms, 35ms
+  apart; link hover 4px, 200ms; featured card rise and image zoom 320ms; search focus ring 200ms; typing hint
+  65ms / 1.5s / 28ms with a 1s caret blink; name pill width 320ms and name 240ms after 80ms; account menu reveal
+  200ms and its entries 220ms, 50ms apart from 60ms. Keyframes start with `site-header-`.
 - No animation library.
 - `prefers-reduced-motion: reduce` turns these off and shows the final state at once. The reveal
   masks must come off in that mode too, or they clip the focus ring. On the home page side cards
@@ -887,7 +979,8 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
   show their final value at once and an approved review's tick and green show at once; the row still
   waits 800ms, then goes without a fade. On the profile page the cards do not rise, and after a save
   the check and "Saved" show at once without the fill. A Modal and a toast appear at once, without the rise
-  or the fade.
+  or the fade. In the header no animation or transition runs at all: the bar, panel, scrim, pill and menu
+  change at once, and the search shows one hint term without the typing or the caret.
 
 ## Accessibility patterns [Proje]
 
@@ -896,8 +989,9 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
 - Every focusable element shows a 3px `--focus` outline with a 2px to 4px offset.
 - Status messages use `role="status"`, errors `role="alert"`.
 - The current page's nav link has `aria-current="page"`.
-- The category mega menu follows the disclosure pattern: buttons with `aria-expanded` and
-  `aria-controls`, opened by Enter, Space or Down arrow, closed by Escape (see Header).
+- The header's Categories button and name pill follow the disclosure pattern: `aria-expanded` and
+  `aria-controls`, opened by Enter, Space or Down arrow, closed by Escape, which returns the focus to the
+  button (see Header).
 - Every page has a "Skip to content" link (`Layout.jsx`) that appears on focus.
 - Images have `alt` text; a missing image shows a text placeholder.
 - Text contrast is at least 4.5:1 and control contrast at least 3:1 (see Contrast).
@@ -910,7 +1004,7 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
 ### Do
 
 - Use the tokens; never write a color directly in a rule [Proje].
-- Keep `--accent` for the main action on a screen and the active nav underline [Uyarlandı].
+- Keep `--accent` for the main action on a screen; in the dark header use `--header-accent` [Uyarlandı].
 - Use 4px corners on buttons and 16px on product cards [HP].
 - Keep form fields at 44px with a visible `--field-line` border and the 3px focus ring [Proje].
 - Change a dark value in both dark blocks [Proje].
@@ -924,7 +1018,8 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
   storm colors, the printer plan cards, the "How can we help?" band or the strip above the header.
 - Don't change the coverflow's geometry or motion here; `docs/ui-design.md` owns it [Proje].
 - Don't add a hamburger drawer or a separate mobile layout [Uyarlandı]. The admin panel's menu
-  disclosure below 768px is the one exception (see Admin panel).
+  disclosure below 768px is one exception (see Admin panel); the header's Categories panel opens under the
+  header, not from the side, and is not a drawer either.
 - Don't load more font weights than `index.html` loads [Proje].
 
 ## Responsive
@@ -939,8 +1034,8 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
 
 - Write media queries at 480, 768, 1024 and 1280px.
 - Touch targets are at least 44 × 44px.
-- No mobile-specific design: the header wraps, grids reflow, and there is no sideways scroll at
-  375px. The product grid steps from 4 columns to 3 (up to 1024px), 2 (up to 768px) and 1 (up
+- No mobile-specific design: the header puts the search on a second row up to 768px, grids reflow,
+  and there is no sideways scroll at 360px. The product grid steps from 4 columns to 3 (up to 1024px), 2 (up to 768px) and 1 (up
   to 480px); other grids use `auto-fit`.
 - Existing max widths stay (see Layout) [Proje].
 - Thresholds that belong to a component stay as they are: the coverflow's 700px track width and
@@ -1016,11 +1111,17 @@ Mistakes in it, corrected here:
 13. **Breakpoints in the code.** The cart switches at 576px (36rem); keep it or move it to 480. The
     product detail moved from 700px to 768px in SCRUM-134.
 14. **Touch targets under 44px.** The home sort select (40px). The cart quantity and Remove buttons
-    are 44px since SCRUM-138, Logout and the profile icon since SCRUM-123. The full list is in
+    are 44px since SCRUM-138, the header's controls since SCRUM-123 (the SCRUM-164 header keeps them at
+    44px). The full list is in
     "Migration status" (Touch targets).
-15. **Header search and mega menu.** Decided in SCRUM-123: two header rows, a 200px search field,
-    and a full-width panel per top-level category (see Header). The number stays so the numbers
-    below do not change.
+15. **Header search and mega menu.** Decided in SCRUM-123 (two rows, a 200px search, a panel per
+    top-level category) and replaced in SCRUM-164: one dark row, a search up to 560px and one Categories
+    panel (see Header). The number stays so the numbers below do not change.
+18. **Header colors and the avatar.** SCRUM-164 makes the header dark in both themes with new
+    `--header-*` tokens and `#3b78f5` as the header's blue. White initials on `#3b78f5` would be 4.05:1,
+    so the avatar and the cart count use dark `--header` text (4.75:1). Open: whether the light theme
+    should get a light header back one day, and whether `#3b78f5` should become the dark theme's
+    `--accent`.
 16. **Manrope.** Could be considered later; nothing planned.
 17. **Disabled button look.** Decided in SCRUM-134 (option A): an unavailable action such as "Out of
     stock" is the `Button` with `unavailable`, a `--line` fill with `--muted` text at full opacity
@@ -1036,8 +1137,9 @@ header, footer and `/products` product card on them. SCRUM-134 moved the remaini
 register, profile, cart, checkout, order confirmation, orders, deliveries, product page, wishlist,
 dashboard, support and the `/products` page itself) to the tokens and shared parts, added `Modal`,
 `Toast`, the secondary and unavailable `Button` and the form `Card`, and added
-`scripts/verify_responsive_browser.py`. What is still open is the home page (SCRUM-126), the reviews
-section on the product page and the items DESIGN.md marks [Belirsiz]; the rows below say which.
+`scripts/verify_responsive_browser.py`. SCRUM-164 renamed the store to Siesta and rebuilt the header
+(dark single row, Categories panel, typing search hint, name pill) with the motion tokens. What is still open
+is the home page (SCRUM-126) and the items DESIGN.md marks [Belirsiz]; the rows below say which.
 
 ### Colors
 
@@ -1057,10 +1159,11 @@ section on the product page and the items DESIGN.md marks [Belirsiz]; the rows b
 | `--danger` | `#a32b12` | `#a32b12` | `design-system.css`, `products.css`, `orders.css` |
 | `--ok` | `#1a7f37` | `#1a7f37` | `design-system.css` |
 | `--ok-fg` | `#1a7f37` (dark `#3fb950`) | Matches; in-stock text on the product list, product page and wishlist | `design-system.css`, `products.css` |
-| `--header` | `#ffffff` | `#ffffff` | `design-system.css`, `site-header.css` |
-| `--header-fg` | `#222222` | `#222222` | `design-system.css`, `site-header.css` |
-| `--header-fg-soft` | `#505966` | `#505966` | `design-system.css` |
-| `--header-hover` | `#f6f7f9` | `#f6f7f9` | `design-system.css` |
+| `--header` | `#0a0f17` (both themes, SCRUM-164) | `#0a0f17` | `design-system.css`, `site-header.css` |
+| `--header-fg` | `#ffffff` | `#ffffff` | `design-system.css`, `site-header.css` |
+| `--header-fg-soft` | `#cfd5df` | `#cfd5df` | `design-system.css`, `site-header.css` |
+| `--header-hover` | `rgba(255, 255, 255, 0.12)` | `rgba(255, 255, 255, 0.12)` | `design-system.css`, `site-header.css` |
+| `--header-panel`, `--header-line`, `--header-accent`, `--header-accent-ring`, `--header-danger`, `--header-scrim` | `#111826`, `#2f3b50`, `#3b78f5`, `rgba(59, 120, 245, 0.28)`, `#ff8a73`, `rgba(10, 15, 26, 0.5)` | Match (SCRUM-164) | `design-system.css`, `site-header.css` |
 | `--footer` | `#1f2937` | `#1f2937` | `design-system.css`, `site-footer.css` |
 | `--footer-fg` | `#ffffff` | `#ffffff` | `design-system.css`, `site-footer.css` |
 | `--footer-fg-soft` | `#e5e7eb` | `#e5e7eb` | `design-system.css`, `site-footer.css` |
@@ -1089,9 +1192,11 @@ section on the product page and the items DESIGN.md marks [Belirsiz]; the rows b
 | Primary button corners | 4px | Matches: `Button` 4px on every page | `components/ui/Button.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login, register and profile add their ring glow and spotlight on top | `components/ui/Button.css`; `auth.css` |
 | Secondary button | 44px, 4px corners | Matches: `Button` `variant="secondary"` (cart, checkout, deliveries, product page, wishlist, /products, the error box); the `/products` category links use the same values | `components/ui/Button.css`, `products.css` |
-| Header | White, at least 64px, 1px `--line` bottom, two rows | Matches | `site-header.css`, `Header.jsx` |
-| Header content | Logo, API categories with mega menu, search, account, cart count | Matches | `Header.jsx`, `CategoryMenu.jsx` |
-| Active nav link | 2px `--accent` underline | Matches | `site-header.css` |
+| Header | Dark single row, 72px, 56px while scrolling down, sticky, 1px `--header-line` bottom | Matches (SCRUM-164) | `site-header.css`, `Header.jsx` |
+| Header content | Siesta wordmark, Categories panel (API categories, pill, links, best-seller card), search with typing hint and Ctrl K, wishlist, name pill with account menu, cart count | Matches (SCRUM-164) | `Header.jsx`, `CategoryMenu.jsx`, `HeaderSearch.jsx`, `AccountMenu.jsx`, `lib/search-hints.js`, `lib/site-header.js`, `lib/role-routes.js` |
+| Active nav link | 2px `--header-accent` underline | Matches | `site-header.css` |
+| Motion tokens | `--ease-standard`, `--dur-fast`, `--dur-base` | Defined; used by the header only (other parts keep their own curves) | `design-system.css`, `site-header.css` |
+| Store name | Siesta | Header, footer and every page title; the invoice PDF still says "Online Store" (backend, outside SCRUM-164) | `Header.jsx`, `Footer.jsx`, `pages/*.jsx`, `index.html` |
 | Footer | `--footer` dark | Matches | `site-footer.css`, `Footer.jsx` |
 | Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | Matches: `Card`, 1:1 image, "Add to cart" `Button` | `components/ui/Card.css`, `products.css`, `ProductCard.jsx` |
 | Product card spec row | One `body-sm` row | Matches: brand, or the first line of the description | `ProductCard.jsx`, `lib/product-display.js` |
@@ -1103,12 +1208,12 @@ section on the product page and the items DESIGN.md marks [Belirsiz]; the rows b
 | Purchase card | `--surface`, `--line` | Matches: `--surface`, 1px `--line`, `--shadow`, 10px corners | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | Matches: the checkout fields are `Input`, as is the header search | `components/ui/Input.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Matches: errors use the shared error state; the unused `.purchase-message` rules are gone | `request-states.css` |
-| Product page | Framed card, gallery and details side by side, `Button`s, 44px links | Matches: layout restored on tokens (one column up to 768px), `Input`, `Button` (unavailable for Out of stock), secondary wishlist button (SCRUM-134). Not yet: the reviews section (SCRUM-137) uses token colors but rem spacing, type fallbacks such as `var(--type-heading-md, …)`, its own 0.3rem select and textarea instead of `Input`, and a 0.85rem status pill | `pages/ProductPage.jsx`, `components/ProductDetail.jsx`, `AddToCart.jsx`, `WishlistButton.jsx`, `styles/product-detail.css`, `add-to-cart.css`; `reviews.css` |
+| Product page | Framed card, gallery and details side by side, `Button`s, 44px links | Matches: layout restored on tokens (one column up to 768px), `Input`, `Button` (unavailable for Out of stock), secondary wishlist button; the reviews section uses the tokens, `Input` (select and multiline) and `Button` (SCRUM-134) | `pages/ProductPage.jsx`, `components/ProductDetail.jsx`, `AddToCart.jsx`, `WishlistButton.jsx`, `ProductReviews.jsx`, `styles/product-detail.css`, `add-to-cart.css`, `reviews.css` |
 | Wishlist | Product-card frame, `Button` | Matches: `Card`, secondary Remove `Button`, 44px title links (SCRUM-134); the look is still [Belirsiz] | `pages/WishlistPage.jsx`, `styles/wishlist.css` |
 | Dashboard and support | Tokens, type scale, 44px links | Matches (SCRUM-134); the order status pill keeps the interim look | `pages/DashboardPage.jsx`, `pages/RoleHomePages.jsx`, `styles/role-home.css` |
 | Error box "Try again" | Secondary button | Matches: `ui-button ui-button--secondary` (SCRUM-134) | `components/RequestStates.js`, `styles/request-states.css` |
 | Order status badge | [Belirsiz] (see Order status badges) | Interim pill on tokens: `--field-line` edge, `--ok` for delivered, `--danger` for cancelled, `label` / `caption` type; not a design decision | `orders.css`, `role-home.css` |
-| Rating stars and reviews | [Belirsiz] (see Rating stars and reviews) | Stars are `--accent` text characters; see the product page row for the reviews section | `components/ProductReviews.jsx`, `reviews.css` |
+| Rating stars and reviews | [Belirsiz] (see Rating stars and reviews) | Stars are `--accent` text characters (the look is undecided); the reviews section is on the tokens: spacing, corners, `heading-md` / `heading-sm` titles, a `badge`-type status pill, `Input` fields and `Button` actions (SCRUM-134) | `components/ProductReviews.jsx`, `reviews.css` |
 
 ### Layout and responsive
 
@@ -1116,6 +1221,6 @@ section on the product page and the items DESIGN.md marks [Belirsiz]; the rows b
 | --- | --- | --- | --- |
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (form card, Modal, catalog, purchase, reviews, header, admin), 768 (product grid, product detail, header; the admin panel's `767.98px` is the same step), 1024 (product grid, admin), 1280 (admin); 576 (cart, open question 13) and 733 (home status, kept as a component threshold) | `components/ui/Card.css`, `components/ui/Modal.css`, `products.css`, `purchases.css`, `product-detail.css`, `reviews.css`, `site-header.css`, `admin.css`; `cart.css`, `home.css` |
 | Touch targets | 44px | Matches everywhere but the home page: header, footer, card, cart and purchase-page buttons; order review links and the order and invoice PDF links; the product page's back, category and wishlist login links and quantity field; the wishlist title links; the dashboard section and order links; and the `/products` filter fields, category links, buttons and card title links are 44px (SCRUM-134). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px (home page, SCRUM-126) | `home.css` |
-| No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks) | `scripts/verify_responsive_browser.py` |
+| No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks); with the SCRUM-164 header also at 360px (72 checks at 360, 768 and 1280px) | `scripts/verify_responsive_browser.py` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
 | Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Matches, through `Card` | `design-system.css`, `components/ui/Card.css` |

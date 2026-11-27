@@ -40,7 +40,7 @@ public static class WishlistEndpoints
             if (!TryOwner(principal, out var owner)) return Results.Unauthorized();
             if (productId <= 0) return Results.NotFound();
             var productExists = await db.Products.AnyAsync(
-                product => product.Id == productId && product.IsActive && product.Category.IsActive, ct);
+                product => product.Id == productId && product.IsActive && product.Price > 0 && product.Category.IsActive, ct);
             if (!productExists) return Results.NotFound();
 
             var exists = await db.WishlistItems.AnyAsync(item => item.UserId == owner && item.ProductId == productId, ct);

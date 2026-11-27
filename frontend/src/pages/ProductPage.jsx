@@ -31,7 +31,7 @@ export default function ProductPage() {
 
   return (
     <div className="route-page catalog-page product-page">
-      <title>{product ? `${product.name} | Online Store` : "Product | Online Store"}</title>
+      <title>{product ? `${product.name} | Siesta` : "Product | Siesta"}</title>
       <main id="main-content">
         <p className="back-link"><Link to="/products">&larr; Back to all products</Link></p>
         <div aria-busy={status === "loading"}>

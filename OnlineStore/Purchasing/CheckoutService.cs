@@ -109,7 +109,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
             order.OrderItems.Add(snapshot);
             // Defense in depth: the row lock AND the affected-row guard prevent overselling.
             var changed = await db.Products.Where(product => product.Id == line.ProductId
-                    && product.IsActive && product.StockQuantity >= line.Quantity)
+                    && product.IsActive && product.Price > 0 && product.StockQuantity >= line.Quantity)
                 .ExecuteUpdateAsync(update => update.SetProperty(product => product.StockQuantity,
                     product => product.StockQuantity - line.Quantity), ct);
             if (changed != 1) throw new PurchaseException(409, "Stock changed. Review your cart before trying again.");
@@ -146,7 +146,7 @@ public sealed class CheckoutService(StoreDbContext db, ICheckoutPaymentGateway p
         User user, Cart cart, DateTime now, CancellationToken ct)
     {
         if (cart.Items.Count is 0 or > 100) throw new PurchaseException(409, "Use a cart with 1 to 100 product lines.");
-        if (cart.Items.Any(line => line.Quantity <= 0 || !line.Product.IsActive || line.Quantity > line.Product.StockQuantity))
+        if (cart.Items.Any(line => line.Quantity <= 0 || !line.Product.IsActive || line.Product.Price <= 0 || line.Quantity > line.Product.StockQuantity))
             throw new PurchaseException(409, "Some products are unavailable or exceed stock. Update your cart before checkout.");
         var productIds = cart.Items.Select(line => line.ProductId).ToArray();
         var active = await ProductPricing.ActiveLinks(db, now).Where(link => productIds.Contains(link.ProductId))

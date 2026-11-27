@@ -20,5 +20,7 @@
 /* Textarea: at least 88px (three lines), padding 10px 12px, resized only in height. */
 .ui-input--multiline { height: auto; min-height: 88px; padding: 10px var(--space-sm); resize: vertical; }
 .ui-input--multiline[aria-invalid="true"] { padding: 9px calc(var(--space-sm) - 1px); }
+/* Select: the same frame; the browser draws the arrow. */
+.ui-input--select { cursor: pointer; }
 .ui-field-hint { margin: 0; font: var(--type-body-sm); color: var(--muted); }
 .ui-field-error { margin: 0; font: var(--type-field-error); color: var(--danger); }

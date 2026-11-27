@@ -10,10 +10,10 @@
   /* Colors, light theme. */
   --bg: #f6f7f9;
   --surface: #ffffff;
-  --header: #ffffff;
-  --header-fg: #222222;
-  --header-fg-soft: #505966;
-  --header-hover: #f6f7f9;
+  --header: #0a0f17;
+  --header-fg: #ffffff;
+  --header-fg-soft: #cfd5df;
+  --header-hover: rgba(255, 255, 255, 0.12);
   --footer: #1f2937;
   --footer-fg: #ffffff;
   --footer-fg-soft: #e5e7eb;
@@ -71,7 +71,6 @@
   --space-xl: 24px;
   --space-xxl: 32px;
   --space-form-card-y: 36px;
-  --header-height: 64px;
   --touch-target: 44px;
   --form-max: 420px;
   --catalog-max: 1200px;
@@ -86,6 +85,21 @@
   --radius-panel: 12px;
   --radius-product: 16px;
   --radius-full: 9999px;
+
+  /* Motion (SCRUM-164). The header's transitions use these; other parts keep their own values for now. */
+  --ease-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --dur-fast: 200ms;
+  --dur-base: 320ms;
+
+  /* The Siesta header (SCRUM-164) is dark in both themes, so its colors have no separate dark values. */
+  --header-height: 72px;
+  --header-height-compact: 56px;
+  --header-panel: #111826;
+  --header-line: #2f3b50;
+  --header-accent: #3b78f5;
+  --header-accent-ring: rgba(59, 120, 245, 0.28);
+  --header-danger: #ff8a73;
+  --header-scrim: rgba(10, 15, 26, 0.5);
 }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) {

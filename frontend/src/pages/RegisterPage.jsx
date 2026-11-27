@@ -99,7 +99,7 @@ export default function RegisterPage() {
 
   return (
     <div className="route-page auth-page">
-      <title>Create account | Online Store</title>
+      <title>Create account | Siesta</title>
       <main id="main-content">
         {form.showForm && (
           <Card as="form" variant="form" id="register-form" {...form.formProps} onSubmit={handleSubmit}>

@@ -89,7 +89,7 @@ function WishlistContents() {
 export default function WishlistPage() {
   return (
     <div className="route-page catalog-page wishlist-page">
-      <title>My wishlist | Online Store</title>
+      <title>My wishlist | Siesta</title>
       <main id="main-content">
         <h1>My wishlist</h1>
         <PurchaseAccess role="Customer">{account => <WishlistContents key={account.id} />}</PurchaseAccess>

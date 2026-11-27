@@ -3,6 +3,10 @@
 /* A wrapper cannot reach body, so this rule has to stay global. Every old page already sets margin 0. */
 body { margin: 0; }
 
+/* The site header is sticky (SCRUM-164): a jump to an anchor stops below it instead of under it. */
+html { scroll-padding-top: var(--header-height); }
+@media (max-width: 768px) { html { scroll-padding-top: 128px; } }
+
 .app-shell { min-height: 100vh; display: flex; flex-direction: column; }
 .route-page { flex: 1; }
 
