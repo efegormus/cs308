@@ -61,6 +61,7 @@ builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<ICheckoutPaymentGateway, MockPaymentGateway>();
 builder.Services.AddScoped<CheckoutService>();
 builder.Services.AddScoped<DeliveryService>();
+builder.Services.AddScoped<CancellationService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<PricingService>();

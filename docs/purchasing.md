@@ -22,6 +22,7 @@ require `X-CSRF-TOKEN` obtained from `/api/auth/csrf` for the current identity.
 | `POST /api/customer/checkout` | Customer | 201 purchase receipt; 200 when replaying a completed attempt |
 | `GET /api/customer/checkout/attempts/{UUID}` | Customer | Recover the owner's completed attempt after a lost response; 404 otherwise |
 | `GET /api/customer/orders/{id}` | Customer | Owner-only order snapshot and current payment/fulfillment; 404 for another owner |
+| `POST /api/customer/orders/{id}/cancel` | Customer + CSRF | Owner cancels an order that is still Processing (SCRUM-157); stock goes back in the same transaction; 404 for another owner, 409 once the order is InTransit or Delivered; repeating it answers `alreadyCancelled: true` and changes nothing |
 | `GET /api/product-management/deliveries?afterId=0` | ProductManager | Up to 50 deliveries, snapshot lines/totals/address and `nextAfterId` |
 | `POST /api/product-management/deliveries/{id}/status` | ProductManager | Guarded transition and refreshed version/view |
 
@@ -157,3 +158,20 @@ shipping/delivery reflected in the owner receipt, and recovery after deliberatel
 losing the successful POST response. Temporary fixture rows were removed afterwards.
 
 The React pages and ASP.NET hosting are documented in [react-hosting.md](react-hosting.md).
+
+## Customer cancellation (SCRUM-157)
+
+`POST /api/customer/orders/{id}/cancel` (no body, `X-CSRF-TOKEN` header) answers
+`{ orderId, status: "Cancelled", cancelledAt, alreadyCancelled, itemsRestored, refunded }`.
+
+- Only the owner can cancel: another customer's order id answers 404, the same as an unknown id.
+- Only a paid order that is still `Processing` can be cancelled. `InTransit` and `Delivered` orders answer 409
+  and keep their stock; an unpaid attempt answers 409.
+- In one transaction the order becomes `Cancelled` (with `CancelledAt`), its shipment becomes `Cancelled` so the
+  product manager can no longer ship it, and each line's quantity is added back to the product's stock.
+- Requests are serialized by the order row lock. A repeated or simultaneous request finds the order already
+  `Cancelled`, answers 200 with `alreadyCancelled: true` and restores nothing, so stock is never restored twice.
+- The refund is recorded in the same transaction as a `Completed` `Refunds` row with reason `Cancellation`, for the
+  full payment amount (the database allows one cancellation refund per order). The mock payment gateway has no refund
+  call, so no money really moves. `paymentStatus` and the payment stay `Confirmed`: the profit report (SCRUM-152)
+  counts revenue as confirmed payments minus completed refunds, so a cancelled order drops out of revenue and cost.
