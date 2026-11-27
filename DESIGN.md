@@ -343,6 +343,7 @@ from borders and one light shadow, not from heavy elevation.
 Non-color tokens that stay as they are [Proje]: `--shadow` `0 1px 3px rgba(31, 41, 55, 0.08)`,
 `--btn-glow` `rgba(255, 255, 255, 0.28)`, `--ring-glow` `rgba(23, 74, 139, 0.22)`. `--ring-glow`
 and the home page's `--halo` are tints of the old accent `#174a8b`; see Open questions.
+`--backdrop` `rgba(31, 41, 55, 0.5)` [Uyarlandı] is new: the veil behind a Modal (see Modal).
 
 ### Dark theme [Proje]
 
@@ -376,6 +377,7 @@ written in both dark blocks too, because its light value changed and the dark th
 | `--ok-fg` | `#3fb950` | [Uyarlandı] New; the value of the home page's `--home-ok` |
 | `--shadow` | `0 1px 3px rgba(0, 0, 0, 0.4)` | [Proje] |
 | `--ring-glow` | `rgba(77, 132, 224, 0.35)` | [Proje] |
+| `--backdrop` | `rgba(0, 0, 0, 0.7)` | [Uyarlandı] New; the Modal veil |
 | `--footer` | `#0a0f17` | [Uyarlandı] New; today's dark `--header` |
 | `--footer-fg` | `#ffffff` | [Uyarlandı] New |
 | `--footer-fg-soft` | `#cfd5df` | [Uyarlandı] New |
@@ -515,11 +517,11 @@ load at once.
 | 2, card | 1px `--line` border and `--shadow` `0 1px 3px rgba(31, 41, 55, 0.08)` | Form card, coverflow row | [Proje] |
 | 2, product card | `0 2px 8px rgba(26, 26, 26, 0.08)` | `/products` product card | [HP] |
 | 3, front card | `--card-shadow` `0 22px 44px rgba(31, 41, 55, 0.18)` | Coverflow front card | [Proje] |
-| 3, menu | `--shadow-menu` `0 10px 28px rgba(31, 41, 55, 0.18)`; dark `0 10px 28px rgba(0, 0, 0, 0.55)` | Header account menu, category mega menu panel | [Uyarlandı] |
+| 3, menu | `--shadow-menu` `0 10px 28px rgba(31, 41, 55, 0.18)`; dark `0 10px 28px rgba(0, 0, 0, 0.55)` | Header account menu, category mega menu panel, Modal, Toast | [Uyarlandı] |
 
 The product card shadow is the token `--shadow-product`. It has no dark value yet, so the dark
 theme uses the same value; see Open questions. HP's modal level
-(`0 8px 24px`) has no use in the store yet.
+(`0 8px 24px`) is not used: the Modal takes `--shadow-menu` over the `--backdrop` veil.
 
 ## Shapes
 
@@ -809,9 +811,54 @@ from the login and register parts (`.auth-page`, `useAuthForm`) and keeps their 
 
 Support chat for guests and customers (requirement 13). Decision pending.
 
-### Toast [Belirsiz]
+### Modal [Uyarlandı]
 
-Decision pending.
+The shared `Modal` (`components/ui/Modal.jsx`, SCRUM-134), for a question or a short form that must be answered
+before the page goes on. No page uses it yet; use it only where a page really needs one.
+
+- **Frame.** The form card lifted over the page: `--surface`, 1px `--line`, 10px corners (`rounded.card`) and
+  `--shadow-menu`. Up to 480px wide, with at least 16px around it on a narrow screen; the body scrolls when it
+  is taller than the window. Title `heading-sm` (Poppins 20px 600), text `body-md`, actions on the right in
+  the footer.
+- **Veil.** `--backdrop` (light `rgba(31, 41, 55, 0.5)`, dark `rgba(0, 0, 0, 0.7)`) behind it. New token.
+- **Close.** A 44px icon button with `aria-label` "Close" at the top right, `--muted`, `--bg` on hover.
+- **Behaviour.** It is a `<dialog>` opened with `showModal()`, so the page behind is inert. `aria-modal="true"`,
+  named by its title. Focus goes to the first field or action (the close button only when there is nothing
+  else), Tab and Shift+Tab stay inside, and focus goes back to the element that opened it. Escape, the close
+  button and a click on the veil close it (a drag that starts inside does not). The parent owns `open` and
+  closes it in `onClose`.
+- A toast shown while a modal is open sits under the veil.
+
+| Pair | Ratio | Need | Result |
+| --- | --- | --- | --- |
+| `--surface` `#ffffff` panel on the light veil over `--bg` (`#8a9098`) | 3.22:1 | 3 | Pass |
+| Dark `--surface` `#18202c` panel / its `--line` on the dark veil (`#040608`) | 1.24:1 / 1.62:1 | — | Decorative; the page behind is inert and the panel holds the focus |
+| `--muted` close icon on `--surface` / dark | 7.09:1 / 7.30:1 | 3 | Pass |
+
+### Toast [Uyarlandı]
+
+The shared `Toast` (`components/ui/Toast.jsx`, SCRUM-134): `useToasts()` keeps the list and `ToastRegion` shows it.
+For a short notice that does not need an answer. No page uses it yet; the pages keep their inline
+`role="status"` lines, which stay on screen.
+
+- **Look.** A `--surface` card with a 1px `--line` border, 6px corners (`rounded.field`), `--shadow-menu` and a 3px
+  line on the left (an inset shadow, as on the profile note): `--accent` for information, `--ok-fg` for success,
+  `--danger` for an error. Text `body-sm` in `--fg`. A 44px icon close button (`aria-label` "Dismiss
+  notification") on the right. No new token.
+- **Place.** Bottom right, 16px from the edges, up to 360px wide; on a narrow screen the window width minus 16px on
+  each side. At most three; a fourth pushes the oldest out. The newest is at the bottom.
+- **Timing.** A toast closes after 5s, paused while the pointer is over it or focus is in it. A toast can stay until
+  it is closed (`duration: 0`), as an error that must be read should.
+- **Screen readers.** The region is a `role="status"`, `aria-live="polite"` region that stays on the page; an error's
+  text has `role="alert"`.
+
+| Pair | Ratio | Need | Result |
+| --- | --- | --- | --- |
+| `--fg` on `--surface` / dark | 15.91:1 / 13.71:1 | 4.5 | Pass |
+| `--accent` line on `--surface` / dark `#2d6bcf` on `#18202c` | 7.06:1 / 3.21:1 | 3 | Pass |
+| `--ok-fg` line on `--surface` / dark | 5.08:1 / 6.45:1 | 3 | Pass |
+| `--danger` line on `--surface` / dark | 7.21:1 / 7.13:1 | 3 | Pass |
+| `--muted` close icon on `--surface` / dark | 7.09:1 / 7.30:1 | 3 | Pass |
 
 ## Motion and reduced motion [Proje]
 
@@ -825,6 +872,8 @@ Decision pending.
   (220ms, 80ms apart) and count from 0 (700ms, easeOutCubic), skeleton rows shimmer (1.2s), and the
   review approval runs 200ms (button to circle), 120ms + 250ms (tick), 800ms (hold) and 250ms (close).
   The values live in `frontend/src/lib/motion.js`; keyframes start with `admin-`.
+- Modal and Toast (SCRUM-134): the panel and a new toast rise 8px and fade in (200ms, the entrance curve); the
+  veil fades in (200ms). Closing has no animation. Keyframes start with `ui-`.
 - Customer profile (SCRUM-103): the login and register motion (masked reveal of the title, text, note, every field
   and the button; shake; spotlight; spinner; the 0.95s `--ok` fill and the check), plus the two cards rising 24px
   in 0.85s on the same curve, 140ms apart (`profile-card-in`). After a save the check and "Saved" stay about 1.8s,
@@ -835,7 +884,8 @@ Decision pending.
   scale instead of turning and the VIEW circle sits on the pointer. In the admin panel KPI values
   show their final value at once and an approved review's tick and green show at once; the row still
   waits 800ms, then goes without a fade. On the profile page the cards do not rise, and after a save
-  the check and "Saved" show at once without the fill.
+  the check and "Saved" show at once without the fill. A Modal and a toast appear at once, without the rise
+  or the fade.
 
 ## Accessibility patterns [Proje]
 
@@ -1042,6 +1092,8 @@ the dark theme too.
 | Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | Matches: `Card`, 1:1 image, "Add to cart" `Button` | `components/ui/Card.css`, `products.css`, `ProductCard.jsx` |
 | Product card spec row | One `body-sm` row | Matches: brand, or the first line of the description | `ProductCard.jsx`, `lib/product-display.js` |
 | Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
+| Modal | Form card over `--backdrop`, focus kept inside, Escape and veil close | `Modal` matches (SCRUM-134); no page uses it yet | `components/ui/Modal.jsx`, `Modal.css` |
+| Toast | `--surface` card, 3px tone line, 44px close, 5s, polite live region | `Toast` matches (SCRUM-134); no page uses it yet | `components/ui/Toast.jsx`, `Toast.css` |
 | Admin panel | Menu, KPI cards, `Table`, review approval | Matches (SCRUM-124) | `pages/AdminPanelPage.jsx`, `components/admin/`, `components/ui/Table.js`, `styles/admin.css` |
 | Customer profile | Form cards, neutral note, 32px title and 44px button | Cards and note match; title 28px and button 48px with 6px corners, as on login (SCRUM-103) | `pages/ProfilePage.jsx`, `styles/profile.css`, `auth.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
