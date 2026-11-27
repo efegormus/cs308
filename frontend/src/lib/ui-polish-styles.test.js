@@ -15,12 +15,16 @@ test("order history and dashboard load-more buttons use the shared ui-button", (
   assert.match(read("pages/OrdersPage.jsx"), /id="more-orders" className="ui-button"/);
 });
 
-test("route pages give ui-button the accent fill so page styles cannot override it", () => {
-  assert.match(css("purchases"), /\.route-page \.ui-button \{[^}]*background: var\(--accent\)/);
+// SCRUM-134: the old .route-page .ui-button override also painted the secondary Button blue. Only links styled as
+// buttons need help now, because products.css colors every link with --link.
+test("links styled as buttons keep the button text color", () => {
+  assert.doesNotMatch(css("purchases"), /\.route-page \.ui-button \{/);
+  assert.match(css("purchases"), /\.route-page a\.ui-button \{ color: var\(--accent-fg\); \}/);
+  assert.match(css("purchases"), /\.route-page a\.ui-button--secondary \{ color: var\(--link\); \}/);
 });
 
 test("cart quantity controls meet the 44px touch target", () => {
-  assert.match(css("cart"), /\.cart-quantity button \{[^}]*min-height: 2\.75rem/);
+  assert.match(css("cart"), /\.cart-quantity \.ui-button \{[^}]*min-height: var\(--touch-target\)/);
 });
 
 test("order review links are chips, not a bulleted list", () => {

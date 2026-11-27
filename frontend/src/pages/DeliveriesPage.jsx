@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
+import Button from "../components/ui/Button.jsx";
 import { loginHref } from "../lib/auth-utils.js";
 import { fetchDeliveries, transitionDelivery } from "../lib/purchase-api.js";
 import { formatPrice } from "../lib/product-display.js";
@@ -22,9 +23,9 @@ function DeliveryCard({ delivery, busy, onTransition }) {
     </li>)}</ul>
     <p className="purchase-total">Original total: {formatPrice(delivery.total)}</p>
     {(delivery.canShip || delivery.canDeliver)
-      ? <button type="button" disabled={busy} onClick={() => onTransition(delivery, delivery.canShip ? "InTransit" : "Delivered")}>
+      ? <Button disabled={busy} onClick={() => onTransition(delivery, delivery.canShip ? "InTransit" : "Delivered")}>
         {delivery.canShip ? "Mark in transit" : "Mark delivered"}
-      </button>
+      </Button>
       : ["Processing", "InTransit"].includes(delivery.status)
         && <p>This delivery needs payment or shipment reconciliation before it can continue.</p>}
   </section>;
@@ -81,10 +82,10 @@ function Deliveries() {
     <ErrorState error={mutation.error} />
     {(read.error?.status === 401 || mutation.error?.status === 401) && <p><Link to={loginHref(location)}>Log in again</Link></p>}
     {notice && <p role="status">{notice}</p>}
-    <button id="retry" type="button" disabled={disabled} onClick={() => load()}>Refresh deliveries</button>
+    <Button id="retry" variant="secondary" disabled={disabled} onClick={() => load()}>Refresh deliveries</Button>
     {loaded && items.length === 0 && <p role="status">No deliveries yet.</p>}
     <div id="deliveries">{items.map(item => <DeliveryCard key={item.id} delivery={item} busy={disabled || read.status === "error" || mutation.status === "error"} onTransition={transition} />)}</div>
-    {cursor !== null && <button id="more" type="button" disabled={disabled} onClick={() => load(cursor)}>Load more deliveries</button>}
+    {cursor !== null && <Button id="more" variant="secondary" disabled={disabled} onClick={() => load(cursor)}>Load more deliveries</Button>}
   </>;
 }
 export default function DeliveriesPage() {

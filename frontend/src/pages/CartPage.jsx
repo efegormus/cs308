@@ -3,6 +3,7 @@ import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
+import Button from "../components/ui/Button.jsx";
 import { fetchCart, MAX_LINE_QUANTITY, removeCartItem, setCartItemQuantity } from "../lib/cart-api.js";
 import { loginHref } from "../lib/auth-utils.js";
 import { formatPrice, safeImageUrl } from "../lib/product-display.js";
@@ -21,11 +22,11 @@ function CartLine({ line, busy, onRemove, onQuantity }) {
         <Link to={`/product?id=${line.productId}`}>{line.name}</Link>
         <p><Price price={line.unitPrice} listPrice={line.listUnitPrice} /> each</p>
         <div className="cart-quantity" role="group" aria-label={`Quantity of ${line.name}`}>
-          <button type="button" disabled={busy || line.quantity <= 1} aria-label={`Decrease quantity of ${line.name}`}
-            onClick={() => onQuantity(line, line.quantity - 1)}>&minus;</button>
+          <Button variant="secondary" disabled={busy || line.quantity <= 1} aria-label={`Decrease quantity of ${line.name}`}
+            onClick={() => onQuantity(line, line.quantity - 1)}>&minus;</Button>
           <output aria-live="polite">{line.quantity}</output>
-          <button type="button" disabled={busy || line.quantity >= Math.min(line.stockQuantity, MAX_LINE_QUANTITY)}
-            aria-label={`Increase quantity of ${line.name}`} onClick={() => onQuantity(line, line.quantity + 1)}>+</button>
+          <Button variant="secondary" disabled={busy || line.quantity >= Math.min(line.stockQuantity, MAX_LINE_QUANTITY)}
+            aria-label={`Increase quantity of ${line.name}`} onClick={() => onQuantity(line, line.quantity + 1)}>+</Button>
         </div>
         {!line.available && (
           <p className="cart-line-warning" role="status">
@@ -34,10 +35,10 @@ function CartLine({ line, busy, onRemove, onQuantity }) {
         )}
       </div>
       <p className="cart-line-total">{formatPrice(line.lineTotal)}</p>
-      <button type="button" className="cart-remove" disabled={busy} onClick={() => onRemove(line)}
+      <Button variant="secondary" className="cart-remove" disabled={busy} onClick={() => onRemove(line)}
         aria-label={`Remove ${line.name} from the cart`}>
         Remove
-      </button>
+      </Button>
     </li>
   );
 }

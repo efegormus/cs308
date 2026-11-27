@@ -554,7 +554,7 @@ Buttons stay nearly square, product cards stay soft. That split comes from HP.
   [Proje].
 
 **Secondary button.** Height 44px, 4px corners, `--surface` fill, `--link` text [Proje colors].
-Its border color is an open question.
+Its edge is 1px `--field-line`, drawn inside so the height stays 44px; hover and pressed show `--bg` and a `--link` edge. It is the shared `Button` with `variant="secondary"` (SCRUM-134).
 
 ### Inputs and forms [Proje]
 
@@ -989,7 +989,7 @@ Mistakes in it, corrected here:
    padding stays 20px [Proje] (24px in HP). Model and warranty can join the spec row when the
    list API returns them. The number stays so the numbers below do not change.
 2. **Input size.** Inputs stay 44px high with 6px corners [Proje]; HP uses 4px corners, the same
-   as buttons. Purchase inputs (padding 12px, 4.8px corners) and the 40px sort select differ too.
+   as buttons. The 40px sort select differs too (purchase inputs match since SCRUM-134).
 3. **`--danger` and `--sale-bg`.** Keep two reds (`#a32b12` for errors, `#b3262b` for discounts)
    or merge them into one.
 4. **`--link`.** Stays `#174a8b` [Proje]; HP uses the primary color for links. Changing it to
@@ -1005,7 +1005,7 @@ Mistakes in it, corrected here:
    surface.
 8. **Dark theme button hover.** The fill stays `--accent` and the ring shows hover. A separate
    pressed token for dark could come later.
-9. **Secondary button border.** Today a hard-coded `#b9c4d2`; HP uses a 1px primary border.
+9. **Secondary button border.** Decided in SCRUM-134: a 1px `--field-line` edge drawn inside (4.83:1), as on the admin panel's Reject button; HP's 1px primary border is not used. The number stays so the numbers below do not change.
 10. **Sizes outside the scale.** Field errors are 13px and home text 15px [Proje]; the scale is
     16 / 14 / 12.
 11. **Badge weight.** "Bold" is written as 600, the heaviest loaded weight. 700 would need another
@@ -1039,18 +1039,18 @@ the dark theme too.
 
 | Token | Target (light) | Current (light) | File |
 | --- | --- | --- | --- |
-| `--accent` | `#024ad8` | `#024ad8`; hard-coded `#174a8b` in purchase rules; fallbacks `#174a8b`, `#1d4ed8` | `design-system.css`; `purchases.css`; `cart.css`, `orders.css`, `add-to-cart.css` |
+| `--accent` | `#024ad8` | `#024ad8`; fallback `#1d4ed8` | `design-system.css`; `add-to-cart.css` |
 | `--accent-hover` | `#0e3191` | `#0e3191` | `design-system.css` |
-| `--accent-fg` | `#ffffff` | `#ffffff`; hard-coded `white`/`#fff` | `design-system.css`; `purchases.css`, `add-to-cart.css` |
+| `--accent-fg` | `#ffffff` | `#ffffff`; hard-coded `#fff` | `design-system.css`; `add-to-cart.css` |
 | `--bg` | `#f6f7f9` | `#f6f7f9` | `design-system.css`, `products.css` |
-| `--surface` | `#ffffff` | `#ffffff`; hard-coded `white` | `design-system.css`, `products.css`; `purchases.css` |
+| `--surface` | `#ffffff` | `#ffffff`; fallback `#fff` | `design-system.css`, `products.css`, `purchases.css`, `cart.css`, `orders.css`; `add-to-cart.css` |
 | `--fg` | `#222222` | `#222222` | `design-system.css`, `products.css` |
-| `--muted` | `#505966` | `#505966`; fallbacks `#5d6877` | `design-system.css`, `products.css`; `cart.css`, `orders.css` |
-| `--line` | `#dce0e6` | `#dce0e6`; hard-coded `#dce0e6`, `#e3e7eb` | `design-system.css`, `products.css`; `purchases.css` |
-| `--field-line` | `#6b7280` | `#6b7280`; hard-coded `#9ba9b9` (purchase inputs), `#b9c4d2` (catalog buttons) | `design-system.css`; `purchases.css`, `products.css` |
+| `--muted` | `#505966` | `#505966` | `design-system.css`, `products.css`, `purchases.css`, `cart.css`, `orders.css` |
+| `--line` | `#dce0e6` | `#dce0e6` | `design-system.css`, `products.css`, `purchases.css`, `cart.css`, `orders.css` |
+| `--field-line` | `#6b7280` | `#6b7280`; hard-coded `#b9c4d2` (catalog plain buttons); fallback `#7b8799` | `design-system.css`, `components/ui/Button.css`; `products.css`; `add-to-cart.css` |
 | `--link` | `#174a8b` | `#174a8b` | `design-system.css`, `products.css` |
-| `--focus` | `#b66d00` | `#b66d00`; hard-coded in purchase rules | `design-system.css`, `products.css`; `purchases.css` |
-| `--danger` | `#a32b12` | `#a32b12`; hard-coded `#7c231d`; fallback `#b00020` | `design-system.css`, `products.css`; `purchases.css`; `orders.css`, `add-to-cart.css` |
+| `--focus` | `#b66d00` | `#b66d00`; fallback `#b66d00` | `design-system.css`, `products.css`; `add-to-cart.css` |
+| `--danger` | `#a32b12` | `#a32b12`; fallback `#b00020` | `design-system.css`, `products.css`, `orders.css`; `add-to-cart.css` |
 | `--ok` | `#1a7f37` | `#1a7f37` | `design-system.css` |
 | `--ok-fg` | `#1a7f37` (dark `#3fb950`) | Matches; in-stock text on the product list, product page and wishlist | `design-system.css`, `products.css` |
 | `--header` | `#ffffff` | `#ffffff` | `design-system.css`, `site-header.css` |
@@ -1069,22 +1069,22 @@ the dark theme too.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Catalog and purchase font | Poppins / Open Sans | Arial | `products.css` |
+| Catalog and purchase font | Poppins / Open Sans | Cart, checkout, order confirmation, orders and deliveries match (SCRUM-134); catalog, product page and wishlist Arial | `cart.css`, `purchases.css`; `products.css` |
 | Page title | 32px 600, line height 1.2 | Login, register and profile match (SCRUM-134); home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
 | Product card title | 20px 600 Poppins | Matches | `products.css` |
-| Price | 24px 500 Poppins | Product card matches; 1.2rem bold Arial (product page, wishlist); 1.2rem bold (purchase total) | `products.css`, `purchases.css` |
-| Order card title | 20px | 1.1rem | `orders.css` |
+| Price | 24px 500 Poppins | Product card and purchase total match; 1.2rem bold Arial (product page, wishlist) | `products.css`, `purchases.css` |
+| Order card title | 20px | Matches (`heading-sm`) | `orders.css` |
 | Stock line | 12px 600 | Product card matches; browser default size on the product page | `products.css` |
-| Button label | Poppins 16px 500 | Login and product card Poppins 16px 500; others inherit body font, 600 | `auth.css`, `components/ui/Button.css`; `cart.css`, `add-to-cart.css`, `products.css` |
+| Button label | Poppins 16px 500 | `Button` (login, product card, cart, checkout, deliveries, orders) matches; the product page and wishlist buttons inherit the body font, 600 | `components/ui/Button.css`; `add-to-cart.css`, `products.css` |
 
 ### Components
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Primary button height | 44px | `Button` 44px, used by the header search, the product card, login, register and profile; padding-based elsewhere (about 40px) | `components/ui/Button.css`; `cart.css`, `add-to-cart.css` |
-| Primary button corners | 4px | `Button` 4px (header search, product card, login, register, profile); 0.4rem (6.4px) | `components/ui/Button.css`; `cart.css`, `add-to-cart.css` |
+| Primary button height | 44px | `Button` 44px, used by the header search, the product card, login, register, profile and the purchase pages; padding-based on the product page (about 40px) | `components/ui/Button.css`; `add-to-cart.css` |
+| Primary button corners | 4px | `Button` 4px (header search, product card, login, register, profile, purchase pages); 0.4rem (6.4px) on the product page | `components/ui/Button.css`; `add-to-cart.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login, register and profile add their ring glow and spotlight on top | `components/ui/Button.css`; `auth.css` |
-| Secondary button | 44px, 4px corners | Padding 0.75rem 1rem, 0.4rem corners | `products.css` |
+| Secondary button | 44px, 4px corners | `Button` `variant="secondary"` matches (cart, checkout, deliveries); catalog plain buttons: padding 0.75rem 1rem, 0.4rem corners | `components/ui/Button.css`; `products.css` |
 | Header | White, at least 64px, 1px `--line` bottom, two rows | Matches | `site-header.css`, `Header.jsx` |
 | Header content | Logo, API categories with mega menu, search, account, cart count | Matches | `Header.jsx`, `CategoryMenu.jsx` |
 | Active nav link | 2px `--accent` underline | Matches | `site-header.css` |
@@ -1096,16 +1096,16 @@ the dark theme too.
 | Toast | `--surface` card, 3px tone line, 44px close, 5s, polite live region | `Toast` matches (SCRUM-134); no page uses it yet | `components/ui/Toast.jsx`, `Toast.css` |
 | Admin panel | Menu, KPI cards, `Table`, review approval | Matches (SCRUM-124) | `pages/AdminPanelPage.jsx`, `components/admin/`, `components/ui/Table.js`, `styles/admin.css` |
 | Customer profile | Form cards, neutral note, 32px title and 44px button | Matches: `Card` (form), `Input` and `Button` (SCRUM-134) | `pages/ProfilePage.jsx`, `styles/profile.css`, `auth.css` |
-| Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
-| Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by the header search; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
-| Purchase message | `--danger-bg` / `--danger-fg` for errors | Hard-coded `#e8f0fa`, `#ffebea`, `#7c231d` | `purchases.css` |
+| Purchase card | `--surface`, `--line` | Matches: `--surface`, 1px `--line`, `--shadow`, 10px corners | `purchases.css` |
+| Purchase input | 44px, 6px, `--field-line` | Matches: the checkout fields are `Input`, as is the header search | `components/ui/Input.css` |
+| Purchase message | `--danger-bg` / `--danger-fg` for errors | Matches: errors use the shared error state; the unused `.purchase-message` rules are gone | `request-states.css` |
 
 ### Layout and responsive
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 480 / 768 / 1024 (product grid), 576 (cart), 700 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `home.css` |
-| Touch targets | 44px | Header, footer, card and cart buttons 44px. Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px; `/products` filter inputs 41px and selects 42px, card title links 28px; product page quantity input 36px, category, back and wishlist login links 17px; order review links 28px; invoice PDF link 18px; wishlist card title link 20px; dashboard section links 18px | `home.css`, `products.css`, `add-to-cart.css`, `purchases.css`, `orders.css`, `role-home.css` |
+| Touch targets | 44px | Header, footer, card, cart and purchase-page buttons 44px; order review links and the order and invoice PDF links 44px (SCRUM-134). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px; `/products` filter inputs 41px and selects 42px, card title links 28px; product page quantity input 36px, category, back and wishlist login links 17px; wishlist card title link 20px; dashboard section links 24px | `home.css`, `products.css`, `add-to-cart.css`, `role-home.css` |
 | No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks) | `scripts/verify_responsive_browser.py` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
 | Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Matches, through `Card` | `design-system.css`, `components/ui/Card.css` |
