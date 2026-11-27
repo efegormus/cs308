@@ -8,7 +8,8 @@ const SECTIONS = {
     OVERVIEW,
     { id: "deliveries", path: "/manage/deliveries", label: "Deliveries" },
     { id: "reviews", path: "/manage/reviews", label: "Reviews" },
-    { id: "low-stock", path: "/manage/low-stock", label: "Low stock" }
+    { id: "low-stock", path: "/manage/low-stock", label: "Low stock" },
+    { id: "catalog", path: "/manage/catalog", label: "Catalog" }
   ],
   SalesManager: [
     OVERVIEW,

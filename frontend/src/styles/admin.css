@@ -185,3 +185,7 @@
 .admin-pricing-set { display: flex; gap: 8px; align-items: flex-start; min-width: 240px; }
 .admin-pricing-form { display: grid; gap: 16px; max-width: 640px; }
 .admin-pricing-notice { margin: 0 0 16px; font-weight: 500; }
+
+/* Catalog screen (SCRUM-77): the buttons at the end of a table row or form, and room between a table and its form. */
+.admin-row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.admin-section .ui-table-frame + .admin-pricing-form, .admin-section .admin-more + .admin-pricing-form { margin-top: 24px; }

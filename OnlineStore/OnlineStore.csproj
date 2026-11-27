@@ -33,4 +33,8 @@
       </ResolvedFileToPublish>
     </ItemGroup>
   </Target>
+  <ItemGroup>
+    <InternalsVisibleTo Include="OnlineStore.Tests" />
+  </ItemGroup>
+
 </Project>

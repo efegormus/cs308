@@ -65,6 +65,7 @@ builder.Services.AddScoped<CancellationService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<ModerationService>();
 builder.Services.AddScoped<PricingService>();
+builder.Services.AddScoped<CatalogManagementService>();
 // Invoice PDFs live outside wwwroot (SCRUM-74).
 var invoiceRoot = builder.Configuration["Invoices:StoragePath"];
 builder.Services.AddSingleton<IInvoiceStorage>(new FileInvoiceStorage(string.IsNullOrWhiteSpace(invoiceRoot)
@@ -128,6 +129,7 @@ app.MapInvoiceEndpoints();
 app.MapDashboardEndpoints();
 app.MapReviewEndpoints();
 app.MapPricingEndpoints();
+app.MapCatalogManagementEndpoints();
 app.MapSupportChat();
 
 app.Run();
