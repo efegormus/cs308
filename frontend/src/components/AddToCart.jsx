@@ -3,6 +3,8 @@ import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { addCartItem } from "../lib/cart-api.js";
 import { addToCartError, clampQuantity, maxAddQuantity } from "../lib/add-to-cart.js";
+import Button from "./ui/Button.jsx";
+import Input from "./ui/Input.jsx";
 import "../styles/add-to-cart.css";
 
 // The "Add to cart" box of the product page (SCRUM-70). An out-of-stock product gets a disabled button; the server
@@ -18,7 +20,7 @@ export default function AddToCart({ product }) {
   if (max === 0) {
     return (
       <div className="add-to-cart">
-        <button type="button" disabled>Out of stock</button>
+        <Button unavailable>Out of stock</Button>
       </div>
     );
   }
@@ -47,12 +49,9 @@ export default function AddToCart({ product }) {
 
   return (
     <div className="add-to-cart">
-      <label>
-        Quantity
-        <input type="number" inputMode="numeric" min="1" max={max} value={quantity} disabled={busy}
-          onChange={event => setQuantity(clampQuantity(event.target.value, max))} />
-      </label>
-      <button type="button" onClick={add} disabled={busy}>{busy ? "Adding…" : "Add to cart"}</button>
+      <Input className="add-to-cart-quantity" label="Quantity" type="number" inputMode="numeric" min="1" max={max}
+        value={quantity} disabled={busy} onChange={event => setQuantity(clampQuantity(event.target.value, max))} />
+      <Button onClick={add} disabled={busy}>{busy ? "Adding…" : "Add to cart"}</Button>
       {added && (
         <p role="status" className="add-to-cart-ok">
           Added to your cart ({added.itemCount} {added.itemCount === 1 ? "item" : "items"} in total).{" "}

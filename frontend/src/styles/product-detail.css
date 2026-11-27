@@ -1,0 +1,40 @@
+/* The product page (SCRUM-110), /product?id=… Scoped to .product-page; colors only from tokens (DESIGN.md).
+   SCRUM-123 step 3 removed the page's layout rules by mistake; this brings the layout back on the design system:
+   a framed card with the gallery and the details side by side, one column up to 768px. The page also carries
+   .catalog-page (products.css, loaded later), so the rules start with .product-page .product-detail to win over its
+   .catalog-page .price and image rules. */
+.route-page.product-page { font: var(--type-body-md); }
+.product-page .back-link { margin: 0 0 var(--space-md); }
+/* Links that stand alone are 44px touch targets. */
+.product-page :is(.back-link, .product-category, .wishlist-login) a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+
+.product-page .product-detail {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--space-xxl);
+  padding: var(--space-xl); background: var(--surface); color: var(--fg);
+  border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow);
+}
+.product-page .product-detail .product-gallery { display: grid; gap: var(--space-sm); align-content: start; }
+.product-page .product-detail .product-image,
+.product-page .product-detail .image-placeholder {
+  width: 100%; height: 360px; object-fit: contain; border-radius: var(--radius-tile); background: var(--bg);
+}
+.product-page .product-detail .product-category { margin: 0; font: var(--type-body-sm); }
+.product-page .product-detail h1 { margin: var(--space-xxs) 0 var(--space-sm); font: var(--type-heading-lg); overflow-wrap: anywhere; }
+.product-page .product-detail .product-brand { margin: 0 0 var(--space-xs); color: var(--muted); font: var(--type-label); }
+.product-page .product-detail .product-description { margin: 0 0 var(--space-md); color: var(--muted); }
+/* Price (token price) and the stock line with its count (token caption). */
+.product-page .product-detail .price { margin: var(--space-md) 0 var(--space-xxs); padding: 0; font: var(--type-price); }
+.product-page .product-detail .stock { margin: 0; font: var(--type-caption); }
+.product-page .product-detail .wishlist-action { display: grid; justify-items: start; gap: var(--space-xs); }
+.product-page .product-detail .wishlist-action p { margin: 0; }
+.product-page .product-detail .product-specs {
+  display: grid; grid-template-columns: max-content minmax(0, 1fr); gap: var(--space-xs) var(--space-lg);
+  margin: var(--space-xl) 0 0; font: var(--type-body-sm);
+}
+.product-page .product-detail .product-specs dt { color: var(--muted); font-weight: 600; }
+.product-page .product-detail .product-specs dd { margin: 0; overflow-wrap: anywhere; }
+
+@media (max-width: 768px) {
+  .product-page .product-detail { grid-template-columns: minmax(0, 1fr); gap: var(--space-xl); padding: var(--space-md); }
+  .product-page .product-detail .product-image, .product-page .product-detail .image-placeholder { height: 280px; }
+}
