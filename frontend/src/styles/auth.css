@@ -1,49 +1,34 @@
-/* Login and register pages. Tokens: design-system.css (DESIGN.md); built decisions: docs/ui-design.md.
-   This file loads on every page: every rule is scoped to .auth-page. The header and footer have their own files
-   (site-header.css, site-footer.css). Never write a color directly in a rule; use the tokens. */
-
-/* Login page. Everything below applies only inside <body class="auth-page">. */
+/* Login, register and profile pages. Tokens: design-system.css (DESIGN.md); built decisions: docs/ui-design.md.
+   This file loads on every page: every rule is scoped to .auth-page. The form card is the shared Card (variant "form"),
+   the fields the shared Input and the button the shared Button; these rules only add the page frame, the heading, the
+   banner and the motion (masked reveal-up, shake, spotlight, spinner and the success fill). Use tokens, never colors. */
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .auth-page { color-scheme: dark; }
 }
 :root[data-theme="dark"] .auth-page { color-scheme: dark; }
 
 .auth-page, .auth-page * { box-sizing: border-box; }
-.auth-page { margin: 0; background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 16px; }
+.auth-page { margin: 0; background: var(--bg); color: var(--fg); font: var(--type-body-md); }
 .auth-page [hidden] { display: none !important; }
 .auth-page a { color: var(--link); }
 .auth-page a:hover { color: var(--accent-hover); }
-.auth-page :is(input, button, a):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.auth-page :is(input, textarea, button, a):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-.auth-page .page { min-height: 100vh; display: flex; flex-direction: column; }
-
-.auth-page main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px 16px; }
-.auth-page .card {
-  width: 100%; max-width: 420px; padding: 36px 32px;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 10px; box-shadow: var(--shadow);
-}
-.auth-page .card h1 { margin: 0 0 8px; font-family: var(--font-display); font-size: 28px; font-weight: 600; text-wrap: balance; }
-.auth-page .lead { margin: 0 0 24px; line-height: 1.55; color: var(--muted); }
-.auth-page .stack { display: flex; flex-direction: column; gap: 18px; }
-.auth-page .field { display: flex; flex-direction: column; gap: 6px; }
-.auth-page .field label { font-size: 14px; font-weight: 600; }
-.auth-page .field input {
-  height: 44px; padding: 0 12px; font: inherit; font-size: 16px; color: var(--fg);
-  background: var(--surface); border: 1px solid var(--field-line); border-radius: 6px;
-}
-.auth-page .field input[aria-invalid="true"] { border: 2px solid var(--danger); }
-.auth-page .field-error { font-size: 13px; font-weight: 600; color: var(--danger); }
+.auth-page main { flex: 1; display: flex; align-items: center; justify-content: center; padding: 48px var(--space-md); }
+.auth-page .card { width: 100%; max-width: var(--form-max); }
+.auth-page h1 { margin: 0 0 var(--space-xs); font: var(--type-heading-lg); color: var(--fg); text-wrap: balance; }
+.auth-page .lead { margin: 0 0 var(--space-xl); color: var(--muted); }
+.auth-page .stack { display: flex; flex-direction: column; gap: var(--space-field-gap); }
 .auth-page .banner {
-  margin-bottom: 18px; padding: 12px 14px; border: 1px solid var(--danger); border-radius: 6px;
-  background: var(--danger-bg); color: var(--danger-fg); font-size: 14px; font-weight: 600;
+  margin-bottom: var(--space-field-gap); padding: var(--space-sm) 14px; border: 1px solid var(--danger);
+  border-radius: var(--radius-field); background: var(--danger-bg); color: var(--danger-fg); font: var(--type-label);
 }
-.auth-page .switch { margin: 24px 0 0; text-align: center; color: var(--muted); }
+.auth-page .switch { margin: var(--space-xl) 0 0; text-align: center; color: var(--muted); }
 
-/* Primary button: spotlight follows the cursor, spinner while loading, green fill then check on success. */
+/* Primary button (the shared Button): full width, spotlight follows the cursor, spinner while loading, green fill
+   then check on success. Button gives the 44px height, 4px corners, type and the light hover fill. */
 .auth-page .submit {
-  position: relative; overflow: hidden; width: 100%; height: 48px; margin-top: 6px; border: 0; border-radius: 6px;
-  background: var(--accent); color: var(--accent-fg);
-  font-family: var(--font-display); font-size: 16px; font-weight: 500; cursor: pointer;
+  position: relative; overflow: hidden; width: 100%; margin-top: var(--space-label-gap); gap: 0;
   transition: box-shadow 0.25s ease, background-color 0.25s ease;
 }
 .auth-page .submit::after {
@@ -56,7 +41,7 @@
   .auth-page .submit:hover:not(:disabled)::after { opacity: 1; }
 }
 .auth-page .submit.is-loading::before {
-  content: ""; display: inline-block; width: 14px; height: 14px; margin-right: 8px; vertical-align: -2px;
+  content: ""; display: inline-block; width: 14px; height: 14px; margin-right: var(--space-xs);
   border: 2px solid currentColor; border-right-color: transparent; border-radius: 50%; animation: auth-spin 0.7s linear infinite;
 }
 @keyframes auth-spin { to { transform: rotate(360deg); } }
@@ -68,7 +53,7 @@
 .auth-page .submit.is-ok { background: var(--ok); }
 .auth-page .submit.is-ok:disabled, .auth-page .submit.fill:disabled { opacity: 1; cursor: default; }
 .auth-page .submit.is-ok::before {
-  content: ""; display: inline-block; width: 6px; height: 12px; margin-right: 10px; vertical-align: 2px;
+  content: ""; display: inline-block; width: 6px; height: 12px; margin: 0 10px 4px 0;
   border: solid currentColor; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg);
   animation: auth-pop 0.35s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
@@ -85,7 +70,7 @@
 
 /* Masked reveal-up: every line sits in an overflow-hidden mask and drifts up with a soft blur, staggered by --i. */
 .auth-page .r, .auth-page .ri { display: block; }
-.auth-page .ri.field { display: flex; }
+.auth-page .ri.ui-field { display: flex; }
 .auth-page .play .r:not(.done) { overflow: hidden; }
 .auth-page .play .ri {
   animation: auth-reveal-up 0.85s cubic-bezier(0.22, 1, 0.36, 1) both;
@@ -96,7 +81,6 @@
   to { transform: translateY(0); opacity: 1; filter: blur(0); }
 }
 
-@media (max-width: 480px) { .auth-page .card { padding: 28px 20px; } }
 @media (prefers-reduced-motion: reduce) {
   .auth-page .play .ri, .auth-page .shake, .auth-page .submit.is-loading::before, .auth-page .submit.is-ok::before { animation: none; }
   /* No animation means no animationend, so the masks have to come off here or they clip the focus ring. */

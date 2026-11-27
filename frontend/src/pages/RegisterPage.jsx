@@ -5,7 +5,9 @@ import { revealLine, shake, useAuthForm } from "../auth/useAuthForm.js";
 import {
   REGISTER_FIELDS, loginHref, parseAccount, registerFieldErrors, safeReturnUrl, validateRegistration
 } from "../lib/auth-utils.js";
-import "../styles/auth-textarea.css";
+import Button from "../components/ui/Button.jsx";
+import Card from "../components/ui/Card.jsx";
+import Input from "../components/ui/Input.jsx";
 
 const CONFLICT_MESSAGE = "An account with this email already exists.";
 const SIGN_IN_FAILED_MESSAGE = "Your account was created, but we could not sign you in. Please log in.";
@@ -100,7 +102,7 @@ export default function RegisterPage() {
       <title>Create account | Online Store</title>
       <main id="main-content">
         {form.showForm && (
-          <form id="register-form" {...form.formProps} onSubmit={handleSubmit}>
+          <Card as="form" variant="form" id="register-form" {...form.formProps} onSubmit={handleSubmit}>
             <h1 className="r" style={revealLine(0)}><span className="ri">Create account</span></h1>
             <p className="lead r" style={revealLine(1)}>
               <span className="ri">Create an account to keep your cart and follow your orders.</span>
@@ -109,29 +111,22 @@ export default function RegisterPage() {
             <div className="stack">
               {REGISTER_FIELDS.map((field, index) => {
                 const { id, label, ...controlProps } = CONTROL_PROPS[field];
-                const Control = field === "homeAddress" ? "textarea" : "input";
-                const errorId = `${id}-error`;
                 return (
                   <div className="r" style={revealLine(index + 2)} key={field}>
-                    <div className="ri field">
-                      <label htmlFor={id}>{label}</label>
-                      <Control
-                        id={id}
-                        ref={element => { controls.current[field] = element; }}
-                        name={field}
-                        value={values[field]}
-                        aria-invalid={errors[field] ? "true" : undefined}
-                        aria-describedby={errors[field] ? errorId : undefined}
-                        onChange={event => updateField(field, event.target.value)}
-                        {...controlProps}
-                      />
-                      {errors[field] && <div id={errorId} className="field-error">{errors[field]}</div>}
-                    </div>
+                    <Input
+                      className="ri" label={label} error={errors[field]} multiline={field === "homeAddress"}
+                      id={id}
+                      ref={element => { controls.current[field] = element; }}
+                      name={field}
+                      value={values[field]}
+                      onChange={event => updateField(field, event.target.value)}
+                      {...controlProps}
+                    />
                   </div>
                 );
               })}
               <div className="r" style={revealLine(REGISTER_FIELDS.length + 2)}>
-                <div className="ri"><button id="submit" {...form.buttonProps} /></div>
+                <div className="ri"><Button id="submit" {...form.buttonProps} /></div>
               </div>
             </div>
             <p className="switch r" style={revealLine(REGISTER_FIELDS.length + 3)}>
@@ -139,7 +134,7 @@ export default function RegisterPage() {
                 Already have an account? <Link ref={loginLink} to={loginHref({ pathname: returnUrl })}>Log in</Link>
               </span>
             </p>
-          </form>
+          </Card>
         )}
       </main>
     </div>

@@ -2,6 +2,9 @@ import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { Link, useSearchParams } from "react-router";
 import { revealLine, shake, useAuthForm } from "../auth/useAuthForm.js";
+import Button from "../components/ui/Button.jsx";
+import Card from "../components/ui/Card.jsx";
+import Input from "../components/ui/Input.jsx";
 import {
   loginErrorMessage, parseAccount, registerHref, safeReturnUrl, validateEmail, validatePassword
 } from "../lib/auth-utils.js";
@@ -63,7 +66,7 @@ export default function LoginPage() {
       <title>Log in | Online Store</title>
       <main id="main-content">
         {form.showForm && (
-          <form id="login-form" {...form.formProps} onSubmit={handleSubmit}>
+          <Card as="form" variant="form" id="login-form" {...form.formProps} onSubmit={handleSubmit}>
             <h1 className="r" style={revealLine(0)}><span className="ri">Log in</span></h1>
             <p className="lead r" style={revealLine(1)}>
               <span className="ri">Welcome back. Log in to see your cart and your orders.</span>
@@ -71,46 +74,36 @@ export default function LoginPage() {
             {form.banner && <div id="banner" className="banner" role="alert">{form.banner}</div>}
             <div className="stack">
               <div className="r" style={revealLine(2)}>
-                <div className="ri field">
-                  <label htmlFor="email">Email</label>
-                  <input
-                    id="email" ref={emailRef} name="email" type="email" autoComplete="email" maxLength={254}
-                    value={email}
-                    aria-invalid={emailError ? "true" : undefined}
-                    aria-describedby={emailError ? "email-error" : undefined}
-                    onChange={event => {
-                      setEmail(event.target.value);
-                      setEmailError("");
-                    }}
-                  />
-                  {emailError && <div id="email-error" className="field-error">{emailError}</div>}
-                </div>
+                <Input
+                  className="ri" label="Email" error={emailError}
+                  id="email" ref={emailRef} name="email" type="email" autoComplete="email" maxLength={254}
+                  value={email}
+                  onChange={event => {
+                    setEmail(event.target.value);
+                    setEmailError("");
+                  }}
+                />
               </div>
               <div className="r" style={revealLine(3)}>
-                <div className="ri field">
-                  <label htmlFor="password">Password</label>
-                  <input
-                    id="password" ref={passwordRef} name="password" type="password" autoComplete="current-password"
-                    maxLength={128}
-                    value={password}
-                    aria-invalid={passwordError ? "true" : undefined}
-                    aria-describedby={passwordError ? "password-error" : undefined}
-                    onChange={event => {
-                      setPassword(event.target.value);
-                      setPasswordError("");
-                    }}
-                  />
-                  {passwordError && <div id="password-error" className="field-error">{passwordError}</div>}
-                </div>
+                <Input
+                  className="ri" label="Password" error={passwordError}
+                  id="password" ref={passwordRef} name="password" type="password" autoComplete="current-password"
+                  maxLength={128}
+                  value={password}
+                  onChange={event => {
+                    setPassword(event.target.value);
+                    setPasswordError("");
+                  }}
+                />
               </div>
               <div className="r" style={revealLine(4)}>
-                <div className="ri"><button id="submit" {...form.buttonProps} /></div>
+                <div className="ri"><Button id="submit" {...form.buttonProps} /></div>
               </div>
             </div>
             <p className="switch r" style={revealLine(5)}>
               <span className="ri">New here? <Link id="register-link" to={registerHref(returnUrl)}>Create an account</Link></span>
             </p>
-          </form>
+          </Card>
         )}
       </main>
     </div>

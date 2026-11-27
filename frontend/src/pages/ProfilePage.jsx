@@ -16,7 +16,9 @@ import {
   validateProfile
 } from "../lib/profile-form.js";
 import { useRequest } from "../lib/useRequest.js";
-import "../styles/auth-textarea.css";
+import Button from "../components/ui/Button.jsx";
+import Card from "../components/ui/Card.jsx";
+import Input from "../components/ui/Input.jsx";
 import "../styles/request-states.css";
 import "../styles/profile.css";
 
@@ -117,25 +119,18 @@ function ProfileEditor({ account, returnUrl }) {
   const first = incomplete ? 3 : 2; // The reveal line of the first card's heading.
   const field = (name, line) => {
     const { id, label, ...controlProps } = CONTROL_PROPS[name];
-    const Control = name === "homeAddress" ? "textarea" : "input";
-    const errorId = `${id}-error`;
     return (
       <div className="r" style={revealLine(line)}>
-        <div className="ri field">
-          <label htmlFor={id}>{label}</label>
-          <Control
-            id={id}
-            ref={element => { controls.current[name] = element; }}
-            name={name}
-            value={values[name]}
-            aria-required="true"
-            aria-invalid={errors[name] ? "true" : undefined}
-            aria-describedby={errors[name] ? errorId : undefined}
-            onChange={event => updateField(name, event.target.value)}
-            {...controlProps}
-          />
-          {errors[name] && <div id={errorId} className="field-error" role="alert">{errors[name]}</div>}
-        </div>
+        <Input
+          className="ri" label={label} error={errors[name]} errorRole="alert" multiline={name === "homeAddress"}
+          id={id}
+          ref={element => { controls.current[name] = element; }}
+          name={name}
+          value={values[name]}
+          aria-required="true"
+          onChange={event => updateField(name, event.target.value)}
+          {...controlProps}
+        />
       </div>
     );
   };
@@ -149,29 +144,26 @@ function ProfileEditor({ account, returnUrl }) {
       <ProfileNotice incomplete={incomplete} index={2} />
       {form.banner && <div id="banner" className="banner" role="alert">{form.banner}</div>}
       <div className="profile-cards">
-        <section className="profile-card" style={{ "--card": 0 }} aria-labelledby="account-heading">
+        <Card as="section" variant="form" className="profile-card" style={{ "--card": 0 }} aria-labelledby="account-heading">
           <div className="stack">
             <h2 className="r" style={revealLine(first)}><span className="ri" id="account-heading">Account</span></h2>
             {field("name", first + 1)}
             <div className="r" style={revealLine(first + 2)}>
-              <div className="ri field">
-                <label htmlFor="email">Email</label>
-                <input id="email" type="email" value={profile.email} readOnly aria-describedby="email-note" />
-                <div id="email-note" className="field-note">Email cannot be changed here.</div>
-              </div>
+              <Input className="ri" label="Email" id="email" type="email" value={profile.email} readOnly
+                hint="Email cannot be changed here." />
             </div>
           </div>
-        </section>
-        <section className="profile-card" style={{ "--card": 1 }} aria-labelledby="invoice-heading">
+        </Card>
+        <Card as="section" variant="form" className="profile-card" style={{ "--card": 1 }} aria-labelledby="invoice-heading">
           <div className="stack">
             <h2 className="r" style={revealLine(first + 3)}><span className="ri" id="invoice-heading">Invoice and delivery</span></h2>
             {field("taxId", first + 4)}
             {field("homeAddress", first + 5)}
           </div>
-        </section>
+        </Card>
       </div>
       <div className="r profile-actions" style={revealLine(first + 6)}>
-        <div className="ri"><button id="submit" {...form.buttonProps} /></div>
+        <div className="ri"><Button id="submit" {...form.buttonProps} /></div>
       </div>
       <SavedStatus saved={saved} link={link} linkRef={continueRef} />
     </form>
