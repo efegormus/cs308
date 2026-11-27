@@ -164,6 +164,8 @@ Response `200`: an array of products for existing consumers when neither `page` 
 | `categoryName` | string | |
 | `description` | string or `null` | Added by SCRUM-54 to retain catalog descriptions without a second inventory API. |
 | `brandName` | string or `null` | Name of the active assigned brand. |
+| `averageRating` | number or `null` | SCRUM-126. Average of all ratings of the product, rounded to one decimal; `null` when nobody rated it. Sent by `GET /api/products` only. |
+| `ratingCount` | integer | SCRUM-126. Number of ratings behind `averageRating`; `0` when there are none. Sent by `GET /api/products` only. |
 
 The response does **not** contain model, serial number, warranty,
 distributor, SKU, `isActive` or cost.

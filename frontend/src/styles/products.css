@@ -72,3 +72,8 @@
 .catalog-page .product-card-error { color: var(--danger); }
 .catalog-page .product-card-actions { display: flex; gap: var(--space-xs); margin-top: var(--space-md); }
 .catalog-page .product-card-actions .ui-button { flex: 1; }
+
+/* SCRUM-126: rating line on the product card */
+.catalog-page .product-card .product-rating { display: flex; align-items: center; gap: var(--space-xs, 8px); margin: 0; font: var(--type-caption); color: var(--muted); }
+.catalog-page .product-card .product-rating .review-stars { font-size: 16px; }
+.catalog-page .product-card .product-rating--none { font-style: normal; }

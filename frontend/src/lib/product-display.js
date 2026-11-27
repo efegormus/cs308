@@ -37,3 +37,16 @@ export function specRow(product) {
   const firstLine = typeof product.description === "string" ? product.description.trim().split(/\r?\n/)[0].trim() : "";
   return firstLine ? { kind: "description", text: firstLine } : null;
 }
+
+// SCRUM-126: the rating line of a product card. The API sends averageRating (null when nobody rated) and ratingCount.
+// Returns null for data that is not a sane rating, so the card shows "No ratings yet" instead of a wrong number.
+export function ratingSummary(product) {
+  const average = product?.averageRating;
+  const count = product?.ratingCount;
+  if (!Number.isSafeInteger(count) || count < 0) return null;
+  if (count === 0) return { rated: false, count: 0, average: null, text: "No ratings yet", label: "No ratings yet" };
+  if (!Number.isFinite(average) || average < 1 || average > 5) return null;
+  const noun = count === 1 ? "rating" : "ratings";
+  return { rated: true, count, average, text: `${average.toFixed(1)} (${count})`,
+    label: `Rated ${average.toFixed(1)} out of 5 from ${count} ${noun}` };
+}
