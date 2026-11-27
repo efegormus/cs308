@@ -20,7 +20,7 @@ import uuid
 from playwright.sync_api import expect, sync_playwright
 
 PM_MENU = ["Overview", "Deliveries", "Reviews", "Low stock"]
-SM_MENU = ["Overview", "Invoices", "Discounts"]
+SM_MENU = ["Overview", "Invoices", "Pricing", "Discounts"]
 # Controlled moderation UI cases (SCRUM-141) use a small route-mocked queue, 3 to a page.
 # verify_purchasing_browser.py separately exercises real customer submissions and decisions against MySQL.
 def moderation_comment(id, product, author, rating, body):
@@ -292,7 +292,7 @@ def verify(url, assembly, executable=None):
             assert "₺" in kpis.first.inner_text()
             assert page.locator(".admin-kpi").first.evaluate("element => getComputedStyle(element).animationName") == "none"
             no_sideways_scroll(page, "SM overview")
-            for label, path in [("Invoices", "/manage/invoices"), ("Discounts", "/manage/discounts")]:
+            for label, path in [("Invoices", "/manage/invoices"), ("Pricing", "/manage/pricing"), ("Discounts", "/manage/discounts")]:
                 menu_link(page, label).click()
                 expect(page).to_have_url(url + path)
                 expect(menu_link(page, label)).to_have_attribute("aria-current", "page")
@@ -300,7 +300,7 @@ def verify(url, assembly, executable=None):
                 no_sideways_scroll(page, path)
             page.goto(url + "/manage/reviews")
             expect(page).to_have_url(url + "/manage")
-            print("PASS: sales manager menu, final KPI values at once with reduced motion, invoices and discounts")
+            print("PASS: sales manager menu, final KPI values at once with reduced motion, invoices, pricing and discounts")
 
             assert not errors, errors
             print("PASS: no browser exceptions")
