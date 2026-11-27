@@ -30,7 +30,7 @@ public static class WishlistEndpoints
                                        product.Product.Images.Where(i => i.IsPrimary).OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.StorageKey).FirstOrDefault(),
                                        product.Product.CategoryId, product.Product.Category.Name, product.Product.Description,
                                        product.Product.Brand != null && product.Product.Brand.IsActive ? product.Product.Brand.Name : null,
-                                       product.ListPrice, product.DiscountRate))).ToListAsync(ct);
+                                       product.ListPrice, product.DiscountRate, null, 0))).ToListAsync(ct);
             return Results.Ok(items);
         });
 

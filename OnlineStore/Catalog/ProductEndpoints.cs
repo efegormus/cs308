@@ -135,6 +135,7 @@ public static class ProductEndpoints
                 var products = await selected
                     .Select(ProductListItemDto.FromPricedProduct)
                     .ToListAsync(cancellationToken);
+                products = await ProductRatings.AttachAsync(db, products, cancellationToken);
 
                 if (!paged) return Results.Ok(products);
                 return Results.Ok(new ProductPageDto(products, totalCount, currentPage, currentPageSize,
