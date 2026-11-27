@@ -178,3 +178,9 @@
   .admin-page .admin-approve .admin-approve-tick, .admin-page .admin-approve.is-approved .admin-approve-tick,
   .admin-page .admin-reject.is-rejected .admin-approve-tick { transition: none; }
 }
+
+/* SCRUM-156: pricing screen */
+.admin-pricing-filters { display: flex; flex-wrap: wrap; gap: 8px; align-items: flex-end; margin-bottom: 16px; }
+.admin-pricing-set { display: flex; gap: 8px; align-items: flex-start; min-width: 240px; }
+.admin-pricing-form { display: grid; gap: 16px; max-width: 640px; }
+.admin-pricing-notice { margin: 0 0 16px; font-weight: 500; }
