@@ -16,27 +16,79 @@
 .catalog-page main { max-width: var(--catalog-max); margin: auto; padding: 40px var(--space-xl); min-height: 75vh; }
 .catalog-page h1 { margin: 0 0 var(--space-sm); font: var(--type-heading-lg); }
 .catalog-page .intro, .catalog-page .category-description { color: var(--muted); }
-/* Category links look like the secondary Button: 44px, 4px corners, a 1px --field-line edge drawn inside. */
-.catalog-page .category-nav { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin: 28px 0; }
-.catalog-page .category-nav a {
-  display: inline-flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-md);
-  border-radius: var(--radius-button); background: var(--surface); box-shadow: inset 0 0 0 1px var(--field-line);
-  font: var(--type-button); text-decoration: none;
+/* The All products page (SCRUM-165, DESIGN.md Products page): breadcrumb, heading, status line and chips, then the
+   264px filter sidebar beside the category sections. Up to 768px the sidebar sits above the sections. Every link,
+   field and button is 44px high. */
+.catalog-page { --catalog-sidebar-width: 264px; }
+.catalog-page .catalog-breadcrumb ol { display: flex; flex-wrap: wrap; align-items: center; margin: 0 0 var(--space-xs);
+  padding: 0; list-style: none; font: var(--type-body-sm); color: var(--muted); }
+.catalog-page .catalog-breadcrumb li { display: inline-flex; align-items: center; min-width: 0; overflow-wrap: anywhere; }
+.catalog-page .catalog-breadcrumb li + li::before { content: "/"; margin: 0 var(--space-xs); color: var(--muted); }
+.catalog-page .catalog-breadcrumb a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+.catalog-page .catalog-breadcrumb [aria-current="page"] { color: var(--fg); }
+.catalog-page h1 { overflow-wrap: anywhere; }
+.catalog-page .catalog-status { margin: 0; font: var(--type-body-sm); color: var(--muted); }
+.catalog-page .catalog-chips { display: flex; flex-wrap: wrap; gap: var(--space-xs); margin: var(--space-md) 0 0; padding: 0;
+  list-style: none; }
+.catalog-page .catalog-chip { display: inline-flex; align-items: center; gap: var(--space-xs); max-width: 100%;
+  min-height: var(--touch-target); padding: 0 var(--space-md); border: 0; border-radius: var(--radius-full);
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface)); box-shadow: inset 0 0 0 1px var(--field-line);
+  color: var(--fg); font: var(--type-label); cursor: pointer; overflow-wrap: anywhere; text-align: left; }
+.catalog-page .catalog-chip:hover { box-shadow: inset 0 0 0 1px var(--link); }
+.catalog-page .catalog-chip:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.catalog-page .catalog-chip svg { flex: none; }
+.catalog-page .catalog-layout { display: grid; grid-template-columns: var(--catalog-sidebar-width) minmax(0, 1fr);
+  gap: var(--space-xxl); align-items: start; margin-top: var(--space-xl); }
+
+/* Sidebar */
+.catalog-page .catalog-sidebar { display: flex; flex-direction: column; gap: var(--space-xl); min-width: 0; }
+.catalog-page .catalog-sidebar-group { margin: 0; padding: 0 0 var(--space-xl); border-bottom: 1px solid var(--line); }
+.catalog-page .catalog-sidebar-group fieldset { margin: 0; padding: 0; border: 0; min-width: 0; }
+.catalog-page .catalog-sidebar-heading { margin: 0 0 var(--space-xs); padding: 0; font: var(--type-heading-sm); }
+.catalog-page .catalog-category-list { margin: 0; padding: 0; list-style: none; }
+.catalog-page .catalog-category-link { display: flex; align-items: center; justify-content: space-between; gap: var(--space-sm);
+  min-height: var(--touch-target); padding: 0 var(--space-sm) 0 calc(var(--space-sm) + var(--depth, 0) * var(--space-md));
+  border-radius: var(--radius-field); color: var(--fg); text-decoration: none; overflow-wrap: anywhere; }
+.catalog-page .catalog-category-link.is-sub { font: var(--type-body-sm); }
+.catalog-page .catalog-category-link:hover { background: var(--bg); }
+.catalog-page .catalog-category-link[aria-current="page"] {
+  background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--link); font-weight: 600; }
+.catalog-page .catalog-category-count { flex: none; font: var(--type-body-sm); color: var(--muted); }
+.catalog-page .catalog-price-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--space-xs); }
+.catalog-page .catalog-price-error { margin: var(--space-xs) 0 0; }
+.catalog-page .catalog-price-apply, .catalog-page .catalog-sidebar .clear-filters { width: 100%; }
+.catalog-page .catalog-price-apply { margin-top: var(--space-sm); }
+.catalog-page .catalog-check { display: flex; align-items: center; gap: var(--space-xs); min-height: var(--touch-target);
+  font: var(--type-label); cursor: pointer; }
+.catalog-page .catalog-check input { width: 20px; height: 20px; margin: 0; accent-color: var(--accent); }
+.catalog-page .catalog-check input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* Results and sections */
+.catalog-page .catalog-results { min-width: 0; }
+.catalog-page .empty-hint { margin: 0 0 var(--space-md); color: var(--muted); }
+.catalog-page .category-section + .category-section { margin-top: var(--space-xxl); }
+.catalog-page .category-section { scroll-margin-top: calc(var(--header-height) + var(--space-md)); }
+.catalog-page .category-section-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
+  gap: var(--space-sm); margin: 0 0 var(--space-md); }
+.catalog-page .category-section h2 { margin: 0; font: var(--type-heading-md); overflow-wrap: anywhere; }
+.catalog-page .category-section-controls { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); }
+.catalog-page .category-section-sort .ui-input { width: auto; min-width: 190px; }
+@media (max-width: 768px) {
+  .catalog-page .catalog-layout { grid-template-columns: minmax(0, 1fr); }
 }
-.catalog-page .category-nav a:hover { background: var(--bg); box-shadow: inset 0 0 0 1px var(--link); }
-/* Filters: every field is a 44px touch target with the field border and corners (DESIGN.md, Inputs and forms). */
-.catalog-page .product-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: var(--space-sm); align-items: end; margin: var(--space-xl) 0; }
-.catalog-page .product-filters label { display: grid; gap: var(--space-label-gap); font: var(--type-label); }
-.catalog-page .product-filters input, .catalog-page .product-filters select {
-  min-width: 0; min-height: var(--touch-target); padding: 0 var(--space-sm); border: 1px solid var(--field-line);
-  border-radius: var(--radius-field); background: var(--surface); color: var(--fg); font: var(--type-body-md); }
-.catalog-page .product-filters :is(input, select):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.catalog-page .sort-note, .catalog-page .empty-hint { margin: var(--space-xs) 0; color: var(--muted); }
-.catalog-page .clear-filters { margin: var(--space-xxs) 0 var(--space-md); }
-.catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: var(--space-md); margin: var(--space-xxl) 0; }
-.catalog-page .category-section { margin-top: 2.5rem; scroll-margin-top: 1.5rem; }
-.catalog-page .category-section h2 { margin: 0 0 var(--space-xs); font: var(--type-heading-md); overflow-wrap: anywhere; }
+/* Above the sections the sidebar stays short: two columns of categories (in reading order down each column, so a
+   subcategory stays under its parent), then Brand and Price side by side. */
+@media (min-width: 481px) and (max-width: 768px) {
+  .catalog-page .catalog-sidebar { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-xl) var(--space-xl); }
+  .catalog-page .catalog-sidebar > nav, .catalog-page .catalog-sidebar .clear-filters { grid-column: 1 / -1; }
+  .catalog-page .catalog-category-list { columns: 2; column-gap: var(--space-xl); }
+  .catalog-page .catalog-category-list li { break-inside: avoid; }
+}
+@media (max-width: 480px) {
+  .catalog-page .category-section-controls, .catalog-page .category-section-sort { width: 100%; }
+  .catalog-page .category-section-sort .ui-input { width: 100%; min-width: 0; }
+}
 .catalog-page .product-count { font: var(--type-body-sm); color: var(--muted); }
 /* Shared by the product card, the product page and the wishlist: the full width, the contain fit and the centred
    "No image available" placeholder. Each of them sets its own size and corners. */
@@ -50,11 +102,11 @@
 @media (max-width: 480px) { .catalog-page main { padding: var(--space-xxl) var(--space-md); } }
 
 /* Product grid and product card on /products (SCRUM-123, DESIGN.md Product card). The frame (16px corners, 20px
-   padding, --shadow-product, --surface) comes from ui/Card. 4 columns, 3 up to 1024px, 2 up to 768px, 1 up to 480px. */
-.catalog-page .product-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--space-lg);
+   padding, --shadow-product, --surface) comes from ui/Card. Beside the sidebar: 3 columns, 2 up to 1024px, 1 up to
+   480px (SCRUM-165). */
+.catalog-page .product-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--space-lg);
   margin: 0; padding: 0; list-style: none; }
-@media (max-width: 1024px) { .catalog-page .product-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 768px) { .catalog-page .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 1024px) { .catalog-page .product-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 480px) { .catalog-page .product-grid { grid-template-columns: minmax(0, 1fr); } }
 .catalog-page .product-card { height: 100%; overflow-wrap: anywhere; }
 .catalog-page .product-card .product-image, .catalog-page .product-card .image-placeholder {

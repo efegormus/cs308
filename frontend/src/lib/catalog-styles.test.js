@@ -13,19 +13,44 @@ test("the catalog uses the type scale, not Arial, and no fixed colors", () => {
   assert.deepEqual(css.match(/#[0-9a-fA-F]{3,8}\b|\b(?:white|black)\b(?!-)|rgba?\(/g) ?? [], []);
 });
 
-test("filter fields and category links are 44px, and no plain-button copy is left", () => {
-  assert.match(css, /\.product-filters input, \.catalog-page \.product-filters select \{[^}]*min-height: var\(--touch-target\)/);
-  assert.match(css, /\.category-nav a \{[^}]*min-height: var\(--touch-target\)/);
-  // Every button on a .catalog-page is the shared Button now, so the old plain-button rule is gone.
+test("the sidebar links, chips, check box row and breadcrumb links are 44px, and the old filter rules are gone", () => {
+  for (const selector of [/\.catalog-category-link \{/, /\.catalog-chip \{/, /\.catalog-check \{/, /\.catalog-breadcrumb a \{/]) {
+    const rule = css.slice(css.search(selector));
+    assert.match(rule.slice(0, rule.indexOf("}")), /min-height: var\(--touch-target\)/, String(selector));
+  }
+  assert.doesNotMatch(css, /\.product-filters|\.category-nav|\.catalog-pagination|\.sort-note/);
+  // Every button on a .catalog-page is the shared Button or the filter chip, so the old plain-button rule is gone.
   assert.doesNotMatch(css, /button:not\(\.ui-button\)/);
+});
+
+test("the sidebar is 264px beside the sections and goes above them up to 768px", () => {
+  assert.match(css, /--catalog-sidebar-width: 264px/);
+  assert.match(css, /\.catalog-layout \{[^}]*grid-template-columns: var\(--catalog-sidebar-width\) minmax\(0, 1fr\)/);
+  assert.match(css, /@media \(max-width: 768px\) \{\s*\.catalog-page \.catalog-layout \{ grid-template-columns: minmax\(0, 1fr\); \}/);
+  assert.match(css, /\.product-grid \{[^}]*repeat\(3, minmax\(0, 1fr\)\)/);
 });
 
 test("the product card title link has a 44px hit area without moving the title", () => {
   assert.match(css, /\.product-card h3 a \{ display: inline-block; padding-block: 10px; margin-block: -10px;/);
 });
 
-test("the /products buttons are the shared secondary Button", () => {
+test("/products uses the shared Button and Input, with no old filter form, global sort or pagination", () => {
   const page = read("pages/ProductsPage.jsx");
-  assert.doesNotMatch(page, /<button/);
-  assert.equal((page.match(/<Button variant="secondary"/g) ?? []).length, 4);
+  const sidebar = read("components/CatalogSidebar.jsx");
+  const section = read("components/CategorySection.jsx");
+  // The only plain <button> is the removable filter chip.
+  assert.equal((page.match(/<button/g) ?? []).length, 1);
+  assert.match(page, /className="catalog-chip"/);
+  assert.doesNotMatch(sidebar + section, /<button|<select/);
+  assert.doesNotMatch(page, /product-filters|CategoryNav|catalog-pagination|"Sort by"|>Order</);
+  assert.match(sidebar, /<Button type="submit" variant="secondary" className="catalog-price-apply">Apply<\/Button>/);
+  assert.match(sidebar, /<Button variant="secondary" className="clear-filters"/);
+  assert.match(section, /<Input select className="category-section-sort"/);
+  assert.match(section, /<Button variant="secondary" className="category-section-toggle"/);
+});
+
+test("the header's category links filter /products with ?categoryId= instead of scrolling to #category-<id>", () => {
+  const menu = read("components/CategoryMenu.jsx");
+  assert.match(menu, /const categoryHref = id => categoryProductsPath\(id\);/);
+  assert.doesNotMatch(menu, /#\$\{categoryAnchorId|#category-|categoryIdFromHash/);
 });
