@@ -4,8 +4,9 @@ import { Link } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { addCartItem } from "../lib/cart-api.js";
 import { addToCartError, withCsrfRetry } from "../lib/add-to-cart.js";
-import { formatPrice, safeImageUrl, specRow, stockStatus } from "../lib/product-display.js";
+import { formatPrice, ratingSummary, safeImageUrl, specRow, stockStatus } from "../lib/product-display.js";
 import { canUseCart } from "../lib/role-routes.js";
+import { starRow } from "../lib/stars.js";
 import Button from "./ui/Button.jsx";
 import Card from "./ui/Card.jsx";
 
@@ -23,6 +24,7 @@ export default function ProductCard({ product }) {
   const imageUrl = safeImageUrl(product.imageUrl);
   const spec = specRow(product);
   const stock = stockStatus(product.stockQuantity);
+  const rating = ratingSummary(product);
   // The cart API answers 403 to staff, so they get no cart button (the header hides their cart the same way).
   const showCart = canUseCart(account?.role ?? null);
 
@@ -54,6 +56,11 @@ export default function ProductCard({ product }) {
         {spec && (
           <p className={`product-spec ${spec.kind === "brand" ? "product-brand" : "product-description"}`}>{spec.text}</p>
         )}
+        {rating && <p className={rating.rated ? "product-rating" : "product-rating product-rating--none"}>
+          {rating.rated && <span className="review-stars" aria-hidden="true">{starRow(rating.average)}</span>}
+          <span aria-hidden={rating.rated ? "true" : undefined}>{rating.text}</span>
+          {rating.rated && <span className="ui-visually-hidden">{rating.label}</span>}
+        </p>}
         <p className="price"><Price price={product.price} listPrice={product.listPrice} /></p>
         <p className={stock.inStock ? "stock" : "stock out-of-stock"}>{stock.text}</p>
         {added && (

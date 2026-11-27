@@ -17,7 +17,11 @@ public record ProductListItemDto(
     string? Description = null,
     string? BrandName = null,
     decimal? ListPrice = null,
-    decimal? DiscountRate = null)
+    decimal? DiscountRate = null,
+    // SCRUM-126: the public average of all ratings (null when nobody rated yet) and how many there are.
+    // Filled for GET /api/products by ProductRatings.AttachAsync; other responses leave the defaults.
+    double? AverageRating = null,
+    int RatingCount = 0)
 {
     // Kept as an Expression so EF Core can translate it into SQL
     // (only the needed columns are selected) and tests can still Compile() it.
@@ -32,7 +36,7 @@ public record ProductListItemDto(
             product.CategoryId,
             product.Category.Name,
             product.Description,
-            product.Brand != null && product.Brand.IsActive ? product.Brand.Name : null, product.Price, 0m);
+            product.Brand != null && product.Brand.IsActive ? product.Brand.Name : null, product.Price, 0m, null, 0);
 
     public static readonly Expression<Func<PricedProduct, ProductListItemDto>> FromPricedProduct = priced =>
         new ProductListItemDto(priced.Product.Id, priced.Product.Name, priced.Price, priced.Product.StockQuantity,
@@ -40,5 +44,5 @@ public record ProductListItemDto(
             priced.Product.Images.Where(i => i.IsPrimary).OrderBy(i => i.SortOrder).ThenBy(i => i.Id).Select(i => i.StorageKey).FirstOrDefault(),
             priced.Product.CategoryId, priced.Product.Category.Name, priced.Product.Description,
             priced.Product.Brand != null && priced.Product.Brand.IsActive ? priced.Product.Brand.Name : null,
-            priced.ListPrice, priced.DiscountRate);
+            priced.ListPrice, priced.DiscountRate, null, 0);
 }
