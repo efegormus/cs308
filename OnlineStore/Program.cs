@@ -70,6 +70,7 @@ builder.Services.AddScoped<InvoiceService>();
 builder.Services.AddScoped<InvoiceEmailOutbox>();
 builder.Services.AddScoped<InvoiceEmailDispatcher>();
 builder.Services.AddScoped<IDashboardService, DashboardService>();
+builder.Services.AddScoped<OnlineStore.Reporting.ProfitReportService>();
 var emailTransport = builder.Configuration["Email:Transport"] ?? (builder.Environment.IsDevelopment() ? "Local" : "Smtp");
 if (emailTransport.Equals("Local", StringComparison.OrdinalIgnoreCase))
 {
@@ -123,6 +124,7 @@ app.MapCartEndpoints();
 app.MapWishlistEndpoints();
 app.MapInvoiceEndpoints();
 app.MapDashboardEndpoints();
+OnlineStore.Reporting.ProfitReportEndpoints.MapProfitReportEndpoints(app);
 app.MapReviewEndpoints();
 app.MapSupportChat();
 
