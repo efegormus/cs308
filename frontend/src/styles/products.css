@@ -30,13 +30,6 @@
 .catalog-page .sort-note, .catalog-page .empty-hint { margin: .5rem 0; color: var(--muted); line-height: 1.5; }
 .catalog-page .clear-filters { margin: .25rem 0 1rem; }
 .catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2rem 0; }
-.catalog-page .wishlist-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(240px, 100%), 1fr));
-  gap: 1rem; padding: 0; list-style: none; }
-.catalog-page .wishlist-card { display: flex; height: 100%; flex-direction: column; gap: .5rem; padding: 1rem;
-  border: 1px solid var(--line); border-radius: .6rem; background: var(--surface); }
-.catalog-page .wishlist-card img, .catalog-page .wishlist-card .image-placeholder {
-  width: 100%; height: 180px; object-fit: contain; border-radius: .3rem; background: var(--bg); }
-.catalog-page .wishlist-card h2 { font-size: 1.1rem; }
 .catalog-page .category-section { margin-top: 2.5rem; scroll-margin-top: 1.5rem; }
 .catalog-page .category-section h2 { margin-bottom: .5rem; overflow-wrap: anywhere; }
 .catalog-page .product-count { font-size: .9rem; font-weight: normal; color: var(--muted); }

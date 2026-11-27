@@ -1,0 +1,20 @@
+/* The wishlist page (SCRUM-104). Scoped to .wishlist-page; colors only from tokens. Each item is the shared Card, the
+   same frame as the /products card, with a 1:1 picture, a heading-sm title, the price and the secondary Remove button.
+   The page also carries .catalog-page (products.css, loaded later), so the rules start with .wishlist-page .wishlist-card
+   to win over its .catalog-page .price and image rules. */
+.route-page.wishlist-page { font: var(--type-body-md); }
+.wishlist-page h1 { margin: 0 0 var(--space-md); font: var(--type-heading-lg); }
+.wishlist-page .wishlist-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(240px, 100%), 1fr)); gap: var(--space-lg);
+  margin: 0; padding: 0; list-style: none;
+}
+.wishlist-page .wishlist-card { height: 100%; gap: var(--space-xs); overflow-wrap: anywhere; }
+.wishlist-page .wishlist-card img, .wishlist-page .wishlist-card .image-placeholder {
+  width: 100%; height: auto; aspect-ratio: 1 / 1; object-fit: contain; border-radius: var(--radius-tile); background: var(--bg);
+}
+.wishlist-page .wishlist-card h2 { margin: var(--space-xs) 0 0; font: var(--type-heading-sm); }
+/* The title link is a 44px touch target. */
+.wishlist-page .wishlist-card h2 a { display: inline-flex; align-items: center; min-height: var(--touch-target); color: inherit; }
+.wishlist-page .wishlist-card .wishlist-brand { margin: 0; color: var(--muted); font: var(--type-body-sm); }
+.wishlist-page .wishlist-card .price { margin: auto 0 0; padding-top: var(--space-sm); font: var(--type-price); }
+.wishlist-page .wishlist-card .ui-button { margin-top: var(--space-sm); }

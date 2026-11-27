@@ -1,50 +1,53 @@
-/* The landing pages after login (SCRUM-130). Colors come from the theme tokens, so dark mode works. */
-.role-home-page.catalog-page { color: var(--fg, #222); background: var(--bg, #f5f6f8); }
-.role-home-page .role-home-head { margin: 1rem 0 1.75rem; }
+/* The landing pages after login (SCRUM-130) and the customer dashboard (SCRUM-125). Scoped to .role-home-page; colors
+   only from tokens (DESIGN.md). The pages also carry .purchase-page, so purchases.css gives them the text type. */
+.role-home-page .role-home-head { margin: var(--space-md) 0 var(--space-xxl); }
 .role-home-page .role-home-badge {
-  display: inline-block; margin: 0 0 .75rem; padding: .25rem .75rem; border-radius: 999px;
-  font-size: .85rem; font-weight: 600; letter-spacing: .02em;
-  color: var(--link, #174a8b); background: color-mix(in srgb, var(--link, #174a8b) 14%, transparent);
+  display: inline-block; margin: 0 0 var(--space-sm); padding: var(--space-xxs) var(--space-sm); border-radius: var(--radius-full);
+  color: var(--link); background: color-mix(in srgb, var(--link) 14%, transparent); font: var(--type-label);
 }
-.role-home-page .role-home-head h1 { margin: 0 0 .4rem; font-size: clamp(1.6rem, 4vw, 2.2rem); }
-.role-home-page .role-home-sub { margin: 0; color: var(--muted, #505966); }
+.role-home-page .role-home-head h1 { margin: 0 0 var(--space-label-gap); font: var(--type-heading-lg); overflow-wrap: anywhere; }
+.role-home-page .role-home-sub { margin: 0; color: var(--muted); overflow-wrap: anywhere; }
+
+/* Shortcut cards: an outline card that lifts 2px on hover. */
 .role-home-page .role-home-grid {
-  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: 1rem;
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(15rem, 1fr)); gap: var(--space-md);
   margin: 0; padding: 0; list-style: none;
 }
 .role-home-page .role-home-card {
-  display: flex; flex-direction: column; gap: .4rem; height: 100%; box-sizing: border-box; padding: 1.25rem;
-  color: var(--fg, #222); text-decoration: none; background: var(--surface, #fff);
-  border: 1px solid var(--field-line, #dce0e6); border-radius: .75rem;
+  box-sizing: border-box; display: flex; flex-direction: column; gap: var(--space-label-gap); height: 100%; padding: var(--space-lg);
+  color: var(--fg); text-decoration: none; background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow);
   transition: border-color .15s, transform .15s, box-shadow .15s;
 }
-.role-home-page .role-home-card:hover { border-color: var(--link, #174a8b); transform: translateY(-2px); box-shadow: 0 6px 18px rgb(0 0 0 / .08); }
-.role-home-page .role-home-card:focus-visible { outline: 3px solid #b66d00; outline-offset: 2px; }
-.role-home-page .role-home-card-title { font-size: 1.1rem; font-weight: 700; color: var(--link, #174a8b); }
-.role-home-page .role-home-card-text { color: var(--muted, #505966); line-height: 1.45; }
-@media (prefers-reduced-motion: reduce) { .role-home-page .role-home-card { transition: none; } .role-home-page .role-home-card:hover { transform: none; } }
+.role-home-page .role-home-card:hover { border-color: var(--link); transform: translateY(-2px); box-shadow: var(--shadow-menu); }
+.role-home-page .role-home-card:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.role-home-page .role-home-card-title { font: var(--type-heading-sm); color: var(--link); }
+.role-home-page .role-home-card-text { color: var(--muted); font: var(--type-body-sm); }
+@media (prefers-reduced-motion: reduce) {
+  .role-home-page .role-home-card { transition: none; }
+  .role-home-page .role-home-card:hover { transform: none; }
+}
 
-/* The customer dashboard (SCRUM-125): recent orders and the profile summary side by side, one column on a phone. */
-.role-home-page .dash-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: 1rem; margin: 0 0 1.5rem; }
+/* The customer dashboard: recent orders and the profile summary side by side, one column on a narrow screen. */
+.role-home-page .dash-columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(18rem, 1fr)); gap: var(--space-md); margin: 0 0 var(--space-xl); }
 .role-home-page .dash-section {
-  padding: 1.25rem; box-sizing: border-box; background: var(--surface, #fff);
-  border: 1px solid var(--field-line, #dce0e6); border-radius: .75rem;
+  box-sizing: border-box; padding: var(--space-lg); background: var(--surface);
+  border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow);
 }
-.role-home-page .dash-section a { color: var(--link, #174a8b); }
-.role-home-page .dash-section-head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: .5rem; margin-bottom: .75rem; }
-.role-home-page .dash-section-head h2 { margin: 0; font-size: 1.15rem; }
-.role-home-page .dash-orders { display: grid; gap: .75rem; margin: 0; padding: 0; list-style: none; }
-.role-home-page .dash-order { padding-bottom: .75rem; border-bottom: 1px solid var(--field-line, #dce0e6); }
+.role-home-page .dash-section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); margin-bottom: var(--space-sm); }
+.role-home-page .dash-section-head h2 { margin: 0; font: var(--type-heading-sm); }
+/* "View all orders", "Edit details" and "View details" are 44px touch targets. */
+.role-home-page :is(.dash-section-head, .dash-order) > a { display: inline-flex; align-items: center; min-height: var(--touch-target); }
+.role-home-page .dash-orders { display: grid; gap: var(--space-sm); margin: 0; padding: 0; list-style: none; }
+.role-home-page .dash-order { padding-bottom: var(--space-sm); border-bottom: 1px solid var(--line); }
 .role-home-page .dash-order:last-child { padding-bottom: 0; border-bottom: 0; }
-.role-home-page .dash-order p { margin: .25rem 0; color: var(--muted, #505966); }
-.role-home-page .dash-order-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: .5rem; }
-.role-home-page .dash-status {
-  padding: .15rem .65rem; border-radius: 999px; font-size: .8rem; font-weight: 600;
-  border: 1px solid var(--field-line, #7b8799);
-}
-.role-home-page .dash-status--delivered { border-color: var(--ok, #238636); }
-.role-home-page .dash-status--cancelled { border-color: var(--danger, #b00020); color: var(--danger, #b00020); }
-.role-home-page .dash-profile { display: grid; gap: .6rem; margin: 0; }
-.role-home-page .dash-profile dt { font-size: .85rem; color: var(--muted, #505966); }
+.role-home-page .dash-order p { margin: var(--space-xxs) 0 0; color: var(--muted); font: var(--type-body-sm); }
+.role-home-page .dash-order-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: var(--space-xs); }
+/* Interim status pill, as on the orders page (DESIGN.md, Order status badges is still undecided). */
+.role-home-page .dash-status { padding: 2px var(--space-sm); border: 1px solid var(--field-line); border-radius: var(--radius-full); font: var(--type-caption); }
+.role-home-page .dash-status--delivered { border-color: var(--ok); }
+.role-home-page .dash-status--cancelled { border-color: var(--danger); color: var(--danger); }
+.role-home-page .dash-profile { display: grid; gap: var(--space-sm); margin: 0; }
+.role-home-page .dash-profile dt { color: var(--muted); font: var(--type-body-sm); }
 .role-home-page .dash-profile dd { margin: 0; overflow-wrap: anywhere; }
 .role-home-page .dash-section .request-state { margin: 0; }

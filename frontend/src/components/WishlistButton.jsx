@@ -3,6 +3,7 @@ import { Link, useLocation } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { loginHref } from "../lib/auth-utils.js";
 import { addWishlistItem, WishlistError } from "../lib/wishlist-api.js";
+import Button from "./ui/Button.jsx";
 
 export default function WishlistButton({ productId }) {
   const { account, authReady, csrfToken, expireSession } = useAuth();
@@ -31,15 +32,15 @@ export default function WishlistButton({ productId }) {
     }
   }
 
-  if (!authReady) return <button type="button" disabled>Checking your account…</button>;
-  if (!account) return <p><Link to={loginHref(location)}>Log in to save to your wishlist</Link></p>;
+  if (!authReady) return <Button variant="secondary" disabled>Checking your account…</Button>;
+  if (!account) return <p className="wishlist-login"><Link to={loginHref(location)}>Log in to save to your wishlist</Link></p>;
   if (account.role !== "Customer") return <p>A customer account is required to use a wishlist.</p>;
 
   return (
     <div className="wishlist-action">
-      <button type="button" disabled={status !== "idle"} onClick={save}>
+      <Button variant="secondary" disabled={status !== "idle"} onClick={save}>
         {status === "loading" ? "Saving…" : status === "saved" ? "Saved to wishlist" : "Save to wishlist"}
-      </button>
+      </Button>
       {error && <p role="alert">{error}{sessionExpired && <> <Link to={loginHref(location)}>Log in</Link></>}</p>}
       {status === "saved" && <p role="status"><Link to="/wishlist">View your wishlist</Link></p>}
     </div>

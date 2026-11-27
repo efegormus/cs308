@@ -6,6 +6,7 @@ import { fetchProduct } from "../lib/catalog-api.js";
 import { isLoadedProduct, parseProductId } from "../lib/product-detail.js";
 import { useRequest } from "../lib/useRequest.js";
 import "../styles/request-states.css";
+import "../styles/product-detail.css";
 
 // The product detail page (SCRUM-110), opened as /product?id=3. It loads GET /api/products/{id}.
 export default function ProductPage() {
@@ -29,10 +30,10 @@ export default function ProductPage() {
   const notFound = id === null || (status === "success" && product === null);
 
   return (
-    <div className="route-page catalog-page">
+    <div className="route-page catalog-page product-page">
       <title>{product ? `${product.name} | Online Store` : "Product | Online Store"}</title>
       <main id="main-content">
-        <p><Link to="/products">&larr; Back to all products</Link></p>
+        <p className="back-link"><Link to="/products">&larr; Back to all products</Link></p>
         <div aria-busy={status === "loading"}>
           {status === "loading" && <LoadingState label="Loading product…" />}
           {status === "error" && <ErrorState error={error} onRetry={load} />}

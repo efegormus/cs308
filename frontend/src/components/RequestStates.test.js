@@ -28,7 +28,8 @@ test("retry appears only when supplied, is a non-submit button, and never runs d
   let calls = 0;
   const onRetry = () => calls++;
   const props = { error: { status: 503 }, onRetry };
-  assert.match(render(ErrorState, props), /<button type="button">Try again<\/button>/);
+  // SCRUM-134: "Try again" is the shared secondary Button.
+  assert.match(render(ErrorState, props), /<button type="button" class="ui-button ui-button--secondary">Try again<\/button>/);
   assert.match(render(ErrorState, { ...props, retrying: true }), /disabled=""/);
   assert.equal(calls, 0);
   // Invoke the button's actual event handler, as a click would; nothing schedules retries.

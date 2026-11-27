@@ -67,7 +67,7 @@ export default function ProductCard({ product }) {
           {showCart && (stock.inStock ? (
             <Button onClick={add} disabled={busy} aria-describedby={nameId}>{busy ? "Adding…" : "Add to cart"}</Button>
           ) : (
-            <Button disabled aria-describedby={nameId}>Out of stock</Button>
+            <Button unavailable aria-describedby={nameId}>Out of stock</Button>
           ))}
         </div>
       </Card>
