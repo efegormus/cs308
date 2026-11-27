@@ -1,5 +1,7 @@
 /* Text input. Tokens: design-system.css; rules: DESIGN.md, Inputs and forms and Validation errors. */
-.ui-field { display: flex; flex-direction: column; gap: var(--space-label-gap); }
+/* position: relative keeps the hidden label (position: absolute, below) inside its own field. Without it the label of a field
+   in a table row sits at the row's x position and, being outside the table's scroll box, widens the whole page on a phone. */
+.ui-field { position: relative; display: flex; flex-direction: column; gap: var(--space-label-gap); }
 .ui-field-label { font: var(--type-label); color: var(--fg); }
 /* Read by screen readers, not shown (the hideLabel prop). */
 .ui-visually-hidden {

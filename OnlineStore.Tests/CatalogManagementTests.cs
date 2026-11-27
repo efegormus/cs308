@@ -123,6 +123,7 @@ public class CatalogManagementTests
         await Forbidden(() => service.CreateProductAsync(other.Id, NewProduct(1), default));
         await Forbidden(() => service.EditProductAsync(other.Id, 1, new(1, null, "S", "N", "M", "SN", "D", 1m, "W", "Dist", "c", true), default));
         await Forbidden(() => service.RemoveProductAsync(other.Id, 1, default));
+        await Forbidden(() => service.SetStockAsync(other.Id, 1, new(5, 0), default));
         Assert.Empty(db.Categories); Assert.Empty(db.Products);
     }
 
@@ -323,5 +324,99 @@ public class CatalogManagementTests
         var second = await service.ListProductsAsync(manager.Id, first.NextAfterId!.Value, default);
         Assert.Single(second.Products); Assert.Null(second.NextAfterId);
         Assert.Equal(400, (await Assert.ThrowsAsync<PurchaseException>(() => service.ListProductsAsync(manager.Id, -1, default))).Status);
+    }
+
+    // ---- stock (SCRUM-78) ----
+
+    [Theory]
+    [InlineData(0, 0, true)]
+    [InlineData(25, 10, true)]
+    [InlineData(1_000_000, 0, true)]
+    [InlineData(-1, 0, false)]
+    [InlineData(1_000_001, 0, false)]
+    [InlineData(5, -1, false)]
+    public void StockChange_BoundsTheNewAndTheExpectedCount(int quantity, int expected, bool valid) =>
+        Assert.Equal(valid, new StockChange(quantity, expected).Validate().Count == 0);
+
+    [Fact]
+    public void StockChange_NeedsBothNumbers()
+    {
+        var errors = new StockChange(null, null).Validate();
+        Assert.Contains("quantity", errors.Keys); Assert.Contains("expectedQuantity", errors.Keys);
+        Assert.Contains("below zero", new StockChange(-3, 0).Validate()["quantity"][0]);
+    }
+
+    private static async Task<(CatalogManagementService Service, User Manager, ManagedProduct Product)> SeedStockAsync(StoreDbContext db)
+    {
+        var manager = await AddUserAsync(db, UserRole.ProductManager);
+        var service = Service(db);
+        var category = await service.CreateCategoryAsync(manager.Id, new("Phones", null, null), default);
+        var product = await service.CreateProductAsync(manager.Id, NewProduct(category.Id), default);
+        return (service, manager, product);
+    }
+
+    [Fact]
+    public async Task SetStock_ChangesOnlyTheStockCount()
+    {
+        await using var db = NewDb();
+        var (service, manager, product) = await SeedStockAsync(db);
+        var updated = await service.SetStockAsync(manager.Id, product.Id, new(40, product.StockQuantity), default);
+        Assert.Equal(40, updated.StockQuantity);
+        Assert.Equal(product with { StockQuantity = 40 }, updated);
+        Assert.Equal(40, (await db.Products.AsNoTracking().SingleAsync()).StockQuantity);
+    }
+
+    [Fact]
+    public async Task SetStock_CanSetZeroAndRestockAProductOffSale()
+    {
+        await using var db = NewDb();
+        var (service, manager, product) = await SeedStockAsync(db);
+        await service.RemoveProductAsync(manager.Id, product.Id, default);
+        Assert.Equal(0, (await service.SetStockAsync(manager.Id, product.Id, new(0, 12), default)).StockQuantity);
+        var restocked = await service.SetStockAsync(manager.Id, product.Id, new(9, 0), default);
+        Assert.Equal(9, restocked.StockQuantity); Assert.False(restocked.IsActive);
+    }
+
+    [Fact]
+    public async Task SetStock_NeverGoesBelowZeroAndKeepsTheOldCount()
+    {
+        await using var db = NewDb();
+        var (service, manager, product) = await SeedStockAsync(db);
+        Assert.Equal(400, (await Assert.ThrowsAsync<PurchaseException>(() => service.SetStockAsync(manager.Id, product.Id, new(-1, 12), default))).Status);
+        Assert.Equal(400, (await Assert.ThrowsAsync<PurchaseException>(() => service.SetStockAsync(manager.Id, product.Id, new(ProductRules.MaxStock + 1, 12), default))).Status);
+        Assert.Equal(12, (await db.Products.AsNoTracking().SingleAsync()).StockQuantity);
+    }
+
+    [Fact]
+    public async Task SetStock_RefusesAStaleScreenAndKeepsTheCurrentCount()
+    {
+        await using var db = NewDb();
+        var (service, manager, product) = await SeedStockAsync(db);
+        // A sale took 2 units while the manager looked at 12.
+        var sold = await db.Products.SingleAsync(); sold.StockQuantity = 10; await db.SaveChangesAsync();
+        Assert.Equal(409, (await Assert.ThrowsAsync<PurchaseException>(() => service.SetStockAsync(manager.Id, product.Id, new(50, 12), default))).Status);
+        Assert.Equal(10, (await db.Products.AsNoTracking().SingleAsync()).StockQuantity);
+        Assert.Equal(50, (await service.SetStockAsync(manager.Id, product.Id, new(50, 10), default)).StockQuantity);
+    }
+
+    [Fact]
+    public async Task SetStock_RepeatingTheSameChangeIsASafeRetry()
+    {
+        await using var db = NewDb();
+        var (service, manager, product) = await SeedStockAsync(db);
+        await service.SetStockAsync(manager.Id, product.Id, new(30, 12), default);
+        // The answer to the first request was lost, so the screen sends it again with the old count.
+        Assert.Equal(30, (await service.SetStockAsync(manager.Id, product.Id, new(30, 12), default)).StockQuantity);
+        Assert.Equal(30, (await db.Products.AsNoTracking().SingleAsync()).StockQuantity);
+    }
+
+    [Fact]
+    public async Task SetStock_UnknownProductIs404AndAnInvalidManagerIsRefused()
+    {
+        await using var db = NewDb();
+        var (service, manager, product) = await SeedStockAsync(db);
+        Assert.Equal(404, (await Assert.ThrowsAsync<PurchaseException>(() => service.SetStockAsync(manager.Id, 99, new(1, 0), default))).Status);
+        Assert.Equal(404, (await Assert.ThrowsAsync<PurchaseException>(() => service.SetStockAsync(manager.Id, 0, new(1, 0), default))).Status);
+        Assert.Equal(401, (await Assert.ThrowsAsync<PurchaseException>(() => service.SetStockAsync(manager.Id + 99, product.Id, new(1, 12), default))).Status);
     }
 }

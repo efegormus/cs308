@@ -138,6 +138,40 @@ public sealed class CatalogManagementService(StoreDbContext db, TimeProvider clo
         return await ProductViews(db.Products.AsNoTracking().Where(p => p.Id == id)).SingleAsync(ct);
     }
 
+    // ---- stock (SCRUM-78) ----
+
+    // Sets the stock count of one product, but only while it is still the count the manager saw. The check and the write
+    // are one UPDATE, so a customer buying at the same moment is never overwritten: the loser gets 409 and the
+    // screen shows the new count. Sending the same change again is safe. The count cannot go below zero.
+    public async Task<ManagedProduct> SetStockAsync(long managerId, long id, StockChange input, CancellationToken ct)
+    {
+        if (input.Validate().Count != 0) throw new PurchaseException(400, "Use a valid stock count.");
+        await RequireProductManagerAsync(managerId, ct);
+        var quantity = input.Quantity!.Value;
+        var expected = input.ExpectedQuantity!.Value;
+        if (id <= 0 || !await db.Products.AnyAsync(p => p.Id == id, ct)) throw new PurchaseException(404, "Product not found.");
+        var now = Now();
+        int changed;
+        if (db.Database.IsRelational())
+        {
+            changed = await db.Products.Where(p => p.Id == id && p.StockQuantity == expected)
+                .ExecuteUpdateAsync(update => update.SetProperty(p => p.StockQuantity, quantity)
+                    .SetProperty(p => p.UpdatedAt, now).SetProperty(p => p.RowVersion, now), ct);
+        }
+        else
+        {
+            // The in-memory test provider has no set-based UPDATE.
+            var product = await db.Products.SingleAsync(p => p.Id == id, ct);
+            changed = product.StockQuantity == expected ? 1 : 0;
+            if (changed == 1) { product.StockQuantity = quantity; product.UpdatedAt = now; product.RowVersion = now; await db.SaveChangesAsync(ct); }
+        }
+        db.ChangeTracker.Clear();
+        var view = await ProductViews(db.Products.AsNoTracking().Where(p => p.Id == id)).SingleAsync(ct);
+        if (changed == 0 && view.StockQuantity != quantity)
+            throw new PurchaseException(409, "The stock changed in the meantime. Review the new count and try again.");
+        return view;
+    }
+
     // ---- helpers ----
 
     private async Task RequireCategoryAndBrandAsync(long categoryId, long? brandId, CancellationToken ct)

@@ -105,6 +105,22 @@ public static class ProductRules
     }
 }
 
+// SCRUM-78: the new stock count and the count the manager saw on screen. The change is made only while the stock is
+// still the count they saw, so a sale or a cancellation in between is never overwritten.
+[JsonUnmappedMemberHandling(JsonUnmappedMemberHandling.Disallow)]
+public sealed record StockChange(int? Quantity, int? ExpectedQuantity)
+{
+    public Dictionary<string, string[]> Validate()
+    {
+        var errors = new Dictionary<string, string[]>();
+        if (Quantity is null || Quantity < 0 || Quantity > ProductRules.MaxStock)
+            errors["quantity"] = [$"Use a whole stock count from 0 to {ProductRules.MaxStock}. The stock cannot go below zero."];
+        if (ExpectedQuantity is null || ExpectedQuantity < 0 || ExpectedQuantity > int.MaxValue)
+            errors["expectedQuantity"] = ["Send the stock count you saw, a whole number from 0."];
+        return errors;
+    }
+}
+
 public sealed record ManagedCategory(long Id, long? ParentId, string Name, string Slug, string? Description,
     bool IsActive, int ProductCount, int ChildCount);
 

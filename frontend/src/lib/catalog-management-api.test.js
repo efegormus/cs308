@@ -2,7 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   createCategory, createProduct, deleteCategory, editProduct, fetchCategories, fetchProducts, isManagedCategory,
-  isManagedProduct, isProductPage, removeProduct
+  isManagedProduct, isProductPage, removeProduct, setStock
 } from "./catalog-management-api.js";
 
 const category = { id: 2, parentId: null, name: "Phones", slug: "phones", description: null, isActive: true, productCount: 1, childCount: 0 };
@@ -86,4 +86,24 @@ test("removing a product needs the product back as off sale, and an edit must ke
   t.mock.restoreAll();
   stubFetch(t, 200, { ...product, isActive: false });
   await assert.rejects(editProduct(5, { isActive: true }, "tok"), { kind: "invalid-response" });
+});
+
+test("setStock sends the new and the expected count with the CSRF token and checks the answer", async t => {
+  const calls = stubFetch(t, 200, { ...product, stockQuantity: 40 });
+  assert.equal((await setStock(5, { quantity: 40, expectedQuantity: 12 }, "tok")).stockQuantity, 40);
+  assert.equal(calls[0].path, "/api/product-management/products/5/stock");
+  assert.equal(calls[0].init.method, "PUT");
+  assert.equal(calls[0].init.headers["X-CSRF-TOKEN"], "tok");
+  assert.equal(calls[0].init.body, JSON.stringify({ quantity: 40, expectedQuantity: 12 }));
+  t.mock.restoreAll();
+  stubFetch(t, 200, { ...product, stockQuantity: 41 });
+  await assert.rejects(setStock(5, { quantity: 40, expectedQuantity: 12 }, "tok"), { kind: "invalid-response" });
+});
+
+test("setStock never sends a negative count and reports a conflict by status", async t => {
+  assert.throws(() => setStock(5, { quantity: -1, expectedQuantity: 0 }, "tok"), { status: 400 });
+  assert.throws(() => setStock(5, { quantity: 1, expectedQuantity: -1 }, "tok"), { status: 400 });
+  assert.throws(() => setStock(0, { quantity: 1, expectedQuantity: 0 }, "tok"), { status: 400 });
+  stubFetch(t, 409, { title: "x" });
+  await assert.rejects(setStock(5, { quantity: 1, expectedQuantity: 0 }, "tok"), { status: 409 });
 });

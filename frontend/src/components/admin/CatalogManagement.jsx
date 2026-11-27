@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { Link } from "react-router";
 import { useAuth } from "../../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../../auth/useSessionExpiry.js";
 import {
@@ -248,7 +249,7 @@ export default function CatalogManagement() {
         <Input label="Price (TRY)" inputMode="decimal" autoComplete="off" value={productForm.price} error={productErrors.price}
           hint="For example 1999.90" onChange={set(setProductForm, "price")} />
         {editingProduct
-          ? <p className="ui-field-hint">In stock: {editingProduct.stockQuantity}. Change the stock count on the stock screen.</p>
+          ? <p className="ui-field-hint">In stock: {editingProduct.stockQuantity}. Change the count on the <Link to="/manage/stock">Stock screen</Link>.</p>
           : <Input label="Stock quantity" inputMode="numeric" autoComplete="off" value={productForm.stockQuantity}
             error={productErrors.stockQuantity} onChange={set(setProductForm, "stockQuantity")} />}
         <Input label="Warranty" value={productForm.warrantyStatus} maxLength={100} error={productErrors.warrantyStatus}

@@ -3,10 +3,10 @@ import assert from "node:assert/strict";
 import { adminSections, resolveSection } from "./admin-menu.js";
 import { canAccess } from "./role-routes.js";
 
-test("the product manager's menu is Overview, Deliveries, Reviews, Low stock and Catalog, in that order", () => {
+test("the product manager's menu is Overview, Deliveries, Reviews, Low stock, Stock and Catalog, in that order", () => {
   assert.deepEqual(adminSections("ProductManager").map(item => [item.label, item.path]), [
     ["Overview", "/manage"], ["Deliveries", "/manage/deliveries"], ["Reviews", "/manage/reviews"], ["Low stock", "/manage/low-stock"],
-    ["Catalog", "/manage/catalog"]
+    ["Stock", "/manage/stock"], ["Catalog", "/manage/catalog"]
   ]);
 });
 

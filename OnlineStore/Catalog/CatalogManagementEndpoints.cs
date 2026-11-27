@@ -51,6 +51,13 @@ public static class CatalogManagementEndpoints
             if (errors.Count != 0) return Results.ValidationProblem(errors);
             return Results.Ok(await service.EditProductAsync(Owner(user), id, input, ct));
         }).AddEndpointFilter<CsrfFilter>();
+        manager.MapPut("/products/{id:long}/stock", async (long id, StockChange input, ClaimsPrincipal user,
+            CatalogManagementService service, CancellationToken ct) =>
+        {
+            var errors = input.Validate();
+            if (errors.Count != 0) return Results.ValidationProblem(errors);
+            return Results.Ok(await service.SetStockAsync(Owner(user), id, input, ct));
+        }).AddEndpointFilter<CsrfFilter>();
         manager.MapDelete("/products/{id:long}", async (long id, ClaimsPrincipal user,
             CatalogManagementService service, CancellationToken ct) =>
             Results.Ok(await service.RemoveProductAsync(Owner(user), id, ct))).AddEndpointFilter<CsrfFilter>();
