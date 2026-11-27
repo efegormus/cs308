@@ -1,52 +1,40 @@
-/* products.css hard-codes a light page (#222 on #f6f7f9) but the cart row follows the theme tokens, so in dark mode the
-   numbers were dark on dark. The cart page now takes its text, page and link colors from the same tokens as its rows. */
-.cart-page.catalog-page { color: var(--fg, #222); background: var(--bg, #f6f7f9); }
-.cart-page.catalog-page a { color: var(--link, #174a8b); }
-.cart-page.catalog-page .cart-checkout { color: var(--accent-fg, #fff); }
-.cart-page .cart-lines { list-style: none; margin: 1rem 0; padding: 0; display: grid; gap: .75rem; }
+/* The cart page (SCRUM-69; DESIGN.md, Cart and checkout forms). Scoped to .cart-page; colors only from tokens. The
+   page also carries .catalog-page (products.css), whose Arial and browser headings are replaced here. Remove and the
+   quantity steppers are the shared secondary Button, checkout the primary one. */
+.cart-page.catalog-page { color: var(--fg); background: var(--bg); font: var(--type-body-md); }
+.cart-page h1 { margin: 0 0 var(--space-sm); font: var(--type-heading-lg); }
+.cart-page h2 { font: var(--type-heading-md); }
+.cart-page .cart-lines { display: grid; gap: var(--space-sm); margin: var(--space-md) 0; padding: 0; list-style: none; }
+/* Cart line: image, product info, line total and Remove on --surface with a 1px --line border and 8px corners. */
 .cart-page .cart-line {
-  display: grid; grid-template-columns: 72px 1fr auto auto; gap: 1rem; align-items: center;
-  padding: .75rem 1rem; background: var(--surface, #fff); border: 1px solid var(--line, #dce0e6); border-radius: .5rem;
+  display: grid; grid-template-columns: 72px 1fr auto auto; gap: var(--space-md); align-items: center;
+  padding: var(--space-sm) var(--space-md); background: var(--surface); border: 1px solid var(--line);
+  border-radius: var(--radius-tile); box-shadow: var(--shadow);
 }
 .cart-page .cart-line-image {
-  width: 72px; height: 72px; display: grid; place-items: center; overflow: hidden;
-  border-radius: .375rem; background: var(--bg, #f4f6f9); color: var(--muted, #5d6877); font-size: .75rem;
+  display: grid; place-items: center; width: 72px; height: 72px; overflow: hidden;
+  border-radius: var(--radius-field); background: var(--bg); color: var(--muted); font: var(--type-caption);
 }
 .cart-page .cart-line-image img { width: 100%; height: 100%; object-fit: contain; }
-.cart-page .cart-line-info p { margin: .25rem 0 0; color: var(--muted, #5d6877); }
+.cart-page .cart-line-info p { margin: var(--space-xxs) 0 0; color: var(--muted); }
 .cart-page .cart-line-info a { font-weight: 600; overflow-wrap: anywhere; }
-.cart-page .cart-line-info .cart-line-warning { color: var(--danger-fg, #7a1f0d); }
+.cart-page .cart-line-info .cart-line-warning { color: var(--danger-fg); }
 .cart-page .cart-line-total { margin: 0; font-weight: 600; white-space: nowrap; }
-.cart-page .cart-line .cart-remove {
-  padding: .5rem .875rem; border: 1px solid var(--field-line, #7b8799); border-radius: .3rem;
-  background: var(--surface, #fff); color: var(--fg, #222); font: inherit; cursor: pointer;
+
+/* Quantity: minus and plus (44px squares) around an <output>. */
+.cart-page .cart-quantity { display: inline-flex; align-items: center; gap: var(--space-xs); margin-top: var(--space-xs); }
+.cart-page .cart-quantity .ui-button { width: var(--touch-target); min-width: var(--touch-target); min-height: var(--touch-target); padding: 0; font-size: 18px; }
+.cart-page .cart-quantity output { min-width: 2rem; text-align: center; font-weight: 600; }
+
+/* The total row puts the label and amount on opposite sides. */
+.cart-page .cart-total {
+  display: flex; justify-content: space-between; gap: var(--space-md); padding: var(--space-md);
+  background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-tile); font: var(--type-heading-sm);
 }
-.cart-page .cart-line .cart-remove:disabled { opacity: .7; cursor: default; }
-.cart-page .cart-line .cart-remove:focus-visible,
-.cart-page .cart-checkout:focus-visible { outline: 3px solid var(--focus, #b66d00); outline-offset: 3px; }
-.cart-page .cart-total { display: flex; justify-content: space-between; gap: 1rem; font-size: 1.125rem; }
-.cart-page .cart-checkout {
-  display: inline-block; padding: .625rem 1.25rem; border-radius: .4rem; text-decoration: none; font-weight: 600;
-  background: var(--accent, #174a8b); color: var(--accent-fg, #fff);
-}
+
 @media (max-width: 36rem) {
   .cart-page .cart-line { grid-template-columns: 56px 1fr; }
   .cart-page .cart-line-image { width: 56px; height: 56px; }
   .cart-page .cart-line-total, .cart-page .cart-line .cart-remove { grid-column: 2; justify-self: start; }
+  .cart-page .cart-checkout { width: 100%; }
 }
-
-.cart-page .cart-quantity { display: inline-flex; align-items: center; gap: .5rem; margin-top: .5rem; }
-.cart-page .cart-quantity button {
-  width: 2.25rem; height: 2.25rem; padding: 0; border: 1px solid var(--field-line, #7b8799); border-radius: .3rem;
-  background: var(--surface, #fff); color: var(--fg, #222); font: inherit; font-size: 1.125rem; cursor: pointer;
-}
-.cart-page .cart-quantity button:disabled { opacity: .5; cursor: default; }
-.cart-page .cart-quantity button:focus-visible { outline: 3px solid var(--focus, #b66d00); outline-offset: 3px; }
-.cart-page .cart-quantity output { min-width: 2rem; text-align: center; font-weight: 600; }
-
-/* UI polish (SCRUM-138): aligned quantity controls, secondary Remove button, a full-width checkout action on phones. */
-.cart-page .cart-line { box-shadow: 0 1px 2px rgb(0 0 0 / .08); }
-.cart-page .cart-quantity button { display: inline-grid; place-items: center; line-height: 1; min-width: 2.75rem; min-height: 2.75rem; }
-.cart-page .cart-line .cart-remove { min-height: 2.75rem; color: var(--link, #174a8b); }
-.cart-page .cart-total { padding: 1rem; background: var(--surface, #fff); border: 1px solid var(--line, #dce0e6); border-radius: .5rem; font-weight: 600; }
-@media (max-width: 36rem) { .cart-page .cart-checkout { display: flex; width: 100%; } }

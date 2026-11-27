@@ -5,6 +5,8 @@ import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import PurchaseLines from "../components/PurchaseLines.jsx";
 import { ErrorState, LoadingState } from "../components/RequestStates.js";
+import Button from "../components/ui/Button.jsx";
+import Input from "../components/ui/Input.jsx";
 import { loginHref } from "../lib/auth-utils.js";
 import { browserAttemptStore } from "../lib/checkout-attempt.js";
 import { profileHref } from "../lib/profile-form.js";
@@ -108,9 +110,9 @@ function Checkout({ account }) {
     <ErrorState error={payment.error} />
     {(read.error?.status === 401 || payment.error?.status === 401) && <p><Link to={loginHref(location)}>Log in again</Link></p>}
     {(uncertain || needsReview) && <p>
-      <button id="retry" type="button" disabled={busy || read.status === "loading"} onClick={load}>
+      <Button id="retry" variant="secondary" disabled={busy || read.status === "loading"} onClick={load}>
         {uncertain ? "Check purchase status" : "Reload checkout"}
-      </button>
+      </Button>
     </p>}
     {read.error?.status === 409 && <p><Link to="/cart">Review your cart</Link></p>}
     {quote && !needsReview && <form id="checkout-form" ref={form} onSubmit={purchase}>
@@ -126,12 +128,12 @@ function Checkout({ account }) {
         <p id="payment-help">Use test card 4242424242424242, a future expiry and a 3-digit code. No real payment is taken. Use 4000000000000002 for a declined payment.</p>
         <fieldset className="purchase-fields" disabled={busy}>
           <legend className="visually-hidden">Test payment details</legend>
-          <div className="wide"><label htmlFor="number">Test card number</label>
-            <input id="number" name="number" inputMode="numeric" autoComplete="off" pattern="[0-9]{13,19}" minLength="13" maxLength="19" aria-describedby="payment-help" required /></div>
-          <div><label htmlFor="expiry-month">Expiry month</label><input id="expiry-month" name="expiryMonth" type="number" min="1" max="12" required /></div>
-          <div><label htmlFor="expiry-year">Expiry year</label><input id="expiry-year" name="expiryYear" type="number" min={new Date().getFullYear()} max={new Date().getFullYear() + 20} required /></div>
-          <div><label htmlFor="security-code">Test security code</label>
-            <input id="security-code" name="securityCode" inputMode="numeric" autoComplete="cc-csc" pattern="[0-9]{3,4}" minLength="3" maxLength="4" required /></div>
+          <Input className="wide" label="Test card number"
+            id="number" name="number" inputMode="numeric" autoComplete="off" pattern="[0-9]{13,19}" minLength="13" maxLength="19" aria-describedby="payment-help" required />
+          <Input label="Expiry month" id="expiry-month" name="expiryMonth" type="number" min="1" max="12" required />
+          <Input label="Expiry year" id="expiry-year" name="expiryYear" type="number" min={new Date().getFullYear()} max={new Date().getFullYear() + 20} required />
+          <Input label="Test security code"
+            id="security-code" name="securityCode" inputMode="numeric" autoComplete="cc-csc" pattern="[0-9]{3,4}" minLength="3" maxLength="4" required />
         </fieldset>
         <button id="purchase" className="ui-button purchase-submit" type="submit" disabled={busy}>
           {busy ? "Confirming mock payment…" : "Confirm mock payment"}

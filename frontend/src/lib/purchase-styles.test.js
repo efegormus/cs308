@@ -13,5 +13,15 @@ test("purchases.css uses theme tokens and no fixed colors", () => {
 
 test("purchase cards and fields take their colors from the theme", () => {
   assert.match(css, /\.purchase-card \{[^}]*background: var\(--surface\)/);
-  assert.match(css, /\.purchase-fields input \{[^}]*color: var\(--fg\)[^}]*background: var\(--surface\)/);
+  // SCRUM-134: the payment fields are the shared Input (ui/Input.css: --surface, --fg, --field-line), not page rules.
+  const checkout = readFileSync(new URL("../pages/CheckoutPage.jsx", import.meta.url), "utf8");
+  assert.equal((checkout.match(/<Input /g) ?? []).length, 4);
+  assert.doesNotMatch(css, /\.purchase-fields input/);
+});
+
+test("cart.css and orders.css use theme tokens only, without fallback colors (SCRUM-134)", () => {
+  for (const name of ["cart", "orders"]) {
+    const sheet = readFileSync(new URL(`../styles/${name}.css`, import.meta.url), "utf8");
+    assert.deepEqual(sheet.match(/#[0-9a-fA-F]{3,8}\b|\b(?:white|black)\b(?!-)|rgba?\(/g) ?? [], [], name);
+  }
 });
