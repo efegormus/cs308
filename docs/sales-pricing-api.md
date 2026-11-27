@@ -84,3 +84,17 @@ not sold or shown:
 - Only the sales manager's `GET /api/sales/products` asks for `includeUnpriced`, so the screen can list
   the products that still need a price. Those rows have `listPrice` 0.
 - `PUT /api/sales/products/{id}/price` (price above 0) makes the product visible at once.
+
+## Wishlist discount notifications (SCRUM-85)
+
+When `POST /api/sales/discounts` creates a campaign, `WishlistDiscountNotifier` looks up the active
+customers who have a discounted product on their wishlist.
+
+- Each (customer, product) pair gets one `Notification` of kind `WishlistDiscount` with the discount id.
+- Each customer gets one email that lists their discounted products (at most 10 names, then "and N more").
+- `DeduplicationKey` is `wishlist-discount:{discountId}:{productId}:{userId}`. Running the notifier again
+  for the same discount stores and sends nothing new.
+- Email goes through `IDiscountEmailSender`, chosen by the same `Email:Transport` setting (`Local` or `Smtp`)
+  and `Email:From` / `Email:Smtp:*` values as the invoice emails. Addresses and message text are never logged.
+- A mail failure is logged without the address and does not fail the discount; the in-app notification stays.
+- The email is sent when the campaign is created, also for a campaign that starts later.

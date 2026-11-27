@@ -64,6 +64,7 @@ builder.Services.AddScoped<DeliveryService>();
 builder.Services.AddScoped<CancellationService>();
 builder.Services.AddScoped<ReviewService>();
 builder.Services.AddScoped<ModerationService>();
+builder.Services.AddScoped<WishlistDiscountNotifier>();
 builder.Services.AddScoped<PricingService>();
 builder.Services.AddScoped<CatalogManagementService>();
 // Invoice PDFs live outside wwwroot (SCRUM-74).
@@ -79,9 +80,14 @@ if (emailTransport.Equals("Local", StringComparison.OrdinalIgnoreCase))
 {
     builder.Services.AddSingleton<LocalInvoiceEmailSender>();
     builder.Services.AddSingleton<IInvoiceEmailSender>(s => s.GetRequiredService<LocalInvoiceEmailSender>());
+    builder.Services.AddSingleton<LocalDiscountEmailSender>();
+    builder.Services.AddSingleton<IDiscountEmailSender>(s => s.GetRequiredService<LocalDiscountEmailSender>());
 }
 else if (emailTransport.Equals("Smtp", StringComparison.OrdinalIgnoreCase))
+{
     builder.Services.AddScoped<IInvoiceEmailSender, SmtpInvoiceEmailSender>();
+    builder.Services.AddScoped<IDiscountEmailSender, SmtpDiscountEmailSender>();
+}
 else throw new InvalidOperationException("Email:Transport must be Local or Smtp.");
 builder.Services.AddHostedService<InvoiceEmailBackgroundService>();
 

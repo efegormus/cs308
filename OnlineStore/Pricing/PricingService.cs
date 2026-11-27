@@ -9,7 +9,7 @@ namespace OnlineStore.Pricing;
 // SCRUM-155: the sales manager sets list prices and creates, lists and cancels discount campaigns.
 // A campaign never edits Product.Price. Shoppers see the discounted price because every price read and
 // checkout go through ProductPricing (docs/pricing.md), so a campaign takes effect and ends on its own.
-public sealed class PricingService(StoreDbContext db, TimeProvider clock)
+public sealed class PricingService(StoreDbContext db, TimeProvider clock, WishlistDiscountNotifier? notifier = null)
 {
     public const int PageSize = 50;
 
@@ -80,6 +80,12 @@ public sealed class PricingService(StoreDbContext db, TimeProvider clock)
         };
         db.Discounts.Add(discount);
         await db.SaveChangesAsync(ct);
+        // SCRUM-85: tell the customers who wishlisted these products. This never fails the discount.
+        if (notifier is not null)
+        {
+            try { await notifier.NotifyAsync(discount.Id, ct); }
+            catch (Exception e) when (e is not OperationCanceledException) { }
+        }
         return View(discount, now);
     }
 
