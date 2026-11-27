@@ -24,7 +24,7 @@ Move to a newer image only together with a Playwright version that supports it.
 | --- | --- | --- | --- |
 | `Backend build and test` | The solution compiles and the xUnit suite passes (EF Core in-memory database). | compile error or failing test | Yes |
 | `MySQL integration tests` | Migrations, constraints, foreign keys, seed loader and the schema tests work on a real MySQL 8.4.13. | failing test, **or any MySQL test skipped**, or no test ran | Yes |
-| `Browser end-to-end` | The published ASP.NET app serves the built React catalog and purchasing pages against seeded MySQL in Chromium, including on-screen invoices, protected PDFs, SMTP attachment identity, delivered reviews/moderation, lost-response recovery, and the managers' admin panel (`verify_admin_browser.py`). | migration/seed/start-up error, API check or any browser assertion fails | Yes |
+| `Browser end-to-end` | The published ASP.NET app serves the built React catalog and purchasing pages against seeded MySQL in Chromium, including on-screen invoices, protected PDFs, SMTP attachment identity, delivered reviews/moderation, lost-response recovery, the managers' admin panel (`verify_admin_browser.py`), and that no route scrolls sideways at 375, 768, 1024 or 1280px (`verify_responsive_browser.py`). | migration/seed/start-up error, API check or any browser assertion fails | Yes |
 | `Frontend and script checks` | React unit tests (`*.test.js` under `frontend/src`, Node test runner) and build, `scripts/test_*.py`, and `actionlint` on the workflows. | build error, failing test, bad workflow file | Yes |
 | `Security hygiene` | `gitleaks` scan of the git history and a report of vulnerable NuGet packages. | a secret or vulnerable package is found | No (report only, `continue-on-error`) |
 
@@ -77,6 +77,8 @@ python3 scripts/verify_catalog_browser.py --expect-seeded
 # Disposable local DB only: needs the server connection environment for the trusted fixture role command
 python3 scripts/verify_purchasing_browser.py --operator-assembly <published-app>/OnlineStore.dll --smtp-api-url http://127.0.0.1:8025
 python3 scripts/verify_admin_browser.py --operator-assembly <published-app>/OnlineStore.dll
+# Needs the full demo seed (--seed-demo) and its .local/db-redesign/demo-accounts.json; --screenshot-dir saves every page
+python3 scripts/verify_responsive_browser.py
 
 # Frontend and scripts
 (cd frontend && npm ci && npm test && npm run build)
