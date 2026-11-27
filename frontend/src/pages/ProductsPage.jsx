@@ -3,6 +3,7 @@ import { useLocation, useSearchParams } from "react-router";
 import CategoryNav from "../components/CategoryNav.jsx";
 import CategorySection from "../components/CategorySection.jsx";
 import ProductCard from "../components/ProductCard.jsx";
+import Button from "../components/ui/Button.jsx";
 import { useCatalog } from "../hooks/useCatalog.js";
 import { catalogSummary, categoryAnchorId, categoryIdFromHash, visibleCategories } from "../lib/category-display.js";
 import {
@@ -107,12 +108,12 @@ export default function ProductsPage() {
         <p id="catalog-status" role="status" aria-live="polite">{message}</p>
         {status === "ready" && totalCount > 0 && <p className="sort-note">{sortDescription(sort, order)}</p>}
         {status === "ready" && hasFilters && (
-          <button type="button" className="clear-filters" onClick={clearFilters}>Clear filters</button>
+          <Button variant="secondary" className="clear-filters" onClick={clearFilters}>Clear filters</Button>
         )}
         {status === "ready" && totalCount === 0 && hasFilters && (
           <p className="empty-hint">Try a different word, a wider price range or another category, or clear the filters to see everything.</p>
         )}
-        {status === "error" && <button type="button" onClick={retry}>Try again</button>}
+        {status === "error" && <Button variant="secondary" onClick={retry}>Try again</Button>}
         {status === "ready" && totalCount > 0 && <p>Showing {items.length} products on this page.</p>}
         <div id="catalog" aria-busy={status === "loading"}>
           {sort ? items.length > 0 && <section className="category-section" aria-label="Sorted products">
@@ -121,13 +122,13 @@ export default function ProductsPage() {
         </div>
         {status === "ready" && totalPages > 1 && (
           <nav className="catalog-pagination" aria-label="Product pages">
-            <button type="button" disabled={Number(page) <= 1} onClick={() => updateQuery("page", String(Number(page) - 1), false)}>
+            <Button variant="secondary" disabled={Number(page) <= 1} onClick={() => updateQuery("page", String(Number(page) - 1), false)}>
               Previous
-            </button>
+            </Button>
             <span>Page {page} of {totalPages}</span>
-            <button type="button" disabled={Number(page) >= totalPages} onClick={() => updateQuery("page", String(Number(page) + 1), false)}>
+            <Button variant="secondary" disabled={Number(page) >= totalPages} onClick={() => updateQuery("page", String(Number(page) + 1), false)}>
               Next
-            </button>
+            </Button>
           </nav>
         )}
       </main>
