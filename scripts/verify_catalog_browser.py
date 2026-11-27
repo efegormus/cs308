@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Focused SCRUM-54 verification: real API/MySQL first, then controlled UI failure cases."""
+"""Focused SCRUM-54 verification, updated for the SCRUM-165 All products page (sidebar and category sections):
+real API/MySQL first, then controlled UI failure cases."""
 import argparse
 import math
 import re
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlencode, urlparse
 
 PRODUCTS_API = re.compile(r".*/api/products(?:\?.*)?$")
 
@@ -69,6 +70,51 @@ def mock_products_response(products_body, url):
     }
 
 
+def category_order(categories):
+    """Category ids depth first (a top-level category, then everything below it), as lib/catalog-sections.js orders
+    the sections. A category whose parent is missing counts as top-level."""
+    ids = {category["id"] for category in categories}
+    children = {category["id"]: [] for category in categories}
+    roots = []
+    for category in categories:
+        parent = category.get("parentId")
+        if parent in ids and parent != category["id"]:
+            children[parent].append(category["id"])
+        else:
+            roots.append(category["id"])
+    ordered = []
+
+    def visit(category_id):
+        ordered.append(category_id)
+        for child in children[category_id]:
+            visit(child)
+
+    for root in roots:
+        visit(root)
+    return ordered, children
+
+
+def subtree(children, category_id):
+    found = [category_id]
+    for child in children.get(category_id, []):
+        found.extend(subtree(children, child))
+    return found
+
+
+def format_price(value):
+    """A price as the page writes it into the URL (JavaScript's String(Number(text))): 1100.0 -> "1100"."""
+    number = float(value)
+    return str(int(number)) if number.is_integer() else repr(number)
+
+
+def products_label(count):
+    return f'{count} {"product" if count == 1 else "products"}'
+
+
+def status_text(product_count, section_count):
+    return f'{products_label(product_count)} in {section_count} {"section" if section_count == 1 else "sections"}'
+
+
 def verify(base_url, executable=None, expect_seeded=False):
     from playwright.sync_api import expect, sync_playwright
 
@@ -80,132 +126,228 @@ def verify(base_url, executable=None, expect_seeded=False):
         page.on("pageerror", lambda error: errors.append(str(error)))
         page.on("dialog", lambda dialog: (dialogs.append(dialog.message), dialog.dismiss()))
 
+        def api(path):
+            response = page.request.get(base_url + path)
+            assert response.ok, path
+            return response.json()
+
+        def loaded():
+            expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
+
+        def section(category_id):
+            return page.locator(f"#category-{category_id}")
+
+        def card_names(category_id):
+            return section(category_id).locator(".product-card h3").all_text_contents()
+
         # No request interception in this section: these responses come from the actual backend/database.
-        categories_response = page.request.get(base_url + "/api/categories")
-        products_response = page.request.get(base_url + "/api/products")
-        assert categories_response.ok and products_response.ok
-        categories, products = categories_response.json(), products_response.json()
+        categories, products = api("/api/categories"), api("/api/products")
         assert isinstance(products, list), "Legacy GET /api/products must remain a JSON array."
         page_size = 24
-        paged_response = page.request.get(base_url + f"/api/products?page=1&pageSize={page_size}")
-        assert paged_response.ok
-        first_page = paged_response.json()
+        first_page = api(f"/api/products?page=1&pageSize={page_size}")
         assert_page_response(first_page, products, 1, page_size)
+        assert_page_response(api("/api/products?page=1&pageSize=100"), products, 1, 100)
         if expect_seeded:
             assert len(categories) >= 20 and len(products) >= 55
-        page.goto(base_url)
-        if categories:
-            tablets = next((category for category in categories if category["name"] == "Tablets"), categories[0])
-            if tablets["name"] == "Tablets":
-                expect(page.get_by_role("link", name="Browse tablets")).to_have_attribute("href", f'/products?categoryId={tablets["id"]}')
-                with page.expect_response(
-                    lambda response: is_products_api_url(response.url)
-                    and parse_qs(urlparse(response.url).query).get("page") == ["1"]
-                    and parse_qs(urlparse(response.url).query).get("pageSize") == [str(page_size)]
-                ) as response:
-                    page.get_by_role("link", name="Browse tablets").click()
-                assert response.value.ok
-            else:
-                page.goto(base_url + "/products")
-        else:
-            page.goto(base_url + "/products")
-        expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
-        page.goto(base_url + "/products")
-        expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
-        count_label = "product" if first_page["totalCount"] == 1 else "products"
-        expect(page.locator("#catalog-status")).to_have_text(
-            f'{first_page["totalCount"]} {count_label} found.'
-        )
-        for page_number in range(1, first_page["totalPages"] + 1):
-            current_page = first_page
-            if page_number > 1:
-                with page.expect_response(
-                    lambda response, number=page_number: is_products_api_url(response.url)
-                    and parse_qs(urlparse(response.url).query).get("page") == [str(number)]
-                ) as response:
-                    page.get_by_role("button", name="Next").click()
-                assert response.value.ok
-                current_page = response.value.json()
-                assert_page_response(current_page, products, page_number, page_size)
-            expect(page.locator(".product-card")).to_have_count(len(current_page["items"]))
-            count_label = "product" if current_page["totalCount"] == 1 else "products"
-            expect(page.locator("#catalog-status")).to_have_text(
-                f'{current_page["totalCount"]} {count_label} found.'
-            )
-            expect(page.get_by_role("navigation", name="Product pages")).to_contain_text(
-                f'Page {page_number} of {current_page["totalPages"]}'
-            )
-            visible_links = {
-                link.get_attribute("href")
-                for link in page.locator(".product-card h3 a").all()
-            }
-            assert visible_links == {f'/product?id={item["id"]}' for item in current_page["items"]}
-            for category in categories:
-                section = page.locator(f'#category-{category["id"]}')
-                expected = [product for product in current_page["items"] if product["categoryId"] == category["id"]]
-                expect(section.locator(".product-card")).to_have_count(len(expected))
-                assert section.locator(".product-card h3").all_text_contents() == [product["name"] for product in expected]
-            for product in current_page["items"]:
-                if product["stockQuantity"] == 0:
-                    card = page.locator(".product-card").filter(
-                        has=page.get_by_role("heading", name=product["name"], exact=True)
-                    )
-                    expect(card.locator(".stock")).to_have_text("Out of stock")
-            if page_number < current_page["totalPages"]:
-                expect(page.get_by_role("button", name="Next")).to_be_enabled()
-            else:
-                expect(page.get_by_role("button", name="Next")).to_be_disabled()
-            if page_number > 1:
-                expect(page.get_by_role("button", name="Previous")).to_be_enabled()
-            else:
-                expect(page.get_by_role("button", name="Previous")).to_be_disabled()
-        page.set_viewport_size({"width": 375, "height": 812})
-        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-        first_categories = {p["categoryId"] for p in first_page["items"]}
-        off_page = next((p for p in products if p["categoryId"] not in first_categories), None)
-        if off_page:
-            category = next(c for c in categories if c["id"] == off_page["categoryId"])
-            page.goto(base_url + "/products")
-            page.locator("#category-nav").get_by_role("link", name=category["name"], exact=True).click()
-            expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
-            expect(page).to_have_url(re.compile(r"categoryId=" + str(category["id"])))
-            expected_products = page.request.get(base_url + f'/api/products?categoryId={category["id"]}').json()
-            expect(page.locator(".product-card")).to_have_count(min(24,len(expected_products)))
-            page.reload()
-            expect(page.locator(".product-card")).to_have_count(min(24,len(expected_products)))
-            page.goto(base_url + f'/products?verification=legacy#category-{category["id"]}')
-            expect(page.locator(".product-card")).to_have_count(min(24, len(expected_products)))
-            page.get_by_role("button", name="Clear filters", exact=True).click()
-            expect(page.locator("#catalog-status")).to_have_text(f'{len(products)} products found.')
-            assert urlparse(page.url).fragment == ""
-            assert parse_qs(urlparse(page.url).query).get("verification") == ["legacy"]
-            print("PASS: an off-first-page category loads its products, survives refresh and clears legacy hash filters")
-        print(f"PASS: legacy array and paginated API; real browser → MySQL; {len(products)} products in {len(categories)} categories; all pages, stock, navigation, mobile layout")
+        by_id = {category["id"]: category for category in categories}
+        ordered, children = category_order(categories)
+        own = {category_id: [p for p in products if p["categoryId"] == category_id] for category_id in ordered}
+        with_products = [category_id for category_id in ordered if own[category_id]]
 
-        # A top-level category includes subcategories: sorting must keep global server order.
+        # The home page's "Browse tablets" link opens the page filtered to Tablets and its subcategories (SCRUM-165:
+        # the page loads every match in pages of 100 and groups them itself).
+        page.goto(base_url)
+        tablets = next((category for category in categories if category["name"] == "Tablets"), None)
+        if tablets:
+            link = page.get_by_role("link", name="Browse tablets")
+            expect(link).to_have_attribute("href", f'/products?categoryId={tablets["id"]}')
+            with page.expect_response(
+                lambda response: is_products_api_url(response.url)
+                and parse_qs(urlparse(response.url).query).get("pageSize") == ["100"]
+                and "categoryId" not in parse_qs(urlparse(response.url).query)
+            ) as response:
+                link.click()
+            assert response.value.ok
+            loaded()
+            expect(page.locator("h1")).to_have_text("Tablets")
+            scope = subtree(children, tablets["id"])
+            shown = [category_id for category_id in ordered if category_id in scope and own[category_id]]
+            expect(page.locator(".category-section")).to_have_count(len(shown))
+            expect(page.locator("#catalog-status")).to_have_text(
+                status_text(sum(len(own[category_id]) for category_id in shown), len(shown)))
+            print("PASS: the home page's Browse link opens /products filtered to the category and its subcategories")
+
+        # All products: one section per category that has products of its own, in tree order, three cards each first.
+        page.goto(base_url + "/products")
+        loaded()
+        expect(page.locator("h1")).to_have_text("All products")
+        expect(page.locator(".catalog-breadcrumb")).to_have_text(re.compile(r"Home\s*/?\s*All products"))
+        expect(page.locator("#catalog-status")).to_have_text(status_text(len(products), len(with_products)))
+        expect(page.locator(".category-section")).to_have_count(len(with_products))
+        assert page.locator(".category-section").evaluate_all("nodes => nodes.map(node => node.id)") == [
+            f"category-{category_id}" for category_id in with_products]
+        for category_id in with_products:
+            expected = own[category_id]
+            expect(section(category_id).locator(".product-count")).to_have_text(f" · {products_label(len(expected))}")
+            assert card_names(category_id) == [p["name"] for p in expected[:3]], by_id[category_id]["name"]
+            toggle = section(category_id).locator(".category-section-toggle")
+            if len(expected) > 3:
+                expect(toggle).to_have_text(f"View all {len(expected)}")
+            else:
+                expect(toggle).to_have_count(0)
+        for category_id in ordered:
+            row = page.locator(".catalog-sidebar").get_by_role("link", name=re.compile("^" + re.escape(by_id[category_id]["name"]) + r"\s*\d+$"))
+            if by_id[category_id].get("parentId") in by_id:
+                expect(row).to_have_count(0)  # Subcategories show only under the chosen category.
+            else:
+                count = sum(len(own[c]) for c in subtree(children, category_id))
+                expect(row.locator(".catalog-category-count")).to_have_text(str(count))
+        for product in products:
+            if product["stockQuantity"] == 0 and product in own[product["categoryId"]][:3]:
+                card = page.locator(".product-card").filter(has=page.get_by_role("heading", name=product["name"], exact=True))
+                expect(card.locator(".stock")).to_have_text("Out of stock")
+                expect(card.get_by_role("button", name="Out of stock", exact=True)).to_be_disabled()
+        print(f"PASS: {len(products)} products in {len(with_products)} sections, tree order, 3 cards first, sidebar counts, out-of-stock cards")
+
+        # View all and per-section sorting against the API's own orders.
+        big = next((category_id for category_id in with_products if len(own[category_id]) > 3), None)
+        if big:
+            expected = own[big]
+            toggle = section(big).locator(".category-section-toggle")
+            toggle.click()
+            expect(toggle).to_have_text("Show less")
+            expect(toggle).to_have_attribute("aria-expanded", "true")
+            expect(section(big).locator(".product-card")).to_have_count(len(expected))
+            other = next(category_id for category_id in with_products if category_id != big)
+            for value, sort, order in [("price-asc", "price", "asc"), ("price-desc", "price", "desc"),
+                                       ("popularity", "popularity", ""), ("name", "", "")]:
+                section(big).get_by_label(f'Sort {by_id[big]["name"]}').select_option(value)
+                query = f"categoryId={big}" + (f"&sort={sort}" if sort else "") + (f"&order={order}" if order else "")
+                api_order = [p["name"] for p in api(f"/api/products?{query}") if p["categoryId"] == big]
+                expect(section(big).locator(".product-card h3")).to_have_text(api_order)
+                # Sorting one section leaves every other section in name order.
+                assert card_names(other) == [p["name"] for p in own[other][:3]]
+            toggle.click()
+            expect(toggle).to_have_text(f"View all {len(expected)}")
+            expect(section(big).locator(".product-card")).to_have_count(3)
+            print("PASS: View all / Show less, and each section sorts on its own in the API's name, price and popularity order")
+
+        # Choosing a category in the sidebar: that category and its subcategories only, heading, breadcrumb and chip.
+        parent = next((category_id for category_id in with_products
+                       if children[category_id] and any(own[c] for c in children[category_id])), None)
+        if parent:
+            name = by_id[parent]["name"]
+            page.locator(".catalog-sidebar").get_by_role("link", name=re.compile("^" + re.escape(name) + r"\s*\d+$")).click()
+            loaded()
+            expect(page).to_have_url(re.compile(r"[?&]categoryId=" + str(parent) + r"(&|$)"))
+            expect(page.locator("h1")).to_have_text(name)
+            expect(page.locator(".catalog-breadcrumb")).to_contain_text(name)
+            expect(page.locator(".catalog-breadcrumb").get_by_role("link", name="All products")).to_have_attribute("href", "/products")
+            scope = [category_id for category_id in subtree(children, parent) if own[category_id]]
+            expect(page.locator(".category-section")).to_have_count(len(scope))
+            child = next(c for c in children[parent] if own[c])
+            child_link = page.locator(".catalog-sidebar").get_by_role("link", name=re.compile("^" + re.escape(by_id[child]["name"]) + r"\s*\d+$"))
+            expect(child_link).to_have_class(re.compile("is-sub"))
+            expect(page.get_by_role("button", name=f"Remove filter: {name}")).to_be_visible()
+            page.reload()
+            loaded()
+            expect(page.locator(".category-section")).to_have_count(len(scope))
+            child_link.click()
+            loaded()
+            expect(page.locator("h1")).to_have_text(by_id[child]["name"])
+            expect(page.locator(".category-section")).to_have_count(1)
+            expect(page.locator(".catalog-breadcrumb").get_by_role("link", name=name)).to_have_attribute("href", f"/products?categoryId={parent}")
+            page.get_by_role("button", name=f'Remove filter: {by_id[child]["name"]}').click()
+            loaded()
+            expect(page.locator("h1")).to_have_text("All products")
+            print("PASS: a sidebar category shows itself and its subcategories, with heading, breadcrumb, chip and refresh")
+
+            # The header's Categories panel filters the same page (it used to scroll to #category-<id>).
+            page.locator("#category-button").click()
+            page.locator(".category-panel-item", has_text=name).click()
+            loaded()
+            expect(page).to_have_url(re.compile(r"/products\?categoryId=" + str(parent) + "$"))
+            expect(page.locator("h1")).to_have_text(name)
+            page.locator("#category-button").click()
+            expect(page.locator(".category-panel-links").get_by_role("link", name=f"All {name}")).to_have_attribute(
+                "href", f"/products?categoryId={parent}")
+            page.keyboard.press("Escape")
+            print("PASS: the header's Categories panel links filter /products with ?categoryId=")
+
+            # An old #category-<id> link chooses the category; Clear filters keeps unrelated query values.
+            page.goto(base_url + f"/products?verification=legacy#category-{parent}")
+            loaded()
+            expect(page.locator("h1")).to_have_text(name)
+            assert urlparse(page.url).fragment == ""
+            assert parse_qs(urlparse(page.url).query).get("categoryId") == [str(parent)]
+            page.get_by_role("button", name="Clear filters", exact=True).click()
+            loaded()
+            expect(page.locator("#catalog-status")).to_have_text(status_text(len(products), len(with_products)))
+            assert parse_qs(urlparse(page.url).query) == {"verification": ["legacy"]}
+            print("PASS: old #category-<id> links choose the category; Clear filters keeps other query values")
+
+        # In stock only, price (Enter applies) and brand, each a chip; all checked against the real API.
+        page.goto(base_url + "/products")
+        loaded()
+        page.get_by_label("In stock only").check()
+        in_stock = [p for p in products if p["stockQuantity"] > 0]
+        sections_in_stock = [c for c in ordered if any(p["categoryId"] == c for p in in_stock)]
+        expect(page.locator("#catalog-status")).to_have_text(status_text(len(in_stock), len(sections_in_stock)))
+        expect(page.get_by_role("button", name="Remove filter: In stock only")).to_be_visible()
+        assert parse_qs(urlparse(page.url).query).get("inStock") == ["1"]
+        page.get_by_role("button", name="Remove filter: In stock only").click()
+        expect(page.get_by_label("In stock only")).not_to_be_checked()
+        prices = sorted(p["price"] for p in products)
+        low, high = (format_price(prices[len(prices) // 4]), format_price(prices[len(prices) * 3 // 4]))
+        page.get_by_label("Min", exact=True).fill(str(low))
+        page.get_by_label("Max", exact=True).fill(str(high))
+        page.get_by_label("Max", exact=True).press("Enter")
+        loaded()
+        ranged = api(f"/api/products?minPrice={low}&maxPrice={high}")
+        expect(page.locator("#catalog-status")).to_have_text(status_text(len(ranged), len({p["categoryId"] for p in ranged})))
+        expect(page.locator(".catalog-chip").filter(has_text="–")).to_have_count(1)
+        page.get_by_label("Min", exact=True).fill(format_price(float(high) + 1))
+        page.get_by_role("button", name="Apply", exact=True).click()
+        expect(page.locator("#catalog-price-error")).to_have_text("The minimum price cannot be more than the maximum.")
+        assert parse_qs(urlparse(page.url).query).get("minPrice") == [low]
+        brands = api("/api/brands")
+        if brands:
+            page.get_by_role("button", name="Clear filters", exact=True).click()
+            loaded()
+            page.get_by_label("Brand", exact=True).select_option(str(brands[0]["id"]))
+            loaded()
+            branded = api(f'/api/products?brandId={brands[0]["id"]}')
+            expect(page.locator("#catalog-status")).to_have_text(status_text(len(branded), len({p["categoryId"] for p in branded})))
+            expect(page.get_by_role("button", name=f'Remove filter: {brands[0]["name"]}')).to_be_visible()
+        print("PASS: In stock only, the price range (Enter and Apply, refused when min > max) and brand, each with a chip")
+
+        page.set_viewport_size({"width": 375, "height": 812})
+        page.goto(base_url + "/products")
+        loaded()
+        assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
+        page.set_viewport_size({"width": 1440, "height": 1000})
+
+        # Search through the header (results change on submit), including an out-of-stock product.
         stocked = next(p for p in products if p["stockQuantity"] > 0)
-        for sort, order in [("price", "asc"), ("price", "desc"), ("popularity", "desc")]:
-            page.goto(base_url + f'/products?categoryId={stocked["categoryId"]}&sort={sort}&order={order}')
-            expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
-            response = page.request.get(base_url + f'/api/products?categoryId={stocked["categoryId"]}&sort={sort}&order={order}').json()
-            expect(page.locator(".product-card h3")).to_have_text([p["name"] for p in response])
-            if sort == "price":
-                values = [p["price"] for p in response]
-                assert values == sorted(values, reverse=order == "desc")
-        detail = page.request.get(base_url + f'/api/products/{stocked["id"]}').json()
+        detail = api(f'/api/products/{stocked["id"]}')
         for term in [stocked["name"], detail["description"].split()[0]]:
             page.goto(base_url + "/products")
-            page.locator("#main-content").get_by_label("Search products", exact=True).fill(term)
-            expect(page.locator(".product-card").filter(has=page.get_by_role("heading", name=stocked["name"], exact=True))).to_be_visible()
+            loaded()
+            page.locator("#site-search").fill(term)
+            page.locator("#site-search").press("Enter")
+            loaded()
+            expect(page.locator(".product-card").filter(has=page.get_by_role("heading", name=stocked["name"], exact=True))).to_have_count(1)
         empty = next((p for p in products if p["stockQuantity"] == 0), None)
         if empty:
-            page.goto(base_url + "/products")
-            page.locator("#main-content").get_by_label("Search products", exact=True).fill(empty["name"])
-            expect(page.locator(".product-card").filter(has=page.get_by_role("heading", name=empty["name"], exact=True))).to_be_visible()
+            page.goto(base_url + "/products?" + urlencode({"search": empty["name"]}))
+            loaded()
+            card = page.locator(".product-card").filter(has=page.get_by_role("heading", name=empty["name"], exact=True))
+            expect(card).to_have_count(1)
+            expect(card.get_by_role("button", name="Out of stock", exact=True)).to_be_disabled()
             page.goto(base_url + f'/product?id={empty["id"]}')
             expect(page.locator(".stock")).to_have_text("Out of stock")
             expect(page.get_by_role("button", name="Out of stock", exact=True)).to_be_disabled()
-        print("PASS: real name/description search, effective price/popularity sorting and out-of-stock purchase restriction")
+        print("PASS: real name/description search through the header, and out-of-stock products found but not addable")
 
         fixture_categories = [{"id": 41, "name": "Phones", "description": None}, {"id": 99, "name": "Tablets", "description": None}]
         fixture_products = [
@@ -225,28 +367,35 @@ def verify(base_url, executable=None, expect_seeded=False):
 
         mock(fixture_categories, fixture_products)
         page.goto(base_url + "/products?verification=render")
-        expect(page.locator("#catalog-status")).to_have_text("3 products found.")
+        expect(page.locator("#catalog-status")).to_have_text("3 products in 1 section")
         expect(page.locator("#category-99")).to_have_count(0)
         expect(page.locator(".product-card h3").first).to_have_text(fixture_products[0]["name"])
         expect(page.locator(".price").first).to_contain_text("43.000,50")
         expect(page.locator(".image-placeholder")).to_have_count(3)
         assert page.evaluate("document.documentElement.scrollWidth <= window.innerWidth")
-        page.locator("#category-nav").get_by_role("link",name="Tablets",exact=True).click()
-        expect(page.locator("#catalog-status")).to_have_text("No products match these filters.")
-        page.get_by_role("button",name="Clear filters",exact=True).click()
+        page.locator(".catalog-sidebar").get_by_role("link", name=re.compile(r"^Tablets\s*0$")).click()
+        expect(page.locator("#catalog-status")).to_have_text("No products available in this category yet.")
+        page.get_by_role("button", name="Clear filters", exact=True).click()
         expect(page.locator(".product-card")).to_have_count(3)
-        print("PASS: real category IDs, empty category, TRY prices, safe text and invalid/missing image fallbacks")
+        page.get_by_label("In stock only").check()
+        page.get_by_label("Min", exact=True).fill("100")
+        page.get_by_label("Min", exact=True).press("Enter")
+        expect(page.locator("#catalog-status")).to_have_text("No products match these filters.")
+        expect(page.locator(".empty-hint")).to_be_visible()
+        page.get_by_role("button", name="Clear filters", exact=True).click()
+        expect(page.locator(".product-card")).to_have_count(3)
+        print("PASS: real category IDs, empty category, no-match filters, TRY prices, safe text and image fallbacks")
 
         mock([], [])
         page.reload()
         expect(page.locator("#catalog-status")).to_contain_text("No products available yet.")
-        expect(page.locator("#category-nav")).to_be_hidden()
+        expect(page.locator(".catalog-category-link")).to_have_count(1)  # Only "All products".
         print("PASS: empty catalog")
 
         mock({"title": "Unavailable"}, fixture_products, category_status=503)
         page.reload()
         expect(page.get_by_role("button", name="Try again")).to_be_visible()
-        expect(page.locator("#catalog")).to_be_empty()
+        expect(page.locator("#catalog .category-section")).to_have_count(0)
         mock(fixture_categories, fixture_products)
         page.get_by_role("button", name="Try again").click()
         expect(page.locator(".product-card")).to_have_count(3)
@@ -263,7 +412,7 @@ def verify(base_url, executable=None, expect_seeded=False):
         page.route(PRODUCTS_API, lambda route: route.abort())
         page.reload()
         expect(page.get_by_role("button", name="Try again")).to_be_visible()
-        expect(page.locator("#catalog")).to_have_attribute("aria-busy", "false")
+        loaded()
         print("PASS: network failure")
 
         page.unroute_all(behavior="wait")

@@ -2,8 +2,12 @@ import unittest
 
 from verify_catalog_browser import (
     assert_page_response,
+    category_order,
+    format_price,
     is_products_api_url,
     mock_products_response,
+    status_text,
+    subtree,
 )
 
 
@@ -58,6 +62,21 @@ class CatalogBrowserHelpersTests(unittest.TestCase):
         with self.assertRaises(AssertionError):
             assert_page_response(response, self.products, 1, 24)
 
+
+
+class CatalogSectionHelpersTests(unittest.TestCase):
+    def test_category_order_is_depth_first_and_a_missing_parent_is_top_level(self):
+        categories = [{"id": 4, "name": "A"}, {"id": 1, "name": "P"}, {"id": 11, "name": "S", "parentId": 1},
+                      {"id": 2, "name": "T", "parentId": 99}]
+        ordered, children = category_order(categories)
+        self.assertEqual(ordered, [4, 1, 11, 2])
+        self.assertEqual(subtree(children, 1), [1, 11])
+
+    def test_status_and_price_text_match_the_page(self):
+        self.assertEqual(status_text(1, 1), "1 product in 1 section")
+        self.assertEqual(status_text(8, 2), "8 products in 2 sections")
+        self.assertEqual(format_price(1100.0), "1100")
+        self.assertEqual(format_price(10.5), "10.5")
 
 if __name__ == "__main__":
     unittest.main()

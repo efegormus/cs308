@@ -1,6 +1,6 @@
 // Labels and ids for the category sections of the product list. Pure helpers, so Node can test them.
 
-// The id of a category section. The home page and the category links point at /products#category-<id>.
+// The id of a category section (category-<id>). Old /products#category-<id> links now choose that category (SCRUM-165).
 export function categoryAnchorId(categoryId) {
   return `category-${categoryId}`;
 }

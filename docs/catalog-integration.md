@@ -7,8 +7,9 @@ Description is an additive nullable product DTO field so existing cards keep
 their description without a second live inventory source. `/api/catalog` remains
 available for compatible clients.
 
-The home page and the header's Categories panel link to the matching catalog anchor,
-`/products#category-<id>`, using the real category IDs; no sample inventory is
+The home page and the header's Categories panel link to `/products?categoryId=<id>`, which
+filters the product list to that category (SCRUM-165; older `/products#category-<id>` links
+are turned into the same filter), using the real category IDs; no sample inventory is
 embedded in the page. The React app is served by ASP.NET Core from the same origin,
 so no configurable external API host or CORS allowance is needed.
 
