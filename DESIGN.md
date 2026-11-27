@@ -329,7 +329,7 @@ from borders and one light shadow, not from heavy elevation.
 | `--danger-bg` | `#fdecea` | [Proje] | Error banner background |
 | `--danger-fg` | `#7a1f0d` | [Proje] | Error banner text |
 | `--ok` | `#1a7f37` | [Proje] | Success fill |
-| `--ok-fg` | `#1a7f37` | [Uyarlandı] | New. Success text on `--surface`, such as "In stock" (same as `--ok` in light) |
+| `--ok-fg` | `#1a7f37` (dark `#3fb950`) | Matches; in-stock text on the product list and product page, approved review status | `design-system.css`, `products.css`, `product-detail.css`, `reviews.css` |
 | `--header` | `#ffffff` | [Uyarlandı] | Header bar |
 | `--header-fg` | `#222222` | [Uyarlandı] | Header text, same as `--fg` |
 | `--header-fg-soft` | `#505966` | [Uyarlandı] | Signed-in name, same as `--muted` |
@@ -1030,13 +1030,14 @@ Mistakes in it, corrected here:
 ## Migration status
 
 Target is this file. "Current" is what the code has on this branch. SCRUM-123 moved every token to
-`frontend/src/styles/design-system.css`, set the light tokens to their target values and added the
-type scale (`--type-*`), spacing (`--space-*`) and corner (`--radius-*`) tokens and the shared
-`Button`, `Input`, `Card` and `Badge` in `frontend/src/components/ui/`. Step 2 rebuilt the header
-and footer on those tokens; the header search uses `Button` and `Input`. Step 3 moved the
-`/products` product card to `Card`, `Button` and the type, spacing and corner tokens, and
-`products.css` (product list, product page, wishlist) to the color tokens, so those pages follow
-the dark theme too.
+`frontend/src/styles/design-system.css`, added the type scale (`--type-*`), spacing (`--space-*`) and
+corner (`--radius-*`) tokens and the shared `Button`, `Input`, `Card` and `Badge`, and rebuilt the
+header, footer and `/products` product card on them. SCRUM-134 moved the remaining pages (login,
+register, profile, cart, checkout, order confirmation, orders, deliveries, product page, wishlist,
+dashboard, support and the `/products` page itself) to the tokens and shared parts, added `Modal`,
+`Toast`, the secondary and unavailable `Button` and the form `Card`, and added
+`scripts/verify_responsive_browser.py`. What is still open is the home page (SCRUM-126), the reviews
+section on the product page and the items DESIGN.md marks [Belirsiz]; the rows below say which.
 
 ### Colors
 
@@ -1102,16 +1103,18 @@ the dark theme too.
 | Purchase card | `--surface`, `--line` | Matches: `--surface`, 1px `--line`, `--shadow`, 10px corners | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | Matches: the checkout fields are `Input`, as is the header search | `components/ui/Input.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Matches: errors use the shared error state; the unused `.purchase-message` rules are gone | `request-states.css` |
-| Product page | Framed card, gallery and details side by side, `Button`s, 44px links | Matches: layout restored on tokens (one column up to 768px), `Input`, `Button` (unavailable for Out of stock), secondary wishlist button (SCRUM-134) | `pages/ProductPage.jsx`, `components/ProductDetail.jsx`, `AddToCart.jsx`, `WishlistButton.jsx`, `styles/product-detail.css`, `add-to-cart.css` |
+| Product page | Framed card, gallery and details side by side, `Button`s, 44px links | Matches: layout restored on tokens (one column up to 768px), `Input`, `Button` (unavailable for Out of stock), secondary wishlist button (SCRUM-134). Not yet: the reviews section (SCRUM-137) uses token colors but rem spacing, type fallbacks such as `var(--type-heading-md, …)`, its own 0.3rem select and textarea instead of `Input`, and a 0.85rem status pill | `pages/ProductPage.jsx`, `components/ProductDetail.jsx`, `AddToCart.jsx`, `WishlistButton.jsx`, `styles/product-detail.css`, `add-to-cart.css`; `reviews.css` |
 | Wishlist | Product-card frame, `Button` | Matches: `Card`, secondary Remove `Button`, 44px title links (SCRUM-134); the look is still [Belirsiz] | `pages/WishlistPage.jsx`, `styles/wishlist.css` |
 | Dashboard and support | Tokens, type scale, 44px links | Matches (SCRUM-134); the order status pill keeps the interim look | `pages/DashboardPage.jsx`, `pages/RoleHomePages.jsx`, `styles/role-home.css` |
 | Error box "Try again" | Secondary button | Matches: `ui-button ui-button--secondary` (SCRUM-134) | `components/RequestStates.js`, `styles/request-states.css` |
+| Order status badge | [Belirsiz] (see Order status badges) | Interim pill on tokens: `--field-line` edge, `--ok` for delivered, `--danger` for cancelled, `label` / `caption` type; not a design decision | `orders.css`, `role-home.css` |
+| Rating stars and reviews | [Belirsiz] (see Rating stars and reviews) | Stars are `--accent` text characters; see the product page row for the reviews section | `components/ProductReviews.jsx`, `reviews.css` |
 
 ### Layout and responsive
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 480 / 768 / 1024 (product grid), 576 (cart), 768 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `product-detail.css`, `home.css` |
+| Breakpoints | 480 / 768 / 1024 / 1280 | 480 (form card, Modal, catalog, purchase, reviews, header, admin), 768 (product grid, product detail, header; the admin panel's `767.98px` is the same step), 1024 (product grid, admin), 1280 (admin); 576 (cart, open question 13) and 733 (home status, kept as a component threshold) | `components/ui/Card.css`, `components/ui/Modal.css`, `products.css`, `purchases.css`, `product-detail.css`, `reviews.css`, `site-header.css`, `admin.css`; `cart.css`, `home.css` |
 | Touch targets | 44px | Matches everywhere but the home page: header, footer, card, cart and purchase-page buttons; order review links and the order and invoice PDF links; the product page's back, category and wishlist login links and quantity field; the wishlist title links; the dashboard section and order links; and the `/products` filter fields, category links, buttons and card title links are 44px (SCRUM-134). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px (home page, SCRUM-126) | `home.css` |
 | No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks) | `scripts/verify_responsive_browser.py` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
