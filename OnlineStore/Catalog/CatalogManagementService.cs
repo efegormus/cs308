@@ -20,7 +20,7 @@ public sealed class CatalogManagementService(StoreDbContext db, TimeProvider clo
     public async Task<IReadOnlyList<ManagedCategory>> ListCategoriesAsync(long managerId, CancellationToken ct)
     {
         await RequireProductManagerAsync(managerId, ct);
-        return await CategoryViews(db.Categories.AsNoTracking()).OrderBy(c => c.Id).Take(MaxCategories).ToListAsync(ct);
+        return await CategoryListQuery().ToListAsync(ct);
     }
 
     public async Task<ManagedCategory> CreateCategoryAsync(long managerId, CategoryCreate input, CancellationToken ct)
@@ -77,8 +77,7 @@ public sealed class CatalogManagementService(StoreDbContext db, TimeProvider clo
     {
         await RequireProductManagerAsync(managerId, ct);
         if (afterId < 0) throw new PurchaseException(400, "Use a non-negative product cursor.");
-        var rows = await ProductViews(db.Products.AsNoTracking().Where(p => p.Id > afterId))
-            .OrderBy(p => p.Id).Take(PageSize + 1).ToListAsync(ct);
+        var rows = await ProductPageQuery(afterId).ToListAsync(ct);
         return new(rows.Take(PageSize).ToList(), rows.Count > PageSize ? rows[PageSize - 1].Id : null);
     }
 
@@ -159,11 +158,18 @@ public sealed class CatalogManagementService(StoreDbContext db, TimeProvider clo
         return distributor;
     }
 
-    private IQueryable<ManagedCategory> CategoryViews(IQueryable<Category> categories) => categories.Select(c =>
+    // Order and cut the page before the projection: MySQL cannot order by a property of an object built in the SELECT.
+    internal IQueryable<ManagedCategory> CategoryListQuery() =>
+        CategoryViews(db.Categories.AsNoTracking().OrderBy(c => c.Id).Take(MaxCategories));
+
+    internal IQueryable<ManagedProduct> ProductPageQuery(long afterId) =>
+        ProductViews(db.Products.AsNoTracking().Where(p => p.Id > afterId).OrderBy(p => p.Id).Take(PageSize + 1));
+
+    internal IQueryable<ManagedCategory> CategoryViews(IQueryable<Category> categories) => categories.Select(c =>
         new ManagedCategory(c.Id, c.ParentId, c.Name, c.Slug, c.Description, c.IsActive,
             db.Products.Count(p => p.CategoryId == c.Id), db.Categories.Count(child => child.ParentId == c.Id)));
 
-    private IQueryable<ManagedProduct> ProductViews(IQueryable<Product> products) => products.Select(p =>
+    internal IQueryable<ManagedProduct> ProductViews(IQueryable<Product> products) => products.Select(p =>
         new ManagedProduct(p.Id, p.CategoryId, p.Category.Name, p.BrandId, p.Sku, p.Name, p.Model, p.SerialNumber,
             p.Description ?? "", p.Price, p.StockQuantity, p.WarrantyStatus, p.Distributor.Name, p.Distributor.ContactInfo,
             p.IsActive));
