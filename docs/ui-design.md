@@ -254,6 +254,28 @@ DESIGN.md's Product card section holds the full rules.
 | Alignment | Price, stock, message and button sit at the bottom, so they line up across a row |
 | Actions row | `.product-card-actions`, room for a second action such as a wishlist button |
 
+### Product list data (SCRUM-165)
+
+The category sections of `/products` (sidebar, sections with their own sort, search results) are built from the
+existing endpoints; the API contract does not change. The pure logic is in `lib/catalog-sections.js`, the URL and
+search helpers in `lib/catalog-query.js` and the loaders in `lib/catalog-api.js`. The page itself still uses the
+SCRUM-109 layout until the sidebar and sections land.
+
+| Part | Rule |
+| --- | --- |
+| Requests | `GET /api/categories` (shared with the header) and every product matching the search, brand and price: `fetchMatchingProducts` asks `GET /api/products?…&page=<n>&pageSize=100` (the API maximum) and follows `totalPages`; today's catalog is one request. It sends no `categoryId`, so the sidebar can count every category. A total that changes between pages, or a product seen twice, fails the load ("Try again") |
+| Why not one request per section | `?categoryId=<id>` includes every subcategory, and parent categories have products of their own (Phones and Smartphones), so per-section totals would count products twice; the sidebar needs a count for every category, and "In stock only" has no API parameter |
+| Sections | `buildSections`: one per category that has products, holding the products whose own category it is, in tree order (a top-level category, then the categories below it, as the API orders them). A chosen category shows itself and every category below it (`categoryScope`) |
+| Sidebar counts | `categoryCounts`: a category counts its own products and those of every category below it. `sidebarCategories` lists the top-level categories, and the categories below the chosen one's top-level category only there; during a search, categories without a match are hidden, except the chosen one and its parents |
+| In stock only | `inStock=1` in the URL; `filterInStock` applies it after loading. Out-of-stock products are otherwise always listed and found by search |
+| Per-section sort | `SECTION_SORTS`: Name A to Z (the API's own order), Price low to high, Price high to low, Popularity. `sortSection` keeps the loaded order as the base: price sorts are stable on it, as the API breaks ties by name then id; Popularity uses the order of `GET /api/products?sort=popularity` with the same filters (`fetchPopularityOrder`, asked once, when a section first picks it). So every order matches the server's |
+| View all | A section shows `SECTION_PREVIEW` (3) products; `sectionToggleLabel` gives "View all N" or "Show less", nothing for 3 or fewer |
+| Heading | `catalogHeading`: "All products", the chosen category, or a search (`“query” search results` and "N results"). The breadcrumb is Home / All products / the category's parents / the category or the quoted query, the last item unlinked; links use `?categoryId=<id>` |
+| Status and chips | `sectionsStatus`: "N products in M sections" (no search). `activeFilterChips`: category, brand, price, in stock, each with the URL parameters it removes (`removeCatalogParams`) |
+| Price box | `applyPriceRange`: empty bounds are removed, a comma is a decimal point, negative or non-numeric values and a minimum above the maximum are refused with a message, so the API never gets a range it answers 400 to |
+| Search | `searchFieldReducer`: typing changes only the field; the results change on submit (button or Enter) or on clear. `searchSubmitPath` opens a fresh `/products?search=<text>` (other filters are dropped), at most 100 characters |
+| Old links | `queryForCategoryHash` turns `/products#category-<id>` into `?categoryId=<id>` |
+
 ### Loading, empty and error states
 
 `components/RequestStates.js` and `styles/request-states.css` hold the shared parts.
