@@ -15,4 +15,10 @@
 /* The 2px error border takes 1px from the padding, so the text does not move. */
 .ui-input[aria-invalid="true"] { border: 2px solid var(--danger); padding: 0 calc(var(--space-sm) - 1px); }
 .ui-input:disabled { opacity: 0.7; cursor: not-allowed; }
+/* A value shown for reference only, such as the profile email. */
+.ui-input[readonly] { background: var(--bg); color: var(--muted); }
+/* Textarea: at least 88px (three lines), padding 10px 12px, resized only in height. */
+.ui-input--multiline { height: auto; min-height: 88px; padding: 10px var(--space-sm); resize: vertical; }
+.ui-input--multiline[aria-invalid="true"] { padding: 9px calc(var(--space-sm) - 1px); }
+.ui-field-hint { margin: 0; font: var(--type-body-sm); color: var(--muted); }
 .ui-field-error { margin: 0; font: var(--type-field-error); color: var(--danger); }
