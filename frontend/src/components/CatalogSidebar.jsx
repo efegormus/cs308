@@ -20,6 +20,9 @@ export default function CatalogSidebar({
   const [max, setMax] = useState(maxPrice);
   const [priceError, setPriceError] = useState(null);
   const inStockId = useId();
+  // The box changes at once on a click; the URL (and so inStock) follows a moment later.
+  const [checked, setChecked] = useState(inStock);
+  useEffect(() => setChecked(inStock), [inStock]);
 
   // The fields follow the URL (a removed chip, "Clear filters", the back button).
   useEffect(() => {
@@ -76,8 +79,11 @@ export default function CatalogSidebar({
       </form>
 
       <div className="catalog-sidebar-group">
+        {/* The real check box covers the whole 44px row (transparent); the box beside the text is drawn for it. */}
         <label className="catalog-check" htmlFor={inStockId}>
-          <input id={inStockId} type="checkbox" checked={inStock} onChange={event => onInStockChange(event.target.checked)} />
+          <input id={inStockId} type="checkbox" checked={checked}
+            onChange={event => { setChecked(event.target.checked); onInStockChange(event.target.checked); }} />
+          <span className="catalog-check-box" aria-hidden="true" />
           <span>In stock only</span>
         </label>
       </div>
