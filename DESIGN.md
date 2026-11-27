@@ -658,7 +658,8 @@ that wrapped onto two lines) with the Siesta header: one dark row, with every ca
     request the product pages share), each a real `<button>`, then an "All products" link. The active
     item has a highlight pill (`--header-hover` with a 3px `--header-accent` line) that slides to it
     (`top`, 240ms). The items are one Tab stop: Up, Down, Home and End move (wrapping), focus makes an
-    item active at once, Enter or a click opens `/products#category-<id>`. Hovering makes an item
+    item active at once, Enter or a click opens `/products?categoryId=<id>`, which filters the page to
+    that category (SCRUM-165; it used to scroll to a section). Hovering makes an item
     active after 150ms, and leaving it cancels that, so a quick pass changes nothing. On a touch screen
     the first tap on another item with subcategories only makes it active, so its links can be reached;
     a tap on the active item opens it. The current category keeps `aria-current="page"` and an
@@ -737,6 +738,62 @@ that wrapped onto two lines) with the Siesta header: one dark row, with every ca
 The coverflow stays as it is: layout, geometry, motion, tokens and rules in `docs/ui-design.md`
 and `home.css`. HP's hero, chevrons and category icon cards are not used on the home page.
 
+### Products page [Uyarlandı]
+
+SCRUM-165 replaced the filter form, the wrapping category buttons, the global "Sort by" / "Order"
+selects and the pagination of `/products` with a filter sidebar beside category sections.
+`pages/ProductsPage.jsx`, `components/CatalogSidebar.jsx`, `CategorySection.jsx`,
+`lib/catalog-sections.js`, `lib/catalog-query.js`, `styles/products.css`.
+
+- **Top:** a breadcrumb (`body-sm`, "/" between items, links 44px high): Home / All products /
+  the chosen category's parents / the category, the last item unlinked. Then the `heading-lg` title
+  ("All products" or the category name), one `--muted` status line ("55 products in 17 sections",
+  `role="status"`, "Loading products…" while loading) and the active filters as chips.
+- **Chips:** category, brand, price ("₺100,00 – ₺500,00", "From …", "Up to …") and "In stock only".
+  44px high, full rounding, a 10% `--accent` tint on `--surface` with a 1px `--field-line` edge
+  (`--link` on hover), `label` type and a × icon; the label is "Remove filter: <name>". A click
+  removes only that filter.
+- **Sidebar (264px, 32px from the sections):** groups separated by a 1px `--line`:
+  - Category: "All products" and every top-level category with its count (its own products and
+    those of every category below it, after the brand, price and stock filters). The subcategories
+    of the chosen category's top-level category are indented under it; no other subcategories are
+    listed. Rows are 44px links with 6px corners; the chosen one has `aria-current="page"`, the 10%
+    `--accent` tint, `--link` text and weight 600. Links keep the other filters.
+  - Brand: the shared `Input` select, "All brands" first.
+  - Price: Min and Max (`Input`, side by side) and a full-width secondary "Apply" `Button`; Enter in
+    either field applies too. Nothing changes while typing. A negative or non-numeric value, or a
+    minimum above the maximum, shows a `role="alert"` message under the fields and changes nothing.
+  - "In stock only": a 20px box (2px `--field-line` edge, `--accent` fill and a drawn
+    `--accent-fg` check when on) with its `label` text; the transparent check box covers the whole
+    44px row.
+  - "Clear filters", a full-width secondary `Button`, shown while any filter is on. It keeps the
+    search (the header's × clears that).
+- **Sections:** one per category that has products of its own, in the category order of the API (a
+  top-level category, then the categories below it). A chosen category shows itself and every
+  category below it. The header row: the `heading-md` name with "· N products" in `body-sm`
+  `--muted`, then on the right the section's own sort (the `Input` select, hidden label
+  "Sort <category>": Name A to Z, Price low to high, Price high to low, Popularity) and, for more
+  than three products, a secondary "View all N" / "Show less" `Button` (`aria-expanded`). Each
+  section shows three products first and sorts on its own; the order matches the API's (name,
+  price with name for ties, units sold). Sections are 32px apart. The section id stays
+  `category-<id>`.
+- **Grid:** 3 columns beside the sidebar, 2 up to 1024px, 1 up to 480px (see Product card).
+- **Up to 768px** the sidebar sits above the sections. From 481px the category list has two columns
+  (reading down each column, so a subcategory stays under its parent) and Brand and Price sit side
+  by side.
+- **States:** an empty catalog says "No products available yet. Please check back soon."; a chosen
+  category without products "No products available in this category yet."; filters without a match
+  "No products match these filters." with a hint line; a failed load "We couldn't load the
+  products. Please try again." with a secondary "Try again" `Button`.
+- **URL:** `?categoryId=`, `brandId`, `minPrice`, `maxPrice`, `inStock=1` and `search`. The header's
+  Categories panel and the home page link with `?categoryId=<id>`; an old `/products#category-<id>`
+  link is turned into `?categoryId=<id>`. Each section's sort and "View all" are page state. The old
+  `sort`, `order` and `page` values are ignored.
+- **Requests:** `GET /api/categories` (shared with the header), `GET /api/brands` and every product
+  matching the search, brand and price (`GET /api/products?…&pageSize=100`, following
+  `totalPages`). The category, "In stock only", sorting and "View all" send no request;
+  Popularity asks `sort=popularity` once per filter set. See `docs/ui-design.md`, Product list data.
+
 ### Product card on `/products` [Uyarlandı]
 
 Top to bottom:
@@ -753,8 +810,8 @@ Top to bottom:
 
 The card is the shared `Card`: `--surface`, 16px corners, shadow `0 2px 8px rgba(26, 26, 26,
 0.08)`, padding 20px [Proje]. Cards in a row have equal heights, and the price, stock line and
-button line up at the bottom. The grid has 4 columns, 3 up to 1024px, 2 up to 768px and 1 up to
-480px, with a 20px gap.
+button line up at the bottom. Beside the sidebar the grid has 3 columns, 2 up to 1024px and 1 up
+to 480px, with a 20px gap (SCRUM-165).
 
 - Out-of-stock products are still shown and still found by search (requirement 7), but their
   card offers no add-to-cart action: the button is disabled and reads "Out of stock", as on the
@@ -1035,8 +1092,8 @@ For a short notice that does not need an answer. No page uses it yet; the pages 
 - Write media queries at 480, 768, 1024 and 1280px.
 - Touch targets are at least 44 × 44px.
 - No mobile-specific design: the header puts the search on a second row up to 768px, grids reflow,
-  and there is no sideways scroll at 360px. The product grid steps from 4 columns to 3 (up to 1024px), 2 (up to 768px) and 1 (up
-  to 480px); other grids use `auto-fit`.
+  and there is no sideways scroll at 360px. The product grid steps from 3 columns to 2 (up to 1024px) and 1 (up
+  to 480px), and the `/products` sidebar goes above the sections up to 768px; other grids use `auto-fit`.
 - Existing max widths stay (see Layout) [Proje].
 - Thresholds that belong to a component stay as they are: the coverflow's 700px track width and
   733px status height [Proje]. Other current thresholds are in "Migration status".
@@ -1191,7 +1248,7 @@ is the home page (SCRUM-126) and the items DESIGN.md marks [Belirsiz]; the rows 
 | Primary button height | 44px | Matches: `Button` 44px on every page | `components/ui/Button.css` |
 | Primary button corners | 4px | Matches: `Button` 4px on every page | `components/ui/Button.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login, register and profile add their ring glow and spotlight on top | `components/ui/Button.css`; `auth.css` |
-| Secondary button | 44px, 4px corners | Matches: `Button` `variant="secondary"` (cart, checkout, deliveries, product page, wishlist, /products, the error box); the `/products` category links use the same values | `components/ui/Button.css`, `products.css` |
+| Secondary button | 44px, 4px corners | Matches: `Button` `variant="secondary"` (cart, checkout, deliveries, product page, wishlist, /products, the error box) | `components/ui/Button.css`, `products.css` |
 | Header | Dark single row, 72px, 56px while scrolling down, sticky, 1px `--header-line` bottom | Matches (SCRUM-164) | `site-header.css`, `Header.jsx` |
 | Header content | Siesta wordmark, Categories panel (API categories, pill, links, best-seller card), search with typing hint and Ctrl K, wishlist, name pill with account menu, cart count | Matches (SCRUM-164) | `Header.jsx`, `CategoryMenu.jsx`, `HeaderSearch.jsx`, `AccountMenu.jsx`, `lib/search-hints.js`, `lib/site-header.js`, `lib/role-routes.js` |
 | Active nav link | 2px `--header-accent` underline | Matches | `site-header.css` |
@@ -1199,6 +1256,7 @@ is the home page (SCRUM-126) and the items DESIGN.md marks [Belirsiz]; the rows 
 | Store name | Siesta | Header, footer and every page title; the invoice PDF still says "Online Store" (backend, outside SCRUM-164) | `Header.jsx`, `Footer.jsx`, `pages/*.jsx`, `index.html` |
 | Footer | `--footer` dark | Matches | `site-footer.css`, `Footer.jsx` |
 | Product card | 16px corners, product shadow, 1:1 image, CTA at the bottom | Matches: `Card`, 1:1 image, "Add to cart" `Button` | `components/ui/Card.css`, `products.css`, `ProductCard.jsx` |
+| Products page | Breadcrumb, title, status line, chips; 264px sidebar (category counts, brand, price, in stock, clear); category sections with their own sort and View all | Matches (SCRUM-165); the search heading comes with the next SCRUM-165 PR | `pages/ProductsPage.jsx`, `components/CatalogSidebar.jsx`, `CategorySection.jsx`, `lib/catalog-sections.js`, `products.css` |
 | Product card spec row | One `body-sm` row | Matches: brand, or the first line of the description | `ProductCard.jsx`, `lib/product-display.js` |
 | Discount badge | `--sale-bg`, 3px, 14px 600 | `Badge` matches; no page shows a discount yet | `components/ui/Badge.css` |
 | Modal | Form card over `--backdrop`, focus kept inside, Escape and veil close | `Modal` matches (SCRUM-134); no page uses it yet | `components/ui/Modal.jsx`, `Modal.css` |
@@ -1220,7 +1278,7 @@ is the home page (SCRUM-126) and the items DESIGN.md marks [Belirsiz]; the rows 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (form card, Modal, catalog, purchase, reviews, header, admin), 768 (product grid, product detail, header; the admin panel's `767.98px` is the same step), 1024 (product grid, admin), 1280 (admin); 576 (cart, open question 13) and 733 (home status, kept as a component threshold) | `components/ui/Card.css`, `components/ui/Modal.css`, `products.css`, `purchases.css`, `product-detail.css`, `reviews.css`, `site-header.css`, `admin.css`; `cart.css`, `home.css` |
-| Touch targets | 44px | Matches everywhere but the home page: header, footer, card, cart and purchase-page buttons; order review links and the order and invoice PDF links; the product page's back, category and wishlist login links and quantity field; the wishlist title links; the dashboard section and order links; and the `/products` filter fields, category links, buttons and card title links are 44px (SCRUM-134). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px (home page, SCRUM-126) | `home.css` |
+| Touch targets | 44px | Matches everywhere but the home page: header, footer, card, cart and purchase-page buttons; order review links and the order and invoice PDF links; the product page's back, category and wishlist login links and quantity field; the wishlist title links; the dashboard section and order links; and the `/products` breadcrumb links, chips, sidebar category links, fields, "In stock only" row, buttons and card title links are 44px (SCRUM-134, SCRUM-165). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px (home page, SCRUM-126) | `home.css` |
 | No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks); with the SCRUM-164 header also at 360px (72 checks at 360, 768 and 1280px) | `scripts/verify_responsive_browser.py` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
 | Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Matches, through `Card` | `design-system.css`, `components/ui/Card.css` |

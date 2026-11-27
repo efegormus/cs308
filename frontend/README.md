@@ -40,19 +40,19 @@ test runner.
 
 ## The product list
 
-`/products` shows the products grouped by category. A link such as `/products#category-3` scrolls to that
-category. Search, category, brand, inclusive price range, sorting and page state are synchronized with the URL.
-The page calls `useCatalog()`, and the catalog loads again whenever those query values change:
+`/products` shows a filter sidebar beside one section per category (SCRUM-165). A link such as
+`/products?categoryId=3` shows that category and its subcategories; an older `/products#category-3` link becomes the
+same filter. The category, brand, inclusive price range, "In stock only" (`inStock=1`) and the search are in the URL.
+The page calls `useCatalog()`, which loads every product matching the search, brand and price again whenever those
+change:
 
 ```js
-useCatalog({
-  search: "pixel", sort: "price", order: "desc", categoryId: 2,
-  brandId: 4, minPrice: 100, maxPrice: 500, page: 1, pageSize: 24
-});
+useCatalog({ search: "pixel", brandId: 4, minPrice: 100, maxPrice: 500 });
 ```
 
-`sort` is `price` or `popularity` and `order` is `asc` or `desc`, as in `GET /api/products`.
-The React client opts into a bounded paginated response; callers that omit `page` and `pageSize` still receive the
+The category, "In stock only", each section's sort (name, price both ways, popularity) and "View all" are applied in
+the browser (`lib/catalog-sections.js`); a section's Popularity sort asks `GET /api/products?sort=popularity` once.
+The client asks for pages of 100 (`fetchMatchingProducts`); callers that omit `page` and `pageSize` still receive the
 legacy product array. The API client throws a `CatalogError` with the HTTP status when a request fails.
 Out-of-stock products stay in the list with an Out of stock label.
 

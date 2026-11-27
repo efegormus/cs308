@@ -208,7 +208,7 @@ and `accountMenuLinks` / `canUseWishlist` in `lib/role-routes.js` (SCRUM-164). `
 | Part | Rule |
 | --- | --- |
 | Layout | One dark row: Siesta wordmark, Categories button, search (up to 560px), then Deliveries (product manager), wishlist, account and cart. Sticky; the bar is 72px and 56px while scrolling down (the `<header>` keeps 72px in the flow). Up to 1024px the Categories label is visually hidden and the pill shows only the avatar; up to 768px the search is a second row and the height stays; up to 480px Categories is a 44px icon |
-| Categories panel | `#category-button` (`aria-expanded`, `aria-controls="category-panel"`) opens a full-width panel with a scrim (in `<body>`). Left: every top-level category of `GET /api/categories` as buttons (one Tab stop; Up/Down/Home/End; focus activates; hover activates after 150ms; Enter or click opens `/products#category-<id>`; on touch the first tap on another item only activates it), a sliding highlight pill and "All products". Middle: "All <category>" and its subcategories. Right (from 1025px): the category's best seller from `GET /api/products?categoryId=<id>&sort=popularity&pageSize=1`, asked only while open and cached per category; no product, no card. Escape or the scrim close it and refocus the button |
+| Categories panel | `#category-button` (`aria-expanded`, `aria-controls="category-panel"`) opens a full-width panel with a scrim (in `<body>`). Left: every top-level category of `GET /api/categories` as buttons (one Tab stop; Up/Down/Home/End; focus activates; hover activates after 150ms; Enter or click opens `/products?categoryId=<id>`, which filters the page (SCRUM-165); on touch the first tap on another item only activates it), a sliding highlight pill and "All products". Middle: "All <category>" and its subcategories. Right (from 1025px): the category's best seller from `GET /api/products?categoryId=<id>&sort=popularity&pageSize=1`, asked only while open and cached per category; no product, no card. Escape or the scrim close it and refocus the button |
 | Search | `Input` (44px, 10px corners, `--field-line` edge, `--header-accent` focus edge and ring) and a `--header-accent` submit `Button`; opens `/products?search=<text>`, the product list passes `search` to `useCatalog`. A typing hint "Search <term>" (`aria-hidden`) shows while empty and unfocused; the placeholder stays for screen readers. Ctrl+K / Cmd+K focuses it; a "Ctrl K" chip shows from 769px |
 | Account area | Guest: `#auth-link` Login. Signed in: the name pill `#user-name` ("Account menu, <name>"), which opens the account menu joined under it: My orders, Wishlist, Profile for a customer; the panel and shortcuts for staff; then `#logout` "Sign out" |
 | Wishlist, cart | 44px round icons for guests and customers. Cart count in a `--header-accent` bubble with `--header` text (hidden at 0). The count reloads on page change, login, logout and the `cart-changed` event that `cart-api.js` sends after every change |
@@ -246,7 +246,7 @@ DESIGN.md's Product card section holds the full rules.
 
 | Part | Rule |
 | --- | --- |
-| Grid | 4 columns, 3 up to 1024px, 2 up to 768px, 1 up to 480px; 20px gap |
+| Grid | Beside the sidebar: 3 columns, 2 up to 1024px, 1 up to 480px; 20px gap (SCRUM-165) |
 | Frame | `Card` as `<article class="product-card">`, full height of the row |
 | Image | 1:1, `object-fit: contain`, `--bg`, 8px corners; "No image available" when missing or broken |
 | Text | Name `h3` (link to `/product?id=<id>`), spec row (`specRow`: brand, else the first description line, one line with "…"), price, stock status (`stockStatus`: "In stock" in `--ok-fg`, "Out of stock" in `--danger`) |
@@ -254,12 +254,26 @@ DESIGN.md's Product card section holds the full rules.
 | Alignment | Price, stock, message and button sit at the bottom, so they line up across a row |
 | Actions row | `.product-card-actions`, room for a second action such as a wishlist button |
 
+### Products page (SCRUM-165)
+
+`pages/ProductsPage.jsx`, `components/CatalogSidebar.jsx`, `components/CategorySection.jsx` and the page rules in
+`styles/products.css`. DESIGN.md's Products page section holds the full rules.
+
+| Part | Rule |
+| --- | --- |
+| Layout | Breadcrumb, `h1`, `#catalog-status` ("N products in M sections"), chips, then `.catalog-layout`: the 264px `.catalog-sidebar` (`--catalog-sidebar-width`) and `#catalog` with the sections, 32px apart. Up to 768px the sidebar goes above; from 481px its category list has two columns and Brand and Price sit side by side |
+| Sidebar | Category links with counts (subcategories only under the chosen top-level category, `aria-current="page"` on the chosen one), Brand (`Input` select), Price (Min, Max, Apply `Button`; one form, so Enter applies; `#catalog-price-error`), "In stock only" (transparent check box over the 44px row, drawn 20px box), Clear filters (keeps the search) |
+| Chips | `.catalog-chip` buttons, 44px, "Remove filter: <name>"; each removes its own URL parameters |
+| Sections | `CategorySection`: `#category-<id>`, `h2` with `.product-count`, `Input select` "Sort <category>" and a secondary `.category-section-toggle` ("View all N" / "Show less", `aria-expanded`, `aria-controls`). Three cards first. `aria-busy` while the popularity order loads |
+| Header links | The Categories panel opens `/products?categoryId=<id>` and filters the page (it used to scroll to `#category-<id>`); `aria-current` follows `categoryId` |
+| Checks | `scripts/verify_catalog_browser.py` covers the sections, sidebar counts, View all, every per-section sort against the API, the sidebar and header category links, old hash links, chips, In stock only, price and brand; `verify_responsive_browser.py` finds no control under 44px on `/products` |
+
 ### Product list data (SCRUM-165)
 
 The category sections of `/products` (sidebar, sections with their own sort, search results) are built from the
 existing endpoints; the API contract does not change. The pure logic is in `lib/catalog-sections.js`, the URL and
-search helpers in `lib/catalog-query.js` and the loaders in `lib/catalog-api.js`. The page itself still uses the
-SCRUM-109 layout until the sidebar and sections land.
+search helpers in `lib/catalog-query.js`, the loaders in `lib/catalog-api.js` and the hooks (`useCatalog`,
+`usePopularityOrder`) in `hooks/useCatalog.js`.
 
 | Part | Rule |
 | --- | --- |
@@ -366,7 +380,7 @@ and `styles/home.css`.
 - A row is a bar (small heading, sort dropdown), the track with the arrows on top of it,
   and a count line such as "2 / 5 · iPhone 15".
 - At rest the first card sits beside the category panel: icon, name, product count and a
-  "Browse tablets" link to `/products#category-<id>`. Moving forward, the cards slide over
+  "Browse tablets" link to `/products?categoryId=<id>`. Moving forward, the cards slide over
   the panel, the front card reaches the center at the second product, and the small heading
   appears in the bar.
 - When the track is narrower than 700px there is no panel, so no Browse link either; the
