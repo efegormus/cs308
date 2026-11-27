@@ -1,7 +1,7 @@
-/* From wwwroot/css/products.css. Everything is scoped to .catalog-page, so it cannot reach the login page.
-   Colors are the tokens of design-system.css (SCRUM-123), so the catalog follows the dark theme too. The one color
-   left is the plain button border #b9c4d2 (DESIGN.md, Open questions 9). */
-.catalog-page { font-family: Arial, sans-serif; color: var(--fg); background: var(--bg); }
+/* The catalog base (DESIGN.md; tokens in design-system.css). Everything is scoped to .catalog-page, which the /products,
+   product, wishlist, cart and purchase pages carry, so it cannot reach the login page. The page type is Open Sans
+   (body-md) with Poppins headings (SCRUM-134); colors only from tokens. */
+.catalog-page { color: var(--fg); background: var(--bg); font: var(--type-body-md); }
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme="light"]) .catalog-page { color-scheme: dark; }
 }
@@ -10,29 +10,34 @@
 .catalog-page { margin: 0; }
 .catalog-page [hidden] { display: none !important; }
 .catalog-page a { color: var(--link); }
-.catalog-page a:focus-visible, .catalog-page button:not(.ui-button):focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
-.catalog-page .skip-link { position: absolute; top: -5rem; left: 1rem; padding: 1rem; background: var(--surface); }
-.catalog-page .skip-link:focus { top: 1rem; }
-.catalog-page main { max-width: 1200px; margin: auto; padding: 2.5rem 1.5rem; min-height: 75vh; }
-.catalog-page h1 { margin: 0 0 .75rem; }
-.catalog-page .intro, .catalog-page .category-description { color: var(--muted); line-height: 1.6; }
-.catalog-page .category-nav { display: flex; flex-wrap: wrap; gap: .75rem; margin: 1.75rem 0; }
-/* Plain buttons. The shared Button (.ui-button) keeps its own look, so it is left out. */
-.catalog-page .category-nav a, .catalog-page button:not(.ui-button) { padding: .75rem 1rem; border: 1px solid #b9c4d2;
-  border-radius: .4rem; background: var(--surface); font: inherit; }
-.catalog-page button:not(.ui-button) { cursor: pointer; color: var(--link); }
+.catalog-page a:focus-visible { outline: 3px solid var(--focus); outline-offset: 4px; }
+.catalog-page .skip-link { position: absolute; top: -5rem; left: var(--space-md); padding: var(--space-md); background: var(--surface); }
+.catalog-page .skip-link:focus { top: var(--space-md); }
+.catalog-page main { max-width: var(--catalog-max); margin: auto; padding: 40px var(--space-xl); min-height: 75vh; }
+.catalog-page h1 { margin: 0 0 var(--space-sm); font: var(--type-heading-lg); }
+.catalog-page .intro, .catalog-page .category-description { color: var(--muted); }
+/* Category links look like the secondary Button: 44px, 4px corners, a 1px --field-line edge drawn inside. */
+.catalog-page .category-nav { display: flex; flex-wrap: wrap; gap: var(--space-sm); margin: 28px 0; }
+.catalog-page .category-nav a {
+  display: inline-flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-md);
+  border-radius: var(--radius-button); background: var(--surface); box-shadow: inset 0 0 0 1px var(--field-line);
+  font: var(--type-button); text-decoration: none;
+}
+.catalog-page .category-nav a:hover { background: var(--bg); box-shadow: inset 0 0 0 1px var(--link); }
+/* Filters: every field is a 44px touch target with the field border and corners (DESIGN.md, Inputs and forms). */
 .catalog-page .product-filters { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-  gap: .75rem; align-items: end; margin: 1.5rem 0; }
-.catalog-page .product-filters label { display: grid; gap: .35rem; font-weight: 600; }
+  gap: var(--space-sm); align-items: end; margin: var(--space-xl) 0; }
+.catalog-page .product-filters label { display: grid; gap: var(--space-label-gap); font: var(--type-label); }
 .catalog-page .product-filters input, .catalog-page .product-filters select {
-  min-width: 0; padding: .65rem; border: 1px solid #b9c4d2; border-radius: .4rem; background: var(--surface);
-  color: inherit; font: inherit; }
-.catalog-page .sort-note, .catalog-page .empty-hint { margin: .5rem 0; color: var(--muted); line-height: 1.5; }
-.catalog-page .clear-filters { margin: .25rem 0 1rem; }
-.catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: 1rem; margin: 2rem 0; }
+  min-width: 0; min-height: var(--touch-target); padding: 0 var(--space-sm); border: 1px solid var(--field-line);
+  border-radius: var(--radius-field); background: var(--surface); color: var(--fg); font: var(--type-body-md); }
+.catalog-page .product-filters :is(input, select):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+.catalog-page .sort-note, .catalog-page .empty-hint { margin: var(--space-xs) 0; color: var(--muted); }
+.catalog-page .clear-filters { margin: var(--space-xxs) 0 var(--space-md); }
+.catalog-page .catalog-pagination { display: flex; justify-content: center; align-items: center; gap: var(--space-md); margin: var(--space-xxl) 0; }
 .catalog-page .category-section { margin-top: 2.5rem; scroll-margin-top: 1.5rem; }
-.catalog-page .category-section h2 { margin-bottom: .5rem; overflow-wrap: anywhere; }
-.catalog-page .product-count { font-size: .9rem; font-weight: normal; color: var(--muted); }
+.catalog-page .category-section h2 { margin: 0 0 var(--space-xs); font: var(--type-heading-md); overflow-wrap: anywhere; }
+.catalog-page .product-count { font: var(--type-body-sm); color: var(--muted); }
 /* Images of the product page and the wishlist. The product card has its own 1:1 image below. */
 .catalog-page .product-image, .catalog-page .image-placeholder { width: 100%; height: 180px; object-fit: contain;
   border-radius: .3rem; background: var(--bg); }
@@ -42,7 +47,7 @@
 .catalog-page .price { margin: auto 0 .5rem; padding-top: 1rem; font-size: 1.2rem; font-weight: bold; }
 .catalog-page .stock { margin: 0; color: var(--ok-fg); }
 .catalog-page .out-of-stock { color: var(--danger); }
-@media (max-width: 480px) { .catalog-page main { padding: 2rem 1rem; } .catalog-page h1 { font-size: 1.8rem; } }
+@media (max-width: 480px) { .catalog-page main { padding: var(--space-xxl) var(--space-md); } }
 
 /* Product grid and product card on /products (SCRUM-123, DESIGN.md Product card). The frame (16px corners, 20px
    padding, --shadow-product, --surface) comes from ui/Card. 4 columns, 3 up to 1024px, 2 up to 768px, 1 up to 480px. */
@@ -56,7 +61,8 @@
   height: auto; aspect-ratio: 1 / 1; border-radius: var(--radius-tile); background: var(--bg); }
 .catalog-page .product-card .image-placeholder { padding: var(--space-md); font: var(--type-body-sm); text-align: center; }
 .catalog-page .product-card h3 { margin: var(--space-md) 0 var(--space-xs); font: var(--type-heading-sm); }
-.catalog-page .product-card h3 a { color: inherit; }
+/* The title link's hit area is 44px high (20px type at line height 1.2 plus 10px above and below), without moving it. */
+.catalog-page .product-card h3 a { display: inline-block; padding-block: 10px; margin-block: -10px; color: inherit; }
 .catalog-page .product-card .product-spec { margin: 0; font: var(--type-body-sm); color: var(--muted);
   white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 /* The price, stock and actions sit at the bottom, so they line up across a row. */
