@@ -150,7 +150,7 @@ still use Arial: product page price 1.2rem bold, product count 0.9rem.
 | Home: between rows, row padding, bar side padding | 32px, 18px top and 16px bottom, 20px |
 | Catalog `main` | max-width 1200px, 2.5rem 1.5rem (2rem 1rem up to 480px wide) |
 | Product grid gap, product card padding | 20px, 20px |
-| Purchase card padding | `clamp(1rem, 3vw, 2rem)` |
+| Purchase card padding | `clamp(16px, 2.5vw, 24px)` |
 | Cart: between lines, line padding | 0.75rem, 0.75rem 1rem |
 
 ### Buttons, cards and forms
@@ -159,17 +159,17 @@ still use Arial: product page price 1.2rem bold, product count 0.9rem.
 | --- | --- |
 | Primary button (login, register, profile) | The shared `Button` (44px, radius 4px, `--accent`, Poppins 16px 500, light hover `--accent-hover`), full width, plus the spotlight, ring glow, spinner and success fill from `auth.css` |
 | Plain button (catalog) | Padding 0.75rem 1rem, radius 0.4rem, `--surface` background, 1px `#b9c4d2` border, text `--link`. Not applied to `Button` |
-| Checkout button (cart) | Padding 0.625rem 1.25rem, radius 0.4rem, `--accent`, weight 600 |
+| Checkout button (cart) | A link with the shared `Button` classes (`ui-button`): 44px, radius 4px, `--accent`, Poppins 16px 500 |
 | Coverflow arrow | 44px circle, `--surface`, 1px `--line` border, fills with `--accent` on hover |
 | Login card | `Card` with `variant="form"`: max-width 420px, radius 10px, 1px `--line` border, `--shadow` |
 | Product card | `Card` (16px corners, 20px padding, `--shadow-product`, no border); see Product card |
-| Purchase card | Radius 0.6rem, 1px `#dce0e6` border, white |
+| Purchase card | Radius 10px, 1px `--line` border, `--surface`, `--shadow` |
 | Cart line | Radius 0.5rem, 1px `--line` border, `--surface` |
 | Coverflow row, card | Radius 12px with `--shadow`, radius 10px with `--card-shadow` at the front |
 | Login input | The shared `Input`: height 44px, radius 6px, 1px `--field-line` border, 16px text |
-| Purchase input | Padding 0.75rem, radius 0.3rem, 1px `#9ba9b9` border |
+| Purchase input | The shared `Input` (44px, radius 6px, 1px `--field-line` border, 16px text) |
 | Home sort dropdown | Height 40px, min-width 190px, radius 8px, 1px `--field-line` border, 14px text |
-| Focus ring | 3px outline, `--focus` (`#b66d00` written directly on purchase pages). Offset 2px on login and purchase inputs and on `Button`, 3px on home, cart and request states, 4px on catalog links and plain buttons |
+| Focus ring | 3px outline, `--focus`. Offset 2px on login and purchase inputs and on `Button`, 3px on home and request states, 4px on catalog links and plain buttons |
 
 ### Shared UI components
 
@@ -179,7 +179,7 @@ file next to it, and its classes start with `ui-`. The header search uses `Butto
 
 | Component | Rule |
 | --- | --- |
-| `Button` | Primary button: at least 44px high, 4px corners, `--accent`, Poppins 16px 500, not uppercase. Light hover and pressed fill `--accent-hover`; in the dark theme the fill stays `--accent` and a 4px `--ring-glow` ring shows. Focus 3px `--focus`, offset 2px. Disabled opacity 0.7 |
+| `Button` | Primary button: at least 44px high, 4px corners, `--accent`, Poppins 16px 500, not uppercase. Light hover and pressed fill `--accent-hover`; in the dark theme the fill stays `--accent` and a 4px `--ring-glow` ring shows. Focus 3px `--focus`, offset 2px. Disabled opacity 0.7. `variant="secondary"`: `--surface` fill, `--link` text, 1px `--field-line` edge drawn inside, padding 0 16px; hover `--bg` and a `--link` edge. A link uses the same classes |
 | `Input` | Label, input and optional field error. 44px, 6px corners, 1px `--field-line`, 16px Open Sans, padding 0 12px, focus 3px `--focus` offset 2px. With `error`: `aria-invalid`, `aria-describedby`, 2px `--danger` border, 13px 600 message. `hideLabel` keeps the label for screen readers only. `multiline` renders a textarea (at least 88px, padding 10px 12px, vertical resize); `hint` adds a `body-sm` `--muted` note (id `<id>-note`) the field points to; `errorRole` sets the message's role; read-only inputs get `--bg` and `--muted`. Login, register and profile use it |
 | `Card` | DESIGN.md's `card-product`: `--surface`, 16px corners, padding 20px, `--shadow-product`, flex column. `as` picks the element. `variant="form"` is the form card: 1px `--line`, `--shadow`, 10px corners, padding 36px 32px (28px 20px up to 480px); login, register and the profile cards use it |
 | `Badge` | Discount badge: `--sale-bg`, `--sale-fg`, 3px corners, padding 4px 8px, Open Sans 14px 600 |
