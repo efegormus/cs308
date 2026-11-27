@@ -13,6 +13,7 @@ const SECTIONS = {
   SalesManager: [
     OVERVIEW,
     { id: "invoices", path: "/manage/invoices", label: "Invoices" },
+    { id: "pricing", path: "/manage/pricing", label: "Pricing" },
     { id: "discounts", path: "/manage/discounts", label: "Discounts" }
   ]
 };
