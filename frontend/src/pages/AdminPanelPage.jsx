@@ -7,6 +7,7 @@ import { useAuth } from "../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import AdminShell from "../components/admin/AdminShell.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
+import ProfitChart from "../components/admin/ProfitChart.jsx";
 import ReviewApprovalRow from "../components/admin/ReviewApprovalRow.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState } from "../components/RequestStates.js";
@@ -274,6 +275,7 @@ function SalesOverview({ dashboard }) {
           loadingLabel="Loading invoices…" emptyText="No invoices yet." />
       </section>
     </div>
+    <ProfitChart />
   </>;
 }
 
