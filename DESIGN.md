@@ -743,7 +743,7 @@ still [Belirsiz]: the sales overview has no revenue chart yet.
 - **Frame.** From 768px up, a 240px menu on the left (`--surface`, 1px `--line`, 8px corners) and the
   content on the right. Page titles `heading-lg` (Poppins), text `body-md` (Open Sans). Inner width up to
   1280px.
-- **Menu.** Product manager: Overview, Deliveries, Reviews, Low stock. Sales manager: Overview, Invoices,
+- **Menu.** Product manager: Overview, Deliveries, Reviews, Low stock, Catalog. Sales manager: Overview, Invoices,
   Discounts. Every item is 44px high. Hover shows a 3px `--accent` line on the left (an inset shadow, 200ms).
   The current page keeps `aria-current="page"`, the same line and a light `--accent` tint,
   `color-mix(in srgb, var(--accent) 10%, var(--surface))` (light `#e6edfb`, dark `#1a283c`). The tint is

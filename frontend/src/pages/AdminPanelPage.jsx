@@ -6,6 +6,7 @@ import { Link, Navigate, useParams } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import AdminShell from "../components/admin/AdminShell.jsx";
+import CatalogManagement from "../components/admin/CatalogManagement.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
 import ReviewApprovalRow from "../components/admin/ReviewApprovalRow.jsx";
 import SalesPricing from "../components/admin/SalesPricing.jsx";
@@ -310,6 +311,7 @@ function ProductManagerPanel({ account, section }) {
     {section.id === "deliveries" ? <DeliveriesSection />
       : section.id === "reviews" ? <ReviewsSection dashboard={dashboard} />
       : section.id === "low-stock" ? <LowStockSection dashboard={dashboard} />
+      : section.id === "catalog" ? <CatalogManagement />
       : <ProductOverview dashboard={dashboard} />}
   </AdminShell>;
 }
