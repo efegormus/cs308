@@ -189,3 +189,33 @@
 /* Catalog screen (SCRUM-77): the buttons at the end of a table row or form, and room between a table and its form. */
 .admin-row-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .admin-section .ui-table-frame + .admin-pricing-form, .admin-section .admin-more + .admin-pricing-form { margin-top: 24px; }
+
+/* SCRUM-87: revenue / cost / profit chart. Series 1-3 of the validated categorical palette (blue, orange, aqua). */
+.admin-profit { --series-revenue: #257de0; --series-cost: #f47230; --series-profit: #00b894; margin-top: 24px; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) .admin-profit { --series-revenue: #338ced; --series-cost: #e76624; --series-profit: #00a888; }
+}
+:root[data-theme="dark"] .admin-profit { --series-revenue: #338ced; --series-cost: #e76624; --series-profit: #00a888; }
+.admin-profit-legend { display: flex; flex-wrap: wrap; gap: 8px 24px; margin: 0 0 8px; padding: 0; list-style: none; }
+.admin-profit-swatch { display: inline-block; width: 16px; height: 4px; margin-right: 8px; border-radius: 2px; vertical-align: middle; }
+.admin-profit-swatch--revenue { background: var(--series-revenue); }
+.admin-profit-swatch--cost { background: var(--series-cost); }
+.admin-profit-swatch--profit { background: var(--series-profit); }
+.admin-profit-note { margin: 0 0 8px; color: var(--muted); }
+.admin-profit-plot { position: relative; }
+.admin-profit-plot svg { display: block; width: 100%; height: auto; touch-action: pan-y; }
+.admin-profit-grid { stroke: var(--line); stroke-width: 1; }
+.admin-profit-zero { stroke: var(--field-line); stroke-width: 1; }
+.admin-profit-tick { fill: var(--muted); font-size: 12px; }
+.admin-profit-line { stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.admin-profit-line--revenue { stroke: var(--series-revenue); }
+.admin-profit-line--cost { stroke: var(--series-cost); }
+.admin-profit-line--profit { stroke: var(--series-profit); }
+.admin-profit-cursor { stroke: var(--field-line); stroke-width: 1; stroke-dasharray: 4 3; }
+.admin-profit-dot { stroke: var(--surface); stroke-width: 2; }
+.admin-profit-dot--revenue { fill: var(--series-revenue); }
+.admin-profit-dot--cost { fill: var(--series-cost); }
+.admin-profit-dot--profit { fill: var(--series-profit); }
+.admin-profit-tip { position: absolute; top: 8px; transform: translateX(-50%); display: grid; gap: 2px; padding: 8px 12px;
+  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: 4px; box-shadow: var(--shadow); pointer-events: none; font-size: 14px; }
+.admin-profit-table { margin-top: 12px; }

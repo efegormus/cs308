@@ -8,6 +8,7 @@ import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import AdminShell from "../components/admin/AdminShell.jsx";
 import CatalogManagement from "../components/admin/CatalogManagement.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
+import ProfitChart from "../components/admin/ProfitChart.jsx";
 import ReviewApprovalRow from "../components/admin/ReviewApprovalRow.jsx";
 import SalesPricing from "../components/admin/SalesPricing.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
@@ -276,6 +277,7 @@ function SalesOverview({ dashboard }) {
           loadingLabel="Loading invoices…" emptyText="No invoices yet." />
       </section>
     </div>
+    <ProfitChart />
   </>;
 }
 
