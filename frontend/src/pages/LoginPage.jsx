@@ -63,7 +63,7 @@ export default function LoginPage() {
 
   return (
     <div className="route-page auth-page">
-      <title>Log in | Online Store</title>
+      <title>Log in | Siesta</title>
       <main id="main-content">
         {form.showForm && (
           <Card as="form" variant="form" id="login-form" {...form.formProps} onSubmit={handleSubmit}>

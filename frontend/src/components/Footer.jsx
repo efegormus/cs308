@@ -10,13 +10,13 @@ export default function Footer() {
   return (
     <footer className="site-footer">
       <div className="site-footer-inner">
-        <p className="site-footer-brand">Online Store</p>
+        <p className="site-footer-brand">Siesta</p>
         <nav aria-label="Footer">
           <ul className="site-footer-links">
             {footerLinks(account?.role ?? null).map(([to, label]) => <li key={to}><Link to={to}>{label}</Link></li>)}
           </ul>
         </nav>
-        <p className="site-footer-legal">&copy; 2026 Online Store &middot; CS 308 Team</p>
+        <p className="site-footer-legal">&copy; 2026 Siesta &middot; CS 308 Team</p>
       </div>
     </footer>
   );
