@@ -145,7 +145,7 @@ function Checkout({ account }) {
 
 export default function CheckoutPage() {
   return <div className="route-page catalog-page purchase-page">
-    <title>Checkout | Online Store</title>
+    <title>Checkout | Siesta</title>
     <main id="main-content" className="purchase-layout">
       <h1>Checkout</h1>
       <p className="intro">Review your items and delivery address before confirming your purchase.</p>

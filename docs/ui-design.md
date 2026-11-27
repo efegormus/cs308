@@ -34,10 +34,16 @@ Give the page its wrapper class, as described in [Shared rules](#shared-rules).
 | --- | --- | --- | --- |
 | `--bg` | Page background | `#f6f7f9` | `#0e131a` |
 | `--surface` | Card, input, footer | `#ffffff` | `#18202c` |
-| `--header` | Header bar | `#ffffff` | `#0a0f17` |
-| `--header-fg` | Header text | `#222222` | `#ffffff` |
-| `--header-fg-soft` | Signed-in name | `#505966` | `#cfd5df` |
-| `--header-hover` | Logout hover | `#f6f7f9` | `rgba(255, 255, 255, 0.12)` |
+| `--header` | Header bar (dark in both themes since SCRUM-164) | `#0a0f17` | `#0a0f17` |
+| `--header-fg` | Header text | `#ffffff` | `#ffffff` |
+| `--header-fg-soft` | Secondary header text, panel and menu links | `#cfd5df` | `#cfd5df` |
+| `--header-hover` | Header hover fill, panel highlight pill | `rgba(255, 255, 255, 0.12)` | same |
+| `--header-panel` | Categories panel, search field, account menu | `#111826` | same |
+| `--header-line` | Header bottom line, button and pill edges | `#2f3b50` | same |
+| `--header-accent` | Search focus, avatar, cart count, header active lines | `#3b78f5` | same |
+| `--header-accent-ring` | Search focus ring | `rgba(59, 120, 245, 0.28)` | same |
+| `--header-danger` | "Sign out" | `#ff8a73` | same |
+| `--header-scrim` | Veil behind the categories panel | `rgba(10, 15, 26, 0.5)` | same |
 | `--footer` | Footer bar | `#1f2937` | `#0a0f17` |
 | `--footer-fg` | Footer text and links | `#ffffff` | `#ffffff` |
 | `--footer-fg-soft` | Footer copyright line | `#e5e7eb` | `#cfd5df` |
@@ -62,6 +68,9 @@ Give the page its wrapper class, as described in [Shared rules](#shared-rules).
 | `--shadow-menu` | Account menu and category panel | `0 10px 28px rgba(31, 41, 55, 0.18)` | `0 10px 28px rgba(0, 0, 0, 0.55)` |
 | `--btn-glow` | Button spotlight | `rgba(255, 255, 255, 0.28)` | same |
 | `--ring-glow` | Button hover ring | `rgba(23, 74, 139, 0.22)` | `rgba(77, 132, 224, 0.35)` |
+
+Motion tokens (SCRUM-164): `--ease-standard` `cubic-bezier(0.4, 0, 0.2, 1)`, `--dur-fast` 200ms and
+`--dur-base` 320ms. The header uses them; see [Header motion](#header-motion).
 
 Dark values follow the visitor's system setting. The login and register pages
 (`.auth-page`), the home page, the cart page and, since SCRUM-123, the catalog pages
@@ -176,7 +185,7 @@ dashboard and support page use the scale too (`body-md` text, `heading-lg` title
 
 `frontend/src/components/ui/` holds the shared parts from DESIGN.md. Each has its own CSS
 file next to it, and its classes start with `ui-`. The header search uses `Button` and
-`Input` (with `hideLabel`); the product card uses `Card` and `Button`.
+`Input` (with `hideLabel`, restyled dark in `site-header.css`); the product card uses `Card` and `Button`.
 
 | Component | Rule |
 | --- | --- |
@@ -190,21 +199,45 @@ file next to it, and its classes start with `ui-`. The header search uses `Butto
 
 ### Header and footer
 
-`components/Header.jsx`, `components/CategoryMenu.jsx` and `styles/site-header.css`;
-`components/Footer.jsx` and `styles/site-footer.css` (SCRUM-123). DESIGN.md's Header and
-Footer sections hold the full rules.
+`components/Header.jsx` with `CategoryMenu.jsx` (Categories button and panel), `HeaderSearch.jsx` (search, hint,
+Ctrl K) and `AccountMenu.jsx` (name pill and menu), `styles/site-header.css`, and the pure helpers
+`lib/site-header.js` (scroll state, initials, list keys), `lib/search-hints.js` (hint terms and typewriter steps)
+and `accountMenuLinks` / `canUseWishlist` in `lib/role-routes.js` (SCRUM-164). `components/Footer.jsx` and
+`styles/site-footer.css` (SCRUM-123). DESIGN.md's Header and Footer sections hold the full rules.
 
 | Part | Rule |
 | --- | --- |
-| Layout | Two rows at every width: logo, search, account area and cart; then the category bar. Up to 768px the search moves under the logo row; the category bar wraps. Inner width 1280px, 32px sides (16px up to 480px), min-height 64px, 1px `--line` bottom |
-| Category bar | "All products" and the top-level categories of `GET /api/categories` (`parentId` null). With subcategories: a button with `aria-expanded` that opens a full-width panel ("All <category>" and its subcategories). Without `parentId` every category is a plain link to `/products#category-<id>` |
-| Mega menu input | Hover opens and leaving closes (mouse); tap toggles, tap outside closes (touch); Enter, Space or Down opens, Up and Down move, Escape closes and refocuses the button, Tab never opens (keyboard) |
-| Search | 200px `Input` and 44px `Button`, opens `/products?search=<text>`; the product list passes `search` to `useCatalog` |
-| Account area | Login, or the 44px profile icon with its menu and Logout (44px, 4px corners). Deliveries link for the product manager only |
-| Cart | 44px icon, count bubble in `--accent` (hidden at 0). Guests and customers only. Reloads on page change, login, logout and the `cart-changed` event that `cart-api.js` sends after every change |
-| Current page | 2px `--accent` line (inset shadow) and `aria-current="page"` |
-| Footer | `--footer` background, store name, Products / Cart / Orders (Cart and Orders for guests and customers), copyright in `--footer-fg-soft`. Links `--footer-fg`, underlined, 44px high. No support link until the customer chat exists |
-| Requests | The header and the page share one `GET /api/categories` when they load together (`fetchCategories`) |
+| Layout | One dark row: Siesta wordmark, Categories button, search (up to 560px), then Deliveries (product manager), wishlist, account and cart. Sticky; the bar is 72px and 56px while scrolling down (the `<header>` keeps 72px in the flow). Up to 1024px the Categories label is visually hidden and the pill shows only the avatar; up to 768px the search is a second row and the height stays; up to 480px Categories is a 44px icon |
+| Categories panel | `#category-button` (`aria-expanded`, `aria-controls="category-panel"`) opens a full-width panel with a scrim (in `<body>`). Left: every top-level category of `GET /api/categories` as buttons (one Tab stop; Up/Down/Home/End; focus activates; hover activates after 150ms; Enter or click opens `/products#category-<id>`; on touch the first tap on another item only activates it), a sliding highlight pill and "All products". Middle: "All <category>" and its subcategories. Right (from 1025px): the category's best seller from `GET /api/products?categoryId=<id>&sort=popularity&pageSize=1`, asked only while open and cached per category; no product, no card. Escape or the scrim close it and refocus the button |
+| Search | `Input` (44px, 10px corners, `--field-line` edge, `--header-accent` focus edge and ring) and a `--header-accent` submit `Button`; opens `/products?search=<text>`, the product list passes `search` to `useCatalog`. A typing hint "Search <term>" (`aria-hidden`) shows while empty and unfocused; the placeholder stays for screen readers. Ctrl+K / Cmd+K focuses it; a "Ctrl K" chip shows from 769px |
+| Account area | Guest: `#auth-link` Login. Signed in: the name pill `#user-name` ("Account menu, <name>"), which opens the account menu joined under it: My orders, Wishlist, Profile for a customer; the panel and shortcuts for staff; then `#logout` "Sign out" |
+| Wishlist, cart | 44px round icons for guests and customers. Cart count in a `--header-accent` bubble with `--header` text (hidden at 0). The count reloads on page change, login, logout and the `cart-changed` event that `cart-api.js` sends after every change |
+| Current page | 2px `--header-accent` line (inset shadow) and `aria-current="page"` |
+| Footer | `--footer` background, store name "Siesta", Products / Cart / Orders (Cart and Orders for guests and customers), copyright in `--footer-fg-soft`. Links `--footer-fg`, underlined, 44px high. No support link until the customer chat exists |
+| Requests | The header and the page share one `GET /api/categories` when they load together (`fetchCategories`). The hint needs no request; the featured card asks only while the panel is open |
+
+#### Header motion
+
+`--ease-standard` everywhere; the header's own steps are custom properties on `.site-header`.
+`prefers-reduced-motion: reduce` turns every header animation and transition off, and the hint shows one term.
+
+| Effect | Duration | Delay |
+| --- | --- | --- |
+| Bar height 72 ↔ 56px | 240ms | — |
+| Categories chevron turns 180° | 200ms (`--dur-fast`) | — |
+| Panel reveal (`clip-path` from the top) | 260ms | — |
+| Scrim fade | 240ms | — |
+| Highlight pill `top` | 240ms | — |
+| Panel links: 8px up and a fade | 240ms | index × 35ms |
+| Link hover: `--header-fg`, 4px to the right | 200ms | — |
+| Featured card: 4px rise, image zoom 1.06 | 320ms (`--dur-base`) | — |
+| Search focus edge and ring | 200ms | — |
+| Hint: type, hold, delete | 65ms a character, 1.5s, 28ms a character | — |
+| Caret blink | 1s | — |
+| Name pill width 44 → 210px | 320ms | — |
+| Name fades in from 6px to the left | 240ms | 80ms |
+| Account menu reveal (`clip-path`) | 200ms | — |
+| Account menu entries: 6px down and a fade | 220ms | 60ms + index × 50ms |
 
 ### Product card
 
@@ -277,7 +310,7 @@ only adds the column, the gap between the cards and the note. DESIGN.md's Custom
 
 | Part | Rule |
 | --- | --- |
-| Route | `/profile`, customers only (`PurchaseAccess`, `role-routes.js`). A guest goes to `/login?returnUrl=…`; another role gets the role message, as on `/dashboard`. The dashboard's "Your details" has an "Edit details" link here; the header's profile icon is unchanged |
+| Route | `/profile`, customers only (`PurchaseAccess`, `role-routes.js`). A guest goes to `/login?returnUrl=…`; another role gets the role message, as on `/dashboard`. The dashboard's "Your details" has an "Edit details" link here; the header's account menu (Profile) opens `/dashboard` |
 | Data | `GET /api/customer/profile`, then `PUT` with `{ name, taxId, homeAddress }` (trimmed) through `saveCustomerProfile`, which renews a refused CSRF token once (`withCsrfRetry`). The email is shown read-only and never sent |
 | Form | "My profile", "These details appear on your invoice and delivery.", card "Account" (Full name, Email), card "Invoice and delivery" (Tax ID (TC kimlik no), Home address, 3 rows), "Save changes". `useAuthForm` with `redirectSignedIn: false` and the labels "Saving…" and "Saved" |
 | Validation | Empty or too long: name 100, tax ID 64, address 1000 characters after trimming. The register page's TC kimlik check digits are not applied, so an older tax ID does not block a name change. Messages sit under the field with `role="alert"`, `aria-invalid` and `aria-describedby`; the fields shake and the first one gets focus, after `flushSync` renders the messages. A 400 from the server is mapped to its field; only the backend's known messages are shown, anything else reads "Check this field." |

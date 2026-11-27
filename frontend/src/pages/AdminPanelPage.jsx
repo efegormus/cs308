@@ -339,7 +339,7 @@ function Panel({ account }) {
 
 export default function AdminPanelPage() {
   return <div className="route-page admin-page">
-    <title>Management | Online Store</title>
+    <title>Management | Siesta</title>
     <main id="main-content" className="admin-main">
       <PurchaseAccess role={["ProductManager", "SalesManager"]}>{account => <Panel key={account.id} account={account} />}</PurchaseAccess>
     </main>

@@ -115,6 +115,25 @@ export function roleLinks(role) {
   return (ROLE_LINKS[role] ?? []).filter(([to]) => canAccess(role, to));
 }
 
+/**
+ * The entries of the header's account menu (SCRUM-164), before "Sign out": [path, label]. A customer gets My orders,
+ * Wishlist and Profile, the role's own page (accountPath). Staff keep the entries the menu had before: their panel
+ * and their shortcuts. A page the role may not open is never offered, and an unknown role gets none.
+ */
+export function accountMenuLinks(role) {
+  const account = accountPath(role);
+  const links = role === "Customer"
+    ? [["/orders", "My orders"], ["/wishlist", "Wishlist"], [account, "Profile"]]
+    : accountLabel(role) ? [[account, accountLabel(role)], ...roleLinks(role).map(([to, label]) => [to, label])] : [];
+  const seen = new Set();
+  return links.filter(([to]) => canAccess(role, to) && !seen.has(to) && seen.add(to));
+}
+
+/** The wishlist is a customer page; guests see its link too and are asked to log in there. */
+export function canUseWishlist(role) {
+  return canUseCart(role);
+}
+
 /** Guests and customers have a cart; the cart API answers 403 to staff. role is null for a guest. */
 export function canUseCart(role) {
   return role === null || role === undefined || role === "Customer";

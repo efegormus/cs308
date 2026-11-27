@@ -177,7 +177,7 @@ export default function ProfilePage() {
   const returnUrl = safeReturnUrl(searchParams.get("returnUrl"));
   return (
     <div className="route-page auth-page profile-page">
-      <title>My profile | Online Store</title>
+      <title>My profile | Siesta</title>
       <main id="main-content">
         <PurchaseAccess role="Customer">
           {account => <ProfileEditor key={account.id} account={account} returnUrl={returnUrl} />}
