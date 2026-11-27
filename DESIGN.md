@@ -1036,8 +1036,8 @@ header, footer and `/products` product card on them. SCRUM-134 moved the remaini
 register, profile, cart, checkout, order confirmation, orders, deliveries, product page, wishlist,
 dashboard, support and the `/products` page itself) to the tokens and shared parts, added `Modal`,
 `Toast`, the secondary and unavailable `Button` and the form `Card`, and added
-`scripts/verify_responsive_browser.py`. What is still open is the home page (SCRUM-126), the reviews
-section on the product page and the items DESIGN.md marks [Belirsiz]; the rows below say which.
+`scripts/verify_responsive_browser.py`. What is still open is the home page (SCRUM-126) and the items
+DESIGN.md marks [Belirsiz]; the rows below say which.
 
 ### Colors
 
@@ -1103,12 +1103,12 @@ section on the product page and the items DESIGN.md marks [Belirsiz]; the rows b
 | Purchase card | `--surface`, `--line` | Matches: `--surface`, 1px `--line`, `--shadow`, 10px corners | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | Matches: the checkout fields are `Input`, as is the header search | `components/ui/Input.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Matches: errors use the shared error state; the unused `.purchase-message` rules are gone | `request-states.css` |
-| Product page | Framed card, gallery and details side by side, `Button`s, 44px links | Matches: layout restored on tokens (one column up to 768px), `Input`, `Button` (unavailable for Out of stock), secondary wishlist button (SCRUM-134). Not yet: the reviews section (SCRUM-137) uses token colors but rem spacing, type fallbacks such as `var(--type-heading-md, …)`, its own 0.3rem select and textarea instead of `Input`, and a 0.85rem status pill | `pages/ProductPage.jsx`, `components/ProductDetail.jsx`, `AddToCart.jsx`, `WishlistButton.jsx`, `styles/product-detail.css`, `add-to-cart.css`; `reviews.css` |
+| Product page | Framed card, gallery and details side by side, `Button`s, 44px links | Matches: layout restored on tokens (one column up to 768px), `Input`, `Button` (unavailable for Out of stock), secondary wishlist button; the reviews section uses the tokens, `Input` (select and multiline) and `Button` (SCRUM-134) | `pages/ProductPage.jsx`, `components/ProductDetail.jsx`, `AddToCart.jsx`, `WishlistButton.jsx`, `ProductReviews.jsx`, `styles/product-detail.css`, `add-to-cart.css`, `reviews.css` |
 | Wishlist | Product-card frame, `Button` | Matches: `Card`, secondary Remove `Button`, 44px title links (SCRUM-134); the look is still [Belirsiz] | `pages/WishlistPage.jsx`, `styles/wishlist.css` |
 | Dashboard and support | Tokens, type scale, 44px links | Matches (SCRUM-134); the order status pill keeps the interim look | `pages/DashboardPage.jsx`, `pages/RoleHomePages.jsx`, `styles/role-home.css` |
 | Error box "Try again" | Secondary button | Matches: `ui-button ui-button--secondary` (SCRUM-134) | `components/RequestStates.js`, `styles/request-states.css` |
 | Order status badge | [Belirsiz] (see Order status badges) | Interim pill on tokens: `--field-line` edge, `--ok` for delivered, `--danger` for cancelled, `label` / `caption` type; not a design decision | `orders.css`, `role-home.css` |
-| Rating stars and reviews | [Belirsiz] (see Rating stars and reviews) | Stars are `--accent` text characters; see the product page row for the reviews section | `components/ProductReviews.jsx`, `reviews.css` |
+| Rating stars and reviews | [Belirsiz] (see Rating stars and reviews) | Stars are `--accent` text characters (the look is undecided); the reviews section is on the tokens: spacing, corners, `heading-md` / `heading-sm` titles, a `badge`-type status pill, `Input` fields and `Button` actions (SCRUM-134) | `components/ProductReviews.jsx`, `reviews.css` |
 
 ### Layout and responsive
 
