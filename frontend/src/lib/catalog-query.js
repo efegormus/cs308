@@ -36,3 +36,10 @@ export function sortDescription(sort, order) {
   // The API ignores `order` when no sort is chosen: the list is always by name, A to Z.
   return "Sorted by name, A to Z.";
 }
+
+// Category links request the selected inventory, independent of the current global page.
+export function categoryProductsPath(categoryId, search = "") {
+  if (!Number.isSafeInteger(categoryId) || categoryId <= 0) throw new RangeError("Invalid category ID");
+  const query = updateCatalogSearchParams(new URLSearchParams(search), "categoryId", String(categoryId));
+  return `/products?${query}`;
+}

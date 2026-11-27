@@ -56,3 +56,26 @@ test("the sort sentence names the field and the direction, with the API defaults
   assert.equal(sortDescription("popularity", "desc"), "Sorted by popularity (units sold), best sellers first.");
   assert.equal(sortDescription("popularity", "asc"), "Sorted by popularity (units sold), least sold first.");
 });
+
+
+test("category links reset global pagination and preserve all filters", async () => {
+  const { categoryProductsPath } = await import("./catalog-query.js");
+  const path = categoryProductsPath(99, "page=3&categoryId=1&search=tablet&sort=price&order=desc&minPrice=10&brandId=4");
+  const query = new URL(path, "https://store.example").searchParams;
+  assert.equal(query.get("categoryId"), "99");assert.equal(query.has("page"), false);
+  for (const [key,value] of Object.entries({search:"tablet",sort:"price",order:"desc",minPrice:"10",brandId:"4"})) assert.equal(query.get(key),value);
+});
+test("category link does not mutate saved search parameters", async () => {
+  const { categoryProductsPath } = await import("./catalog-query.js");
+  const source = new URLSearchParams("page=3&categoryId=1");categoryProductsPath(2, source);
+  assert.equal(source.toString(), "page=3&categoryId=1");
+});
+test("direct category link survives serialization and uses no hash anchor", async () => {
+  const { categoryProductsPath } = await import("./catalog-query.js");
+  const path = categoryProductsPath(99);assert.equal(path,"/products?categoryId=99");
+  assert.equal(new URL(path,"https://store.example").hash,"");
+});
+test("unsafe or invalid category identifiers are rejected", async () => {
+  const { categoryProductsPath } = await import("./catalog-query.js");
+  for(const id of [0,-1,1.5,Number.MAX_SAFE_INTEGER+1,"99",null]) assert.throws(()=>categoryProductsPath(id),RangeError);
+});
