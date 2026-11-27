@@ -19,7 +19,7 @@ import uuid
 
 from playwright.sync_api import expect, sync_playwright
 
-PM_MENU = ["Overview", "Deliveries", "Reviews", "Low stock", "Catalog"]
+PM_MENU = ["Overview", "Deliveries", "Reviews", "Low stock", "Stock", "Catalog"]
 SM_MENU = ["Overview", "Invoices", "Pricing", "Discounts"]
 # Controlled moderation UI cases (SCRUM-141) use a small route-mocked queue, 3 to a page.
 # verify_purchasing_browser.py separately exercises real customer submissions and decisions against MySQL.

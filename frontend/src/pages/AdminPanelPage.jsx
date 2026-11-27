@@ -10,6 +10,7 @@ import CatalogManagement from "../components/admin/CatalogManagement.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
 import ReviewApprovalRow from "../components/admin/ReviewApprovalRow.jsx";
 import SalesPricing from "../components/admin/SalesPricing.jsx";
+import StockManagement from "../components/admin/StockManagement.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState } from "../components/RequestStates.js";
 import Button from "../components/ui/Button.jsx";
@@ -311,6 +312,7 @@ function ProductManagerPanel({ account, section }) {
     {section.id === "deliveries" ? <DeliveriesSection />
       : section.id === "reviews" ? <ReviewsSection dashboard={dashboard} />
       : section.id === "low-stock" ? <LowStockSection dashboard={dashboard} />
+      : section.id === "stock" ? <StockManagement />
       : section.id === "catalog" ? <CatalogManagement />
       : <ProductOverview dashboard={dashboard} />}
   </AdminShell>;

@@ -74,6 +74,16 @@ export function editProduct(productId, body, token, { signal } = {}) {
     data => isManagedProduct(data) && data.id === productId && data.isActive === body.isActive);
 }
 
+/**
+ * Sets the stock count (SCRUM-78). The server changes it only while it is still `expectedQuantity`, the count the
+ * manager saw, so a sale in between answers 409 instead of being overwritten.
+ */
+export function setStock(productId, { quantity, expectedQuantity }, token, { signal } = {}) {
+  if (!id(productId) || !Number.isSafeInteger(quantity) || quantity < 0 || !Number.isSafeInteger(expectedQuantity) || expectedQuantity < 0) throw { status: 400 };
+  return request(`${ROOT}/products/${productId}/stock`, { method: "PUT", body: { quantity, expectedQuantity }, token, signal },
+    data => isManagedProduct(data) && data.id === productId && data.stockQuantity === quantity);
+}
+
 /** Takes the product off sale (the row stays, so past orders keep their product). */
 export function removeProduct(productId, token, { signal } = {}) {
   if (!id(productId)) throw { status: 400 };
