@@ -2,8 +2,8 @@
 
 The product manager creates, edits and removes products and categories. Course Project requirement 3 lists the fields a
 product has; this API and the Catalog screen (`/manage/catalog`) keep them. Prices stay a sales manager decision after
-creation (`PUT /api/sales/products/{id}/price`, docs/sales-pricing-api.md), and stock counts after creation belong to
-SCRUM-78. Everything is under `/api/product-management`.
+creation (`PUT /api/sales/products/{id}/price`, docs/sales-pricing-api.md). Stock counts after creation are changed with
+the stock route below (SCRUM-78, screen `/manage/stock`). Everything is under `/api/product-management`.
 
 ## Access and safety
 
@@ -48,10 +48,27 @@ non-blank. The category must exist and the brand must exist and be active (400).
 A distributor is found by name, so all products of one distributor share one row. Saving a product with that name sets
 the distributor's contact text to the latest one entered.
 
+## Stock (SCRUM-78)
+
+* `PUT /products/{id}/stock` with `{quantity, expectedQuantity}` returns 200 and the product (as in the list). `quantity`
+  is the new count, a whole number from 0 to 1,000,000: **the stock cannot go below zero** (400). `expectedQuantity` is the
+  count the manager saw on screen (required, 0 or more). CSRF and the ProductManager role are needed like for every change.
+  Unknown fields are 400. Unknown product: 404. A product that is off sale can be changed too.
+* The change is made only while the stock is still `expectedQuantity`, in one UPDATE. When a sale, a cancellation or
+  another manager changed it in between, the answer is **409** and nothing is written. The client reads the product again and
+  shows the new count. This keeps a customer's purchase from being overwritten by a stale screen.
+* Sending the same change again (the answer was lost) is safe: when the stock already equals `quantity`, the answer is 200
+  and nothing changes.
+* Shoppers see the new count at once, because the product pages read the stock from the database on every request. At 0 the
+  product is shown as out of stock and the cart API refuses it (409).
+* Not in this version: a history of who changed the stock and when (see `docs/db-redesign/schema-future.sql`, StockMovements)
+  and bulk changes.
+
 ## Races
 
 Two requests that save the same SKU or the same category name at once: the unique key in the database decides. One gets
-201 and the other 409. A conflict is never retried by the client.
+201 and the other 409. Two stock changes with the same `expectedQuantity` at once: one gets 200, the other 409. A conflict
+is never retried by the client.
 
 ## Tests
 
