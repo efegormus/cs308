@@ -14,7 +14,8 @@
 
 /* Frame: 240px menu on the left, content on the right. */
 .admin-page .admin-shell { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: var(--space-xl); align-items: start; }
-.admin-page .admin-nav { position: sticky; top: var(--space-md); }
+/* Under the sticky site header (SCRUM-164). */
+.admin-page .admin-nav { position: sticky; top: calc(var(--header-height) + var(--space-md)); }
 .admin-page .admin-nav-toggle { display: none; }
 .admin-page .admin-nav-list {
   margin: 0; padding: var(--space-xs) 0; list-style: none;
