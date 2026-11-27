@@ -1,8 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  CatalogError, ORDER_OPTIONS, SORT_OPTIONS, fetchBrands, fetchCatalog, fetchCatalogPage, fetchCategories,
-  fetchProduct, fetchProductPage, fetchProducts, productsPath
+  CatalogError, MAX_PAGE_SIZE, ORDER_OPTIONS, SORT_OPTIONS, fetchBrands, fetchCatalog, fetchCatalogPage, fetchCategories,
+  fetchMatchingProducts, fetchPopularityOrder, fetchProduct, fetchProductPage, fetchProducts, productsPath
 } from "./catalog-api.js";
 
 const phones = { id: 1, name: "Phones" };
@@ -225,4 +225,49 @@ test("fetchProduct throws for other failures and invalid products", async () => 
   await assert.rejects(fetchProduct(10), error => error.message === "Invalid product response.");
   mockFetch({ "/api/products/10": new Response("nope", { status: 200 }) });
   await assert.rejects(fetchProduct(10), error => error.message === "Invalid product response.");
+});
+
+// --- SCRUM-165: every matching product for the category sections ---
+
+const pageOf = (items, totalCount, page, totalPages = Math.ceil(totalCount / MAX_PAGE_SIZE)) =>
+  ({ items, totalCount, page, pageSize: MAX_PAGE_SIZE, totalPages });
+
+test("fetchMatchingProducts asks for pages of 100 with the filters and no category", async () => {
+  const calls = mockFetch({ "/api/products?brandId=4&search=pixel&page=1&pageSize=100": pageOf([pixel, soldOut], 2, 1) });
+  const result = await fetchMatchingProducts({ brandId: 4, search: " pixel " });
+  assert.deepEqual(result, { items: [pixel, soldOut], totalCount: 2 });
+  assert.equal(calls.length, 1);
+  assert.equal(MAX_PAGE_SIZE, 100);
+});
+
+test("fetchMatchingProducts follows every page and fails when the catalog changes in between", async () => {
+  const many = Array.from({ length: 101 }, (_, index) => ({ ...pixel, id: index + 1, name: `P${index}` }));
+  mockFetch({
+    "/api/products?page=1&pageSize=100": pageOf(many.slice(0, 100), 101, 1),
+    "/api/products?page=2&pageSize=100": pageOf(many.slice(100), 101, 2)
+  });
+  assert.equal((await fetchMatchingProducts()).items.length, 101);
+
+  mockFetch({
+    "/api/products?page=1&pageSize=100": pageOf(many.slice(0, 100), 101, 1),
+    "/api/products?page=2&pageSize=100": pageOf([many[99]], 101, 2)
+  });
+  await assert.rejects(fetchMatchingProducts(), CatalogError);
+
+  mockFetch({
+    "/api/products?page=1&pageSize=100": pageOf(many.slice(0, 100), 101, 1),
+    "/api/products?page=2&pageSize=100": pageOf([], 100, 1, 1)
+  });
+  await assert.rejects(fetchMatchingProducts(), CatalogError);
+});
+
+test("fetchMatchingProducts returns an empty list for no match", async () => {
+  mockFetch({ "/api/products?search=zzz&page=1&pageSize=100": pageOf([], 0, 1, 0) });
+  assert.deepEqual(await fetchMatchingProducts({ search: "zzz" }), { items: [], totalCount: 0 });
+});
+
+test("fetchPopularityOrder asks the API for the popularity order of the same filters", async () => {
+  const calls = mockFetch({ "/api/products?minPrice=10&sort=popularity&page=1&pageSize=100": pageOf([soldOut, pixel], 2, 1) });
+  assert.deepEqual(await fetchPopularityOrder({ minPrice: 10, sort: "price", order: "desc" }), [11, 10]);
+  assert.equal(calls.length, 1);
 });

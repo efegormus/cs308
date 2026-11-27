@@ -116,6 +116,48 @@ export async function fetchProductPage({ signal, ...filters } = {}) {
   return data;
 }
 
+/** The largest page GET /api/products serves (ProductEndpoints.MaxPageSize). */
+export const MAX_PAGE_SIZE = 100;
+// A guard against a server that never stops paging: 50 pages of 100 is far beyond today's catalog (55 products).
+const MAX_PAGES = 50;
+
+/**
+ * Every product that matches the filters, in the API's order, for the category sections of /products (SCRUM-165).
+ * It asks for pages of MAX_PAGE_SIZE (one request for today's catalog) and follows totalPages. When the catalog changes
+ * between two pages (a total that moves, or a product seen twice) it fails, so the page shows "Try again" instead of a
+ * list with a gap. Returns { items, totalCount }.
+ */
+export async function fetchMatchingProducts({ signal, ...filters } = {}) {
+  const items = [];
+  const seen = new Set();
+  let first = null;
+  for (let page = 1; page <= MAX_PAGES; page += 1) {
+    const data = await fetchProductPage({ ...filters, page, pageSize: MAX_PAGE_SIZE, signal });
+    first ??= data;
+    if (data.totalCount !== first.totalCount) throw new CatalogError("The catalog changed while it was loading.");
+    for (const product of data.items) {
+      if (seen.has(product.id)) throw new CatalogError("The catalog changed while it was loading.");
+      seen.add(product.id);
+      items.push(product);
+    }
+    if (page >= data.totalPages) {
+      if (items.length !== first.totalCount) throw new CatalogError("The catalog changed while it was loading.");
+      return { items, totalCount: first.totalCount };
+    }
+  }
+  throw new CatalogError("The catalog is too large to load at once.");
+}
+
+/**
+ * The popularity order (GET /api/products?sort=popularity: units sold, highest first, then name) of the products that
+ * match the same filters, as product ids. The page asks for it once, when a section first picks "Popularity".
+ */
+export async function fetchPopularityOrder({ signal, ...filters } = {}) {
+  const { sort: _sort, order: _order, ...rest } = filters;
+  const { items } = await fetchMatchingProducts({ ...rest, sort: "popularity", signal });
+  return items.map(product => product.id);
+}
+
 export async function fetchBrands({ signal } = {}) {
   const brands = await fetchList("/api/brands", signal);
   if (!brands.every(brand => Number.isInteger(brand?.id) && typeof brand.name === "string"))
