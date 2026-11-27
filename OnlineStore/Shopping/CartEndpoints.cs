@@ -57,7 +57,7 @@ public static class CartEndpoints
             if (errors.Count != 0) return Results.ValidationProblem(errors);
 
             var product = await db.Products.AsNoTracking()
-                .FirstOrDefaultAsync(p => p.Id == input.ProductId && p.IsActive, cancellationToken);
+                .FirstOrDefaultAsync(p => p.Id == input.ProductId && p.IsActive && p.Price > 0, cancellationToken);
             if (product is null)
                 return Results.Problem(statusCode: StatusCodes.Status404NotFound,
                     title: "Product not found.", detail: "No active product has this id.");
@@ -133,7 +133,7 @@ public static class CartEndpoints
                 return Results.Problem(statusCode: StatusCodes.Status404NotFound,
                     title: "This product is not in the cart.");
 
-            if (!line.Product.IsActive)
+            if (!line.Product.IsActive || line.Product.Price <= 0)
                 return Results.Problem(statusCode: StatusCodes.Status409Conflict,
                     title: "This product is no longer available.", detail: "Remove it from the cart.");
             if (input.Quantity > line.Product.StockQuantity)
@@ -359,7 +359,7 @@ public static class CartEndpoints
     // Tells the customer about a line the cart cannot sell as it is. The checkout checks the stock again.
     private static CartMergeConflictDto? CheckLine(Product product, int quantity)
     {
-        if (!product.IsActive)
+        if (!product.IsActive || product.Price <= 0)
             return new CartMergeConflictDto(product.Id, product.Name, "Unavailable", quantity, product.StockQuantity);
         return quantity > product.StockQuantity
             ? new CartMergeConflictDto(product.Id, product.Name, "NotEnoughStock", quantity, product.StockQuantity)

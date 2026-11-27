@@ -25,10 +25,13 @@ public static class ProductPricing
     // cents rounding in both .NET and MySQL; no provider-specific ROUND midpoint behavior.
     public static decimal Calculate(decimal listPrice, decimal rate) => Math.Floor(listPrice * (1 - rate) * 100m + .5m) / 100m;
 
-    public static IQueryable<PricedProduct> Query(StoreDbContext db, DateTime now)
+    // SCRUM-83: a product the sales manager has not priced yet (Price 0) is hidden from every shopping read.
+    // Only the sales manager's own screen asks for includeUnpriced, so it can find the products that need a price.
+    public static IQueryable<PricedProduct> Query(StoreDbContext db, DateTime now, bool includeUnpriced = false)
     {
         var active = ActiveLinks(db, now);
         return from product in db.Products.AsNoTracking()
+               where includeUnpriced || product.Price > 0
                let rate = active.Where(link => link.ProductId == product.Id).Select(link => (decimal?)link.Discount.Rate).Max() ?? 0m
                select new PricedProduct { Product = product, Price = Math.Floor(product.Price * (1 - rate) * 100m + .5m) / 100m,
                    ListPrice = product.Price, DiscountRate = rate };
