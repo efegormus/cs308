@@ -138,7 +138,8 @@ the color tokens above. `products.css` uses them too, except the plain button bo
 
 The product card uses the scale: name 20px 600 Poppins, spec row 14px Open Sans, price
 24px 500 Poppins, stock 12px 600 Open Sans. The rest of the catalog and the purchase pages
-still use Arial: product page price 1.2rem bold, product count 0.9rem.
+still use Arial: product count 0.9rem. The product page, wishlist, dashboard and support page use the scale since
+SCRUM-134.
 
 ### Spacing
 
@@ -169,7 +170,7 @@ still use Arial: product page price 1.2rem bold, product count 0.9rem.
 | Login input | The shared `Input`: height 44px, radius 6px, 1px `--field-line` border, 16px text |
 | Purchase input | The shared `Input` (44px, radius 6px, 1px `--field-line` border, 16px text) |
 | Home sort dropdown | Height 40px, min-width 190px, radius 8px, 1px `--field-line` border, 14px text |
-| Focus ring | 3px outline, `--focus`. Offset 2px on login and purchase inputs and on `Button`, 3px on home and request states, 4px on catalog links and plain buttons |
+| Focus ring | 3px outline, `--focus`. Offset 2px on login and purchase inputs and on `Button`, 3px on home, 4px on catalog links and plain buttons |
 
 ### Shared UI components
 
@@ -179,9 +180,9 @@ file next to it, and its classes start with `ui-`. The header search uses `Butto
 
 | Component | Rule |
 | --- | --- |
-| `Button` | Primary button: at least 44px high, 4px corners, `--accent`, Poppins 16px 500, not uppercase. Light hover and pressed fill `--accent-hover`; in the dark theme the fill stays `--accent` and a 4px `--ring-glow` ring shows. Focus 3px `--focus`, offset 2px. Disabled opacity 0.7. `variant="secondary"`: `--surface` fill, `--link` text, 1px `--field-line` edge drawn inside, padding 0 16px; hover `--bg` and a `--link` edge. A link uses the same classes |
+| `Button` | Primary button: at least 44px high, 4px corners, `--accent`, Poppins 16px 500, not uppercase. Light hover and pressed fill `--accent-hover`; in the dark theme the fill stays `--accent` and a 4px `--ring-glow` ring shows. Focus 3px `--focus`, offset 2px. Disabled opacity 0.7. `variant="secondary"`: `--surface` fill, `--link` text, 1px `--field-line` edge drawn inside, padding 0 16px; hover `--bg` and a `--link` edge. A link uses the same classes. `unavailable` (such as "Out of stock") disables it and draws `--line` with `--muted` text at full opacity; a busy button keeps opacity 0.7 |
 | `Input` | Label, input and optional field error. 44px, 6px corners, 1px `--field-line`, 16px Open Sans, padding 0 12px, focus 3px `--focus` offset 2px. With `error`: `aria-invalid`, `aria-describedby`, 2px `--danger` border, 13px 600 message. `hideLabel` keeps the label for screen readers only. `multiline` renders a textarea (at least 88px, padding 10px 12px, vertical resize); `hint` adds a `body-sm` `--muted` note (id `<id>-note`) the field points to; `errorRole` sets the message's role; read-only inputs get `--bg` and `--muted`. Login, register and profile use it |
-| `Card` | DESIGN.md's `card-product`: `--surface`, 16px corners, padding 20px, `--shadow-product`, flex column. `as` picks the element. `variant="form"` is the form card: 1px `--line`, `--shadow`, 10px corners, padding 36px 32px (28px 20px up to 480px); login, register and the profile cards use it |
+| `Card` | DESIGN.md's `card-product`: `--surface`, 16px corners, padding 20px, `--shadow-product`, flex column. `as` picks the element. `variant="form"` is the form card: 1px `--line`, `--shadow`, 10px corners, padding 36px 32px (28px 20px up to 480px); login, register and the profile cards use it. The wishlist items use the default (product) card |
 | `Badge` | Discount badge: `--sale-bg`, `--sale-fg`, 3px corners, padding 4px 8px, Open Sans 14px 600 |
 | `Table` | Data table (SCRUM-124). Plain `createElement` like `RequestStates.js`, so Node tests render it; the page imports `ui/Table.css`. Columns `{ key, header, render?, rowHeader?, align? }`; `th scope="col"`, `th scope="row"` for a `rowHeader` column. `loading`: skeleton rows (1.2s shimmer) in a `role="status"` box named by `loadingLabel`. No rows: `emptyText` in a `role="status"` box. Wide tables scroll inside a focusable, named region; the page never scrolls sideways |
 | `Modal` | SCRUM-134. `<Modal open onClose title footer>`: a `<dialog>` opened with `showModal()`, `aria-modal`, named by its title. The parent owns `open`; Escape, the 44px close button and a click on the `--backdrop` veil call `onClose`. Focus starts on the first field or action, Tab stays inside (`modal-focus.js`, tested in Node) and returns to the opener. Form card look (`--surface`, 1px `--line`, 10px, `--shadow-menu`), up to 480px wide. Panel rises 8px in 200ms; none with reduced motion. No page uses it yet |
@@ -227,7 +228,7 @@ DESIGN.md's Product card section holds the full rules.
 | State | Rule |
 | --- | --- |
 | Loading | `LoadingState`: `role="status"`, a short label such as "Loading your cart…". The product list has its own status line, "Loading products…" |
-| Error | `ErrorState`: `role="alert"`, a safe message from `normalizeRequestError`, and a "Try again" button when the page passes `onRetry`. It uses `--danger`, `--danger-bg` and `--danger-fg` |
+| Error | `ErrorState`: `role="alert"`, a safe message from `normalizeRequestError`, and a "Try again" button (the shared secondary `Button` classes) when the page passes `onRetry`. It uses `--danger`, `--danger-bg` and `--danger-fg` |
 | Empty | Plain text. "Your cart is empty." with a link to the products, "No deliveries yet.", "No products available in this category yet." on the product list, "No products in this category yet." on a home row, "No products available yet. Please check back soon." when the catalog has nothing |
 
 ## Admin panel
