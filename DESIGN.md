@@ -1012,7 +1012,7 @@ Mistakes in it, corrected here:
     16 / 14 / 12.
 11. **Badge weight.** "Bold" is written as 600, the heaviest loaded weight. 700 would need another
     font weight in `index.html`.
-12. **Body line height.** 1.5 [Proje]; the login lead uses 1.55, the catalog 1.6, HP 1.38.
+12. **Body line height.** 1.5 [Proje]; the login lead and the catalog text use it since SCRUM-134 (they had 1.55 and 1.6). HP's 1.38 is not used. The number stays so the numbers below do not change.
 13. **Breakpoints in the code.** The cart switches at 576px (36rem); keep it or move it to 480. The
     product detail moved from 700px to 768px in SCRUM-134.
 14. **Touch targets under 44px.** The home sort select (40px). The cart quantity and Remove buttons
@@ -1050,7 +1050,7 @@ the dark theme too.
 | `--fg` | `#222222` | `#222222` | `design-system.css`, `products.css` |
 | `--muted` | `#505966` | `#505966` | `design-system.css`, `products.css`, `purchases.css`, `cart.css`, `orders.css` |
 | `--line` | `#dce0e6` | `#dce0e6` | `design-system.css`, `products.css`, `purchases.css`, `cart.css`, `orders.css` |
-| `--field-line` | `#6b7280` | `#6b7280`; hard-coded `#b9c4d2` (catalog plain buttons) | `design-system.css`, `components/ui/Button.css`; `products.css` |
+| `--field-line` | `#6b7280` | `#6b7280` | `design-system.css`, `components/ui/Button.css`, `products.css` |
 | `--link` | `#174a8b` | `#174a8b` | `design-system.css`, `products.css` |
 | `--focus` | `#b66d00` | `#b66d00` | `design-system.css`, `products.css` |
 | `--danger` | `#a32b12` | `#a32b12` | `design-system.css`, `products.css`, `orders.css` |
@@ -1072,13 +1072,13 @@ the dark theme too.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Catalog and purchase font | Poppins / Open Sans | Matches on every page but the `/products` list, which still uses Arial (SCRUM-134) | `cart.css`, `purchases.css`, `product-detail.css`, `wishlist.css`; `products.css` |
-| Page title | 32px 600, line height 1.2 | Login, register and profile match (SCRUM-134); home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
+| Catalog and purchase font | Poppins / Open Sans | Matches on every page: the `.catalog-page` base is `body-md` with Poppins headings (SCRUM-134) | `products.css`, `cart.css`, `purchases.css`, `product-detail.css`, `wishlist.css` |
+| Page title | 32px 600, line height 1.2 | Login, register, profile and the catalog pages match (SCRUM-134); home `clamp(24px, 3vw, 30px)` | `auth.css`, `products.css`, `home.css` |
 | Product card title | 20px 600 Poppins | Matches | `products.css` |
 | Price | 24px 500 Poppins | Matches: product card, product page, wishlist and purchase total | `products.css`, `product-detail.css`, `wishlist.css`, `purchases.css` |
 | Order card title | 20px | Matches (`heading-sm`) | `orders.css` |
 | Stock line | 12px 600 | Matches: product card and product page (with the count) | `products.css`, `product-detail.css` |
-| Button label | Poppins 16px 500 | `Button` matches on every page; the `/products` plain buttons (Clear filters, pagination) inherit Arial | `components/ui/Button.css`; `products.css` |
+| Button label | Poppins 16px 500 | Matches: every button on a page is the shared `Button`; no plain-button rule is left | `components/ui/Button.css` |
 
 ### Components
 
@@ -1087,7 +1087,7 @@ the dark theme too.
 | Primary button height | 44px | Matches: `Button` 44px on every page | `components/ui/Button.css` |
 | Primary button corners | 4px | Matches: `Button` 4px on every page | `components/ui/Button.css` |
 | Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login, register and profile add their ring glow and spotlight on top | `components/ui/Button.css`; `auth.css` |
-| Secondary button | 44px, 4px corners | `Button` `variant="secondary"` matches (cart, checkout, deliveries); catalog plain buttons: padding 0.75rem 1rem, 0.4rem corners | `components/ui/Button.css`; `products.css` |
+| Secondary button | 44px, 4px corners | Matches: `Button` `variant="secondary"` (cart, checkout, deliveries, product page, wishlist, /products, the error box); the `/products` category links use the same values | `components/ui/Button.css`, `products.css` |
 | Header | White, at least 64px, 1px `--line` bottom, two rows | Matches | `site-header.css`, `Header.jsx` |
 | Header content | Logo, API categories with mega menu, search, account, cart count | Matches | `Header.jsx`, `CategoryMenu.jsx` |
 | Active nav link | 2px `--accent` underline | Matches | `site-header.css` |
@@ -1112,7 +1112,7 @@ the dark theme too.
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Breakpoints | 480 / 768 / 1024 / 1280 | 480 (auth, catalog, purchase), 480 / 768 / 1024 (product grid), 576 (cart), 768 (product detail), 733 (home status) | `auth.css`, `products.css`, `purchases.css`, `cart.css`, `product-detail.css`, `home.css` |
-| Touch targets | 44px | Header, footer, card, cart and purchase-page buttons 44px; order review links and the order and invoice PDF links, the product page's back, category and wishlist login links and quantity field, the wishlist title links and the dashboard section and order links 44px (SCRUM-134). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px; `/products` filter inputs 41px and selects 42px, card title links 28px | `home.css`, `products.css` |
+| Touch targets | 44px | Matches everywhere but the home page: header, footer, card, cart and purchase-page buttons; order review links and the order and invoice PDF links; the product page's back, category and wishlist login links and quantity field; the wishlist title links; the dashboard section and order links; and the `/products` filter fields, category links, buttons and card title links are 44px (SCRUM-134). Under 44px (`verify_responsive_browser.py`): home sort select 40px and coverflow panel link 21px (home page, SCRUM-126) | `home.css` |
 | No sideways scroll | None at 375, 768, 1024 and 1280px | Matches on every route (`verify_responsive_browser.py`, 92 checks) | `scripts/verify_responsive_browser.py` |
 | Max widths | Kept | 1280 / 1200 / 920 / 420px | `auth.css`, `home.css`, `products.css`, `purchases.css` |
 | Product card shadow | `0 2px 8px rgba(26, 26, 26, 0.08)` | Matches, through `Card` | `design-system.css`, `components/ui/Card.css` |

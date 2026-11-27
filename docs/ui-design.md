@@ -137,9 +137,9 @@ the color tokens above. `products.css` uses them too, except the plain button bo
 | Coverflow stock | Open Sans | 12px | 600 |
 
 The product card uses the scale: name 20px 600 Poppins, spec row 14px Open Sans, price
-24px 500 Poppins, stock 12px 600 Open Sans. The rest of the catalog and the purchase pages
-still use Arial: product count 0.9rem. The product page, wishlist, dashboard and support page use the scale since
-SCRUM-134.
+24px 500 Poppins, stock 12px 600 Open Sans. The rest of the catalog, the purchase pages, the product page, wishlist,
+dashboard and support page use the scale too (`body-md` text, `heading-lg` titles, `heading-md` section titles,
+`body-sm` product count) since SCRUM-134.
 
 ### Spacing
 
@@ -159,7 +159,7 @@ SCRUM-134.
 | Pattern | Rule |
 | --- | --- |
 | Primary button (login, register, profile) | The shared `Button` (44px, radius 4px, `--accent`, Poppins 16px 500, light hover `--accent-hover`), full width, plus the spotlight, ring glow, spinner and success fill from `auth.css` |
-| Plain button (catalog) | Padding 0.75rem 1rem, radius 0.4rem, `--surface` background, 1px `#b9c4d2` border, text `--link`. Not applied to `Button` |
+| Category links (catalog) | The secondary `Button`'s values: 44px, radius 4px, `--surface` background, 1px `--field-line` edge drawn inside, text `--link`, Poppins 16px 500. Every button on a page is the shared `Button`; the old plain-button rule is gone (SCRUM-134) |
 | Checkout button (cart) | A link with the shared `Button` classes (`ui-button`): 44px, radius 4px, `--accent`, Poppins 16px 500 |
 | Coverflow arrow | 44px circle, `--surface`, 1px `--line` border, fills with `--accent` on hover |
 | Login card | `Card` with `variant="form"`: max-width 420px, radius 10px, 1px `--line` border, `--shadow` |
@@ -170,7 +170,7 @@ SCRUM-134.
 | Login input | The shared `Input`: height 44px, radius 6px, 1px `--field-line` border, 16px text |
 | Purchase input | The shared `Input` (44px, radius 6px, 1px `--field-line` border, 16px text) |
 | Home sort dropdown | Height 40px, min-width 190px, radius 8px, 1px `--field-line` border, 14px text |
-| Focus ring | 3px outline, `--focus`. Offset 2px on login and purchase inputs and on `Button`, 3px on home, 4px on catalog links and plain buttons |
+| Focus ring | 3px outline, `--focus`. Offset 2px on inputs and on `Button`, 3px on home, 4px on catalog links |
 
 ### Shared UI components
 
