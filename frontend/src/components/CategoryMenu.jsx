@@ -2,12 +2,20 @@ import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation, useNavigate } from "react-router";
 import { fetchCategories, fetchProductPage, isValidProduct } from "../lib/catalog-api.js";
+import { categoryProductsPath } from "../lib/catalog-query.js";
 import { activeRootId, buildCategoryTree } from "../lib/category-tree.js";
-import { categoryAnchorId, categoryIdFromHash } from "../lib/category-display.js";
 import { formatPrice, safeImageUrl } from "../lib/product-display.js";
 import { listIndexAfterKey } from "../lib/site-header.js";
 
-const categoryHref = id => `/products#${categoryAnchorId(id)}`;
+// A category link filters /products to that category (SCRUM-165); it no longer scrolls to a section.
+const categoryHref = id => categoryProductsPath(id);
+
+// The category /products is filtered to, or null on any other page.
+function chosenCategory(location) {
+  if (location.pathname !== "/products") return null;
+  const id = Number(new URLSearchParams(location.search).get("categoryId"));
+  return Number.isSafeInteger(id) && id > 0 ? id : null;
+}
 // Hovering an item makes it active after this long, so a pointer passing over the list does not flicker.
 const HOVER_DELAY = 150;
 // Moving through the list with the keyboard waits this long before asking for the featured product.
@@ -52,8 +60,8 @@ export default function CategoryMenu({ onCategories }) {
 
   useEffect(() => { onCategories?.(tree.map(item => item.name)); }, [tree, onCategories]);
 
-  const hashCategory = location.pathname === "/products" ? categoryIdFromHash(location.hash) : null;
-  const currentRoot = activeRootId(tree, hashCategory);
+  const currentCategory = chosenCategory(location);
+  const currentRoot = activeRootId(tree, currentCategory);
   const active = tree.find(item => item.id === activeId) ?? null;
 
   function clearHover() {
@@ -236,7 +244,7 @@ export default function CategoryMenu({ onCategories }) {
               })}
             </ul>
             <Link className="category-panel-all" to="/products"
-              aria-current={location.pathname === "/products" && hashCategory === null ? "page" : undefined}>All products</Link>
+              aria-current={location.pathname === "/products" && currentCategory === null ? "page" : undefined}>All products</Link>
           </nav>
 
           {active && (
@@ -246,7 +254,7 @@ export default function CategoryMenu({ onCategories }) {
               <ul key={open ? active.id : "closed"}>
                 {[{ id: active.id, name: `All ${active.name}` }, ...active.children].map((link, index) => (
                   <li key={link.id} style={{ "--i": index }}>
-                    <Link to={categoryHref(link.id)} aria-current={hashCategory === link.id ? "page" : undefined}>{link.name}</Link>
+                    <Link to={categoryHref(link.id)} aria-current={currentCategory === link.id ? "page" : undefined}>{link.name}</Link>
                   </li>
                 ))}
               </ul>
