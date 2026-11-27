@@ -1,32 +1,27 @@
-/* Ratings and comments on the product page (SCRUM-137). Colors and type come from the design-system tokens, so both themes work. */
-.product-reviews { margin-top: 1.5rem; padding-top: 1rem; border-top: 1px solid var(--line); overflow-wrap: anywhere; color: var(--fg); }
-.product-reviews h2 { margin: 0 0 .75rem; font: var(--type-heading-md, 600 1.25rem/1.3 inherit); }
-.review-summary { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 0 0 1rem; }
-.review-stars { color: var(--accent); font-size: 1.25rem; letter-spacing: .1em; line-height: 1; }
-.review-comments { list-style: none; display: grid; gap: .75rem; margin: 0 0 1rem; padding: 0; }
-.review-comment { padding: .875rem 1rem; background: var(--surface); border: 1px solid var(--line); border-radius: .5rem; }
-.review-comment p { margin: .375rem 0 0; }
+/* Ratings and comments on the product page (SCRUM-137). Colors, type, spacing and corners come from the design-system
+   tokens, so both themes work (SCRUM-134). The rating select and the comment textarea are the shared Input, the actions
+   the shared Button; these rules only lay the section out. The look of the stars is still undecided (DESIGN.md). */
+.product-reviews { margin-top: var(--space-xl); padding-top: var(--space-md); border-top: 1px solid var(--line); overflow-wrap: anywhere; color: var(--fg); }
+.product-reviews h2 { margin: 0 0 var(--space-sm); font: var(--type-heading-md); }
+.review-summary { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); margin: 0 0 var(--space-md); }
+.review-stars { color: var(--accent); font-size: 20px; letter-spacing: .1em; line-height: 1; }
+.review-comments { list-style: none; display: grid; gap: var(--space-sm); margin: 0 0 var(--space-md); padding: 0; }
+.review-comment { padding: 14px var(--space-md); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-tile); }
+.review-comment p { margin: var(--space-label-gap) 0 0; }
 .review-date { color: var(--muted); }
 .review-comments p, .own-comment p { white-space: pre-wrap; }
-.own-rating { display: flex; flex-wrap: wrap; align-items: center; gap: .5rem; margin: 1rem 0 .5rem; }
-.own-comment { margin: .5rem 0 1rem; padding: .875rem 1rem; background: var(--surface); border: 1px dashed var(--field-line); border-radius: .5rem; }
-.own-comment p { margin: 0 0 .375rem; }
+.own-rating { display: flex; flex-wrap: wrap; align-items: center; gap: var(--space-xs); margin: var(--space-md) 0 var(--space-xs); }
+.own-comment { margin: var(--space-xs) 0 var(--space-md); padding: 14px var(--space-md); background: var(--surface); border: 1px dashed var(--field-line); border-radius: var(--radius-tile); }
+.own-comment p { margin: 0 0 var(--space-label-gap); }
 .own-comment p:last-child { margin-bottom: 0; }
-.review-status { display: inline-block; padding: .125rem .625rem; border: 1px solid var(--field-line); border-radius: 999px; font-size: .85rem; font-weight: 600; }
-.review-status--approved { border-color: var(--ok); color: var(--ok-fg, var(--fg)); }
-.review-status--rejected { border-color: var(--danger); color: var(--danger-fg, var(--fg)); }
-.review-form { display: grid; gap: .75rem; margin-top: 1rem; padding: clamp(1rem, 3vw, 1.5rem); background: var(--surface); border: 1px solid var(--line); border-radius: .6rem; }
-.review-form h3 { margin: 0; font: var(--type-heading-sm, 600 1.1rem/1.3 inherit); }
-.review-form label { display: grid; gap: .35rem; font-weight: 600; }
-.review-form select, .review-form textarea {
-  width: 100%; box-sizing: border-box; padding: .625rem .75rem; font: inherit; color: var(--fg);
-  background: var(--surface); border: 1px solid var(--field-line); border-radius: .3rem;
-}
-.review-form select { min-height: 2.75rem; }
-.review-form textarea { min-height: 6rem; resize: vertical; }
-.review-form :is(select, textarea):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+/* Status pill: badge type (14px 600), as a pill with a --field-line edge. */
+.review-status { display: inline-block; padding: var(--space-xxs) var(--space-sm); border: 1px solid var(--field-line); border-radius: var(--radius-full); font: var(--type-badge); }
+.review-status--approved { border-color: var(--ok); color: var(--ok-fg); }
+.review-status--rejected { border-color: var(--danger); color: var(--danger-fg); }
+.review-form { display: grid; gap: var(--space-sm); margin-top: var(--space-md); padding: clamp(var(--space-md), 3vw, var(--space-xl)); background: var(--surface); border: 1px solid var(--line); border-radius: var(--radius-card); }
+.review-form h3 { margin: 0; font: var(--type-heading-sm); }
 .review-form p { margin: 0; color: var(--muted); }
-.review-form p[role="alert"] { color: var(--danger-fg, var(--fg)); }
-.review-actions { display: flex; gap: .5rem; flex-wrap: wrap; }
+.review-form p[role="alert"] { color: var(--danger-fg); }
+.review-actions { display: flex; gap: var(--space-xs); flex-wrap: wrap; }
 .review-submit { justify-self: start; }
 @media (max-width: 480px) { .review-submit { width: 100%; justify-self: stretch; } }

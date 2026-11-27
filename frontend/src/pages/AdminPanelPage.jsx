@@ -6,8 +6,10 @@ import { Link, Navigate, useParams } from "react-router";
 import { useAuth } from "../auth/AuthProvider.jsx";
 import { useSessionExpiry } from "../auth/useSessionExpiry.js";
 import AdminShell from "../components/admin/AdminShell.jsx";
+import CatalogManagement from "../components/admin/CatalogManagement.jsx";
 import KpiCard from "../components/admin/KpiCard.jsx";
 import ReviewApprovalRow from "../components/admin/ReviewApprovalRow.jsx";
+import SalesPricing from "../components/admin/SalesPricing.jsx";
 import PurchaseAccess from "../components/PurchaseAccess.jsx";
 import { ErrorState } from "../components/RequestStates.js";
 import Button from "../components/ui/Button.jsx";
@@ -309,6 +311,7 @@ function ProductManagerPanel({ account, section }) {
     {section.id === "deliveries" ? <DeliveriesSection />
       : section.id === "reviews" ? <ReviewsSection dashboard={dashboard} />
       : section.id === "low-stock" ? <LowStockSection dashboard={dashboard} />
+      : section.id === "catalog" ? <CatalogManagement />
       : <ProductOverview dashboard={dashboard} />}
   </AdminShell>;
 }
@@ -319,6 +322,7 @@ function SalesManagerPanel({ account, section }) {
   const dashboard = useResource(load);
   return <AdminShell account={account} section={section}>
     {section.id === "invoices" ? <InvoicesSection dashboard={dashboard} />
+      : section.id === "pricing" ? <SalesPricing />
       : section.id === "discounts" ? <DiscountsSection dashboard={dashboard} />
       : <SalesOverview dashboard={dashboard} />}
   </AdminShell>;
@@ -335,7 +339,7 @@ function Panel({ account }) {
 
 export default function AdminPanelPage() {
   return <div className="route-page admin-page">
-    <title>Management | Online Store</title>
+    <title>Management | Siesta</title>
     <main id="main-content" className="admin-main">
       <PurchaseAccess role={["ProductManager", "SalesManager"]}>{account => <Panel key={account.id} account={account} />}</PurchaseAccess>
     </main>

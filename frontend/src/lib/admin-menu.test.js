@@ -3,15 +3,16 @@ import assert from "node:assert/strict";
 import { adminSections, resolveSection } from "./admin-menu.js";
 import { canAccess } from "./role-routes.js";
 
-test("the product manager's menu is Overview, Deliveries, Reviews and Low stock, in that order", () => {
+test("the product manager's menu is Overview, Deliveries, Reviews, Low stock and Catalog, in that order", () => {
   assert.deepEqual(adminSections("ProductManager").map(item => [item.label, item.path]), [
-    ["Overview", "/manage"], ["Deliveries", "/manage/deliveries"], ["Reviews", "/manage/reviews"], ["Low stock", "/manage/low-stock"]
+    ["Overview", "/manage"], ["Deliveries", "/manage/deliveries"], ["Reviews", "/manage/reviews"], ["Low stock", "/manage/low-stock"],
+    ["Catalog", "/manage/catalog"]
   ]);
 });
 
-test("the sales manager's menu is Overview, Invoices and Discounts, in that order", () => {
+test("the sales manager's menu is Overview, Invoices, Pricing and Discounts, in that order", () => {
   assert.deepEqual(adminSections("SalesManager").map(item => [item.label, item.path]), [
-    ["Overview", "/manage"], ["Invoices", "/manage/invoices"], ["Discounts", "/manage/discounts"]
+    ["Overview", "/manage"], ["Invoices", "/manage/invoices"], ["Pricing", "/manage/pricing"], ["Discounts", "/manage/discounts"]
   ]);
 });
 
@@ -43,4 +44,9 @@ test("a section segment resolves only to the role's own sections", () => {
   assert.equal(resolveSection("SalesManager", "reviews"), null);
   assert.equal(resolveSection("SalesManager", "nope"), null);
   assert.equal(resolveSection("ProductManager", "overview"), null);
+});
+
+test("only the sales manager has the Pricing section", () => {
+  assert.equal(resolveSection("SalesManager", "pricing").id, "pricing");
+  assert.equal(resolveSection("ProductManager", "pricing"), null);
 });

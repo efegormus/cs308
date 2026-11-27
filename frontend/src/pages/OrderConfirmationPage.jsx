@@ -41,7 +41,7 @@ export default function OrderConfirmationPage() {
   const raw = params.get("orderId");
   const id = parseProductId(raw);
   return <div className="route-page catalog-page purchase-page">
-    <title>Order confirmation | Online Store</title>
+    <title>Order confirmation | Siesta</title>
     <main id="main-content" className="purchase-layout">
       <h1 id="order-heading">{id ? `Order #${id}` : "Order confirmation"}</h1>
       <PurchaseAccess role="Customer">{account => id

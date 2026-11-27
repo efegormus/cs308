@@ -15,7 +15,7 @@ const ROLE_LABEL = {
 
 function RoleHome({ title, role }) {
   return <div className="route-page catalog-page purchase-page role-home-page">
-    <title>{`${title} | Online Store`}</title>
+    <title>{`${title} | Siesta`}</title>
     <main id="main-content" className="purchase-layout">
       <PurchaseAccess role={role}>{account => <>
         <header className="role-home-head">

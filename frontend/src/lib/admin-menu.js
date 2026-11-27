@@ -8,11 +8,13 @@ const SECTIONS = {
     OVERVIEW,
     { id: "deliveries", path: "/manage/deliveries", label: "Deliveries" },
     { id: "reviews", path: "/manage/reviews", label: "Reviews" },
-    { id: "low-stock", path: "/manage/low-stock", label: "Low stock" }
+    { id: "low-stock", path: "/manage/low-stock", label: "Low stock" },
+    { id: "catalog", path: "/manage/catalog", label: "Catalog" }
   ],
   SalesManager: [
     OVERVIEW,
     { id: "invoices", path: "/manage/invoices", label: "Invoices" },
+    { id: "pricing", path: "/manage/pricing", label: "Pricing" },
     { id: "discounts", path: "/manage/discounts", label: "Discounts" }
   ]
 };

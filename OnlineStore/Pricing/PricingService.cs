@@ -17,7 +17,7 @@ public sealed class PricingService(StoreDbContext db, TimeProvider clock, Wishli
     {
         await RequireSalesManagerAsync(managerId, ct);
         if (afterId < 0) throw new PurchaseException(400, "Use a non-negative product cursor.");
-        var rows = await ProductPricing.Query(db, Now()).Where(p => p.Product.Id > afterId)
+        var rows = await ProductPricing.Query(db, Now(), includeUnpriced: true).Where(p => p.Product.Id > afterId)
             .OrderBy(p => p.Product.Id).Take(PageSize + 1)
             .Select(p => new SalesProduct(p.Product.Id, p.Product.Name, p.Product.Model, p.Product.StockQuantity,
                 p.Product.IsActive, p.ListPrice, p.Price, p.DiscountRate))
@@ -34,7 +34,7 @@ public sealed class PricingService(StoreDbContext db, TimeProvider clock, Wishli
         // Only the list price changes. Paid prices and discount snapshots of past orders stay as they were.
         product.Price = input.Price!.Value;
         await db.SaveChangesAsync(ct);
-        return await ProductPricing.Query(db, Now()).Where(p => p.Product.Id == productId)
+        return await ProductPricing.Query(db, Now(), includeUnpriced: true).Where(p => p.Product.Id == productId)
             .Select(p => new SalesProduct(p.Product.Id, p.Product.Name, p.Product.Model, p.Product.StockQuantity,
                 p.Product.IsActive, p.ListPrice, p.Price, p.DiscountRate))
             .SingleAsync(ct);

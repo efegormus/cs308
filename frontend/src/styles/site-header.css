@@ -1,144 +1,301 @@
-/* The site header and its category menu (SCRUM-123). Tokens: design-system.css; rules: DESIGN.md, Header.
-   Two rows at every width: logo, search, account area and cart, then the category bar. Every rule starts with
-   .site-header, because all CSS files load at once. */
-.site-header, .site-header * { box-sizing: border-box; }
+/* The Siesta header (SCRUM-164). Tokens: design-system.css; rules: DESIGN.md, Header. Every rule starts with
+   .site-header (or .site-header-scrim, which lives in <body>), because all CSS files load at once.
+   One dark row, sticky at the top: logo, Categories, search, then wishlist, account and cart. 72px, 56px while the
+   visitor scrolls down. The <header> keeps its 72px in the page flow and only the bar inside it shrinks, so the page
+   below never moves (a moving page would scroll the window and flip the header back). */
+.site-header, .site-header *, .site-header-scrim { box-sizing: border-box; }
 .site-header {
-  position: relative; z-index: 30; background: var(--header); color: var(--header-fg);
-  border-bottom: 1px solid var(--line); font: var(--type-body-md);
+  /* Header-only timings (DESIGN.md, Motion). The curve and the 200 / 320ms steps are the shared motion tokens. */
+  --hdr-height-ms: 240ms;
+  --hdr-panel-ms: 260ms;
+  --hdr-slide-ms: 240ms;
+  --hdr-link-stagger: 35ms;
+  --hdr-menu-item-ms: 220ms;
+  --hdr-menu-stagger: 50ms;
+  --hdr-menu-delay: 60ms;
+  --hdr-name-delay: 80ms;
+  position: sticky; top: 0; z-index: 30; height: var(--header-height);
+  color: var(--header-fg); font: var(--type-body-md);
+  /* The strip a compact bar leaves free shows the page, and clicks go through it. */
+  pointer-events: none;
 }
-.site-header :is(a, button, input):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
-.site-header-inner { max-width: var(--page-max); margin: 0 auto; padding: 0 var(--space-xxl); }
+.site-header-bar {
+  position: relative; height: var(--header-height); pointer-events: auto;
+  background: var(--header); border-bottom: 1px solid var(--header-line);
+  transition: height var(--hdr-height-ms) var(--ease-standard);
+}
+.site-header.is-compact .site-header-bar { height: var(--header-height-compact); }
+.site-header-inner {
+  display: flex; align-items: center; gap: var(--space-md); height: 100%;
+  max-width: var(--page-max); margin: 0 auto; padding: 0 var(--space-xxl);
+}
+.site-header :is(a, button):focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 
-/* Row 1. Wide: logo | search | account and cart. Up to 768px: logo | account and cart, then the search. */
-.site-header-top {
-  display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: "logo search actions";
-  align-items: center; gap: var(--space-sm) var(--space-xl); min-height: var(--header-height); padding: var(--space-sm) 0;
-}
+/* Logo: the Siesta wordmark with a small sun. */
 .site-header .site-logo {
-  grid-area: logo; justify-self: start; display: inline-flex; align-items: center; min-height: var(--touch-target);
-  font: var(--type-logo); color: var(--header-fg); text-decoration: none; white-space: nowrap;
+  flex: none; display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--touch-target);
+  color: var(--header-fg); font: var(--type-logo); text-decoration: none; white-space: nowrap;
 }
-.site-header .site-logo:hover { color: var(--header-fg); }
-
-.site-header .site-search { grid-area: search; justify-self: end; display: flex; align-items: flex-start; gap: var(--space-xxs); }
-.site-header .site-search-field { width: 200px; }
-.site-header .site-search-button { width: var(--touch-target); padding: 0; }
-
-.site-header .site-actions { grid-area: actions; display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--space-xs); }
-.site-header .site-header-link {
-  display: inline-flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-xs);
-  font: var(--type-nav-link); color: var(--header-fg); text-decoration: none;
-}
-.site-header .site-header-link:hover { color: var(--header-fg); text-decoration: underline; text-underline-offset: 6px; }
-/* The current page: a 2px --accent line under the link. An inset shadow keeps the height the same. */
-.site-header :is(.site-header-link, .category-menu-link)[aria-current="page"],
-.site-header .category-menu-link.is-active { box-shadow: inset 0 -2px 0 var(--accent); }
-
-#user-name {
-  display: inline-block; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
-  font: var(--type-body-md); color: var(--header-fg-soft);
-}
-.site-header #logout {
-  min-height: var(--touch-target); padding: 0 var(--space-md); border: 1px solid var(--header-fg);
-  border-radius: var(--radius-button); background: transparent; color: var(--header-fg);
-  font: var(--type-button); font-size: 14px; cursor: pointer;
-}
-.site-header #logout:hover { background: var(--header-hover); }
-.site-header #logout:disabled { opacity: 0.7; cursor: progress; }
-
-/* The profile icon and its menu (SCRUM-130). The menu starts right under the icon with no gap, so the pointer can
-   move onto it. */
-.site-header .account-menu { position: relative; display: inline-flex; align-items: center; }
-.site-header a#user-name.account-icon {
-  display: inline-flex; align-items: center; justify-content: center; width: var(--touch-target); height: var(--touch-target);
-  max-width: none; overflow: visible; border: 1px solid var(--header-fg); border-radius: var(--radius-full);
-  color: var(--header-fg); text-decoration: none; transition: background-color 0.15s;
-}
-.site-header a#user-name.account-icon:hover, .site-header .account-menu:focus-within a#user-name.account-icon,
-.site-header a#user-name.account-icon[aria-current="page"] { background: var(--header-hover); }
-.site-header .account-menu-list {
-  position: absolute; top: 100%; right: 0; z-index: 40; min-width: 12rem; margin: 0; padding: var(--space-xxs) 0; list-style: none;
-  background: var(--surface); color: var(--fg); border: 1px solid var(--line); border-radius: var(--radius-tile);
-  box-shadow: var(--shadow-menu); visibility: hidden; opacity: 0;
-  transform: translateY(-4px); transition: opacity 0.15s, transform 0.15s, visibility 0.15s;
-}
-.site-header .account-menu:hover .account-menu-list,
-.site-header .account-menu:focus-within .account-menu-list { visibility: visible; opacity: 1; transform: none; }
-.site-header .account-menu-name {
-  padding: var(--space-xs) var(--space-md); margin-bottom: var(--space-xxs); border-bottom: 1px solid var(--line);
-  font: var(--type-label); overflow-wrap: anywhere;
-}
-.site-header .account-menu-list a {
-  display: flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-md);
-  font: var(--type-nav-link); color: var(--fg); text-decoration: none;
-}
-.site-header .account-menu-list a:hover, .site-header .account-menu-list a:focus-visible { background: var(--bg); color: var(--link); }
-/* The logout entry of the menu (SCRUM-125) looks like the links above it. */
-.site-header .account-menu-list .account-menu-logout {
-  display: flex; align-items: center; width: 100%; min-height: var(--touch-target); padding: 0 var(--space-md);
-  border: 0; border-top: 1px solid var(--line); margin-top: var(--space-xxs); background: none; cursor: pointer;
-  font: var(--type-nav-link); color: var(--fg); text-align: left;
-}
-.site-header .account-menu-list .account-menu-logout:hover, .site-header .account-menu-list .account-menu-logout:focus-visible { background: var(--bg); color: var(--link); }
-.site-header .account-menu-list .account-menu-logout:disabled { opacity: 0.7; cursor: progress; }
-
-.site-header .site-cart {
-  position: relative; display: inline-flex; align-items: center; justify-content: center;
-  width: var(--touch-target); height: var(--touch-target); border-radius: var(--radius-button); color: var(--header-fg);
-}
-.site-header .site-cart:hover { background: var(--header-hover); }
-.site-header .site-cart-count {
-  position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--radius-full);
-  background: var(--accent); color: var(--accent-fg); font: var(--type-caption); line-height: 20px; text-align: center;
+.site-header .site-logo-mark {
+  width: 14px; height: 14px; border-radius: var(--radius-full); background: var(--header-accent);
+  box-shadow: 0 0 0 4px var(--header-accent-ring);
 }
 
-/* Row 2: the category bar. It wraps instead of scrolling sideways. */
-.site-header .category-menu-bar {
-  display: flex; flex-wrap: wrap; gap: 0 var(--space-xxs); margin: 0 calc(-1 * var(--space-xs)); padding: 0; list-style: none;
+/* The Categories button. */
+.site-header .category-menu { flex: none; }
+.site-header .category-toggle {
+  display: inline-flex; align-items: center; gap: var(--space-xs); min-height: var(--touch-target); min-width: var(--touch-target);
+  margin: 0; padding: 0 14px; border: 1px solid var(--header-line); border-radius: 10px;
+  background: transparent; color: var(--header-fg); font: var(--type-nav-link); cursor: pointer;
+  transition: background-color var(--dur-fast) var(--ease-standard), border-color var(--dur-fast) var(--ease-standard);
 }
-.site-header .category-menu-link {
-  display: inline-flex; align-items: center; gap: var(--space-xxs); min-height: var(--touch-target);
-  margin: 0; padding: 0 var(--space-xs); border: 0; background: transparent; color: var(--header-fg);
-  font: var(--type-nav-link); text-decoration: none; white-space: nowrap; cursor: pointer;
-}
-.site-header .category-menu-link:hover { color: var(--header-fg); text-decoration: underline; text-underline-offset: 6px; }
-.site-header .category-menu-chevron { transition: transform 0.15s; }
-.site-header .category-menu-link[aria-expanded="true"] .category-menu-chevron { transform: rotate(180deg); }
+.site-header .category-toggle:hover, .site-header .category-toggle[aria-expanded="true"] { background: var(--header-hover); }
+.site-header .category-toggle[aria-expanded="true"] { border-color: var(--header-accent); }
+.site-header .category-toggle-chevron { transition: transform var(--dur-fast) var(--ease-standard); }
+.site-header .category-toggle[aria-expanded="true"] .category-toggle-chevron { transform: rotate(180deg); }
 
-/* The mega menu panel: the full width of the window, right under the header (the bar is its last row). Its content
-   lines up with the header content. */
-.site-header .category-menu-panel {
-  --panel-gutter: max(var(--space-xxl), calc((100% - var(--page-max)) / 2 + var(--space-xxl)));
+/* The categories panel: the full width of the window, right under the bar, revealed from the top. */
+.site-header .category-panel {
   position: absolute; top: 100%; left: 0; right: 0; z-index: 40;
-  padding: var(--space-md) var(--panel-gutter) var(--space-xl); background: var(--surface); color: var(--fg);
-  border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); box-shadow: var(--shadow-menu);
+  max-height: calc(100vh - var(--header-height)); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--header-panel); color: var(--header-fg);
+  border-bottom: 1px solid var(--header-line); box-shadow: var(--shadow-menu);
+  visibility: hidden; clip-path: inset(0 0 100% 0);
+  transition: clip-path var(--hdr-panel-ms) var(--ease-standard), visibility 0s linear var(--hdr-panel-ms);
 }
-.site-header .category-menu-panel[hidden] { display: none; }
-.site-header .category-menu-panel-list {
-  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(220px, 100%), 1fr)); gap: 0 var(--space-xl);
+.site-header .category-panel[data-open="true"] {
+  visibility: visible; clip-path: inset(0 0 -48px 0);
+  transition: clip-path var(--hdr-panel-ms) var(--ease-standard), visibility 0s;
+}
+.site-header .category-panel-inner {
+  display: grid; grid-template-columns: 260px minmax(0, 1fr) 280px; align-items: start; gap: var(--space-xxl);
+  max-width: var(--page-max); margin: 0 auto; padding: var(--space-xl) var(--space-xxl) var(--space-xxl);
+}
+
+/* Left column: every top-level category, with a pill that slides to the active one. */
+.site-header .category-panel-list { position: relative; }
+.site-header .category-panel-list ul { margin: 0; padding: 0; list-style: none; }
+.site-header .category-panel-pill {
+  position: absolute; left: 0; right: 0; border-radius: 10px; pointer-events: none;
+  background: var(--header-hover); box-shadow: inset 3px 0 0 var(--header-accent);
+  transition: top var(--hdr-slide-ms) var(--ease-standard), height var(--hdr-slide-ms) var(--ease-standard);
+}
+.site-header .category-panel-pill.is-instant { transition: none; }
+.site-header .category-panel-item {
+  position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: var(--space-xs);
+  width: 100%; min-height: var(--touch-target); margin: 0; padding: 0 14px; border: 0; border-radius: 10px;
+  background: transparent; color: var(--header-fg-soft); font: var(--type-nav-link); text-align: left; cursor: pointer;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.site-header .category-panel-item[data-active="true"] { color: var(--header-fg); }
+.site-header .category-panel-item[aria-current="page"] span { text-decoration: underline 2px var(--header-accent); text-underline-offset: 6px; }
+.site-header .category-panel-item:focus-visible { outline-offset: -3px; }
+.site-header .category-panel-all {
+  display: flex; align-items: center; min-height: var(--touch-target); margin-top: var(--space-xs); padding: 0 14px;
+  border-top: 1px solid var(--header-line); color: var(--header-fg-soft); font: var(--type-label); text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-standard);
+}
+.site-header .category-panel-all:hover, .site-header .category-panel-all[aria-current="page"] { color: var(--header-fg); }
+.site-header .category-panel-all:focus-visible { outline-offset: -3px; }
+
+/* Middle: the links of the active category, coming in one after another. */
+.site-header .category-panel-heading { margin: 0 0 var(--space-xs); font: var(--type-heading-sm); color: var(--header-fg); }
+.site-header .category-panel-links ul {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(min(200px, 100%), 1fr)); gap: 0 var(--space-xl);
   margin: 0; padding: 0; list-style: none;
 }
-.site-header .category-menu-panel-list a {
-  display: flex; align-items: center; min-height: var(--touch-target); padding: 0 var(--space-xs);
-  border-radius: var(--radius-button); font: var(--type-body-md); color: var(--fg); text-decoration: none;
+.site-header .category-panel-links li {
+  animation: site-header-link-in var(--hdr-slide-ms) var(--ease-standard) calc(var(--i, 0) * var(--hdr-link-stagger)) both;
 }
-.site-header .category-menu-panel-list a:hover { background: var(--bg); color: var(--link); text-decoration: underline; }
-.site-header .category-menu-panel-list a[aria-current="page"] { box-shadow: inset 2px 0 0 var(--accent); }
-.site-header .category-menu-panel-list .category-menu-all { font-weight: 600; }
+.site-header .category-panel-links a {
+  display: inline-flex; align-items: center; min-height: var(--touch-target); color: var(--header-fg-soft);
+  font: var(--type-body-md); text-decoration: none;
+  transition: color var(--dur-fast) var(--ease-standard), transform var(--dur-fast) var(--ease-standard);
+}
+.site-header .category-panel-links a:hover { color: var(--header-fg); transform: translateX(4px); }
+.site-header .category-panel-links li:first-child a { color: var(--header-fg); font-weight: 600; }
+.site-header .category-panel-links a[aria-current="page"] { text-decoration: underline 2px var(--header-accent); text-underline-offset: 6px; }
+@keyframes site-header-link-in { from { opacity: 0; transform: translateY(8px); } }
 
+/* Right: the best seller of the active category, only when the catalog has one. */
+.site-header .category-panel-featured {
+  display: flex; flex-direction: column; overflow: hidden; border: 1px solid var(--header-line); border-radius: 14px;
+  background: var(--header); color: var(--header-fg); text-decoration: none;
+  transition: transform var(--dur-base) var(--ease-standard), box-shadow var(--dur-base) var(--ease-standard);
+}
+.site-header .category-panel-featured:hover { transform: translateY(-4px); box-shadow: var(--shadow-menu); }
+.site-header .category-panel-featured-media { display: block; aspect-ratio: 4 / 3; overflow: hidden; background: var(--header-hover); }
+.site-header .category-panel-featured-media img {
+  display: block; width: 100%; height: 100%; object-fit: contain; transition: transform var(--dur-base) var(--ease-standard);
+}
+.site-header .category-panel-featured:hover img { transform: scale(1.06); }
+.site-header .category-panel-featured-body { display: grid; gap: var(--space-xxs); padding: 14px var(--space-md) var(--space-md); }
+.site-header .category-panel-featured-kicker { font: var(--type-caption); color: var(--header-fg-soft); }
+.site-header .category-panel-featured-name { font: var(--type-label); overflow-wrap: anywhere; }
+.site-header .category-panel-featured-price { font: var(--type-nav-link); }
+
+/* The scrim behind the panel. It lives in <body>, under the header (z-index 30) and over the page. */
+.site-header-scrim {
+  position: fixed; inset: 0; z-index: 29; pointer-events: none;
+  background: var(--header-scrim); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);
+  opacity: 0; visibility: hidden;
+  transition: opacity 240ms var(--ease-standard), visibility 0s linear 240ms;
+}
+.site-header-scrim[data-open="true"] {
+  opacity: 1; visibility: visible; pointer-events: auto; transition: opacity 240ms var(--ease-standard), visibility 0s;
+}
+
+/* Search: up to 560px, the same form as before, dark. */
+.site-header .site-search { flex: 1 1 560px; display: flex; gap: var(--space-xs); min-width: 0; max-width: 560px; margin: 0 auto; }
+.site-header .site-search-box { position: relative; flex: 1; min-width: 0; }
+.site-header .site-search .ui-input {
+  /* --field-line, not --header-line: a text field needs a 3:1 edge (3.97:1 here; --header-line is 1.70:1). */
+  height: var(--touch-target); padding: 0 64px 0 14px; border: 1px solid var(--field-line); border-radius: 10px;
+  background: var(--header-panel); color: var(--header-fg);
+  transition: border-color var(--dur-fast) var(--ease-standard), box-shadow var(--dur-fast) var(--ease-standard);
+}
+.site-header .site-search .ui-input::placeholder { color: var(--header-fg-soft); opacity: 1; }
+.site-header .site-search.has-hint .ui-input::placeholder { color: transparent; }
+.site-header .site-search .ui-input:focus { outline: none; border-color: var(--header-accent); box-shadow: 0 0 0 3px var(--header-accent-ring); }
+.site-header .site-search-hint {
+  position: absolute; top: 1px; bottom: 1px; left: 15px; right: 64px; overflow: hidden; pointer-events: none;
+  color: var(--header-fg-soft); font: var(--type-body-md); line-height: calc(var(--touch-target) - 2px); white-space: nowrap;
+}
+.site-header .site-search-hint-term { color: var(--header-fg); }
+.site-header .site-search-caret {
+  display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -0.2em;
+  background: var(--header-accent); animation: site-header-caret 1s steps(1) infinite;
+}
+@keyframes site-header-caret { 50% { opacity: 0; } }
+.site-header .site-search-kbd {
+  position: absolute; top: 50%; right: 10px; transform: translateY(-50%); padding: 1px 6px; pointer-events: none;
+  border: 1px solid var(--header-line); border-radius: var(--radius-field); color: var(--header-fg-soft);
+  font: var(--type-caption); white-space: nowrap;
+}
+/* --header-accent instead of --accent: #024ad8 is never used on a dark surface (DESIGN.md, Colors). */
+.site-header .site-search .site-search-button {
+  flex: none; width: var(--touch-target); padding: 0; border-radius: 10px; background: var(--header-accent); color: var(--header-fg);
+}
+.site-header .site-search .site-search-button:is(:hover, :active):not(:disabled) {
+  background: color-mix(in srgb, var(--header-accent) 85%, var(--header-fg)); box-shadow: none;
+}
+
+/* Right side: wishlist, account and cart. */
+.site-header .site-actions { flex: none; display: flex; align-items: center; gap: var(--space-xs); margin-left: auto; }
+.site-header .site-header-link {
+  display: inline-flex; align-items: center; min-height: var(--touch-target); padding: 0 10px; border-radius: 10px;
+  color: var(--header-fg); font: var(--type-nav-link); text-decoration: none; white-space: nowrap;
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+.site-header .site-header-link:hover { background: var(--header-hover); }
+/* The current page: a 2px line under the link; an inset shadow keeps the height. */
+.site-header .site-header-link[aria-current="page"] { box-shadow: inset 0 -2px 0 var(--header-accent); }
+.site-header .site-icon-link {
+  position: relative; display: inline-flex; align-items: center; justify-content: center;
+  width: var(--touch-target); height: var(--touch-target); border-radius: var(--radius-full); color: var(--header-fg);
+  transition: background-color var(--dur-fast) var(--ease-standard);
+}
+.site-header .site-icon-link:hover, .site-header .site-icon-link[aria-current="page"] { background: var(--header-hover); }
+.site-header .site-cart-count {
+  position: absolute; top: 2px; right: 0; min-width: 20px; height: 20px; padding: 0 5px; border-radius: var(--radius-full);
+  background: var(--header-accent); color: var(--header); font: var(--type-caption); line-height: 20px; text-align: center;
+}
+
+/* The name pill and the account menu joined under it. */
+.site-header .account-menu { position: relative; flex: none; }
+.site-header .account-pill {
+  display: flex; align-items: center; gap: var(--space-xs); width: 210px; height: var(--touch-target);
+  margin: 0; padding: 0 var(--space-sm) 0 4px; overflow: hidden; border: 1px solid var(--header-line); border-radius: 22px;
+  background: transparent; color: var(--header-fg); font: var(--type-label); cursor: pointer;
+  animation: site-header-pill-grow var(--dur-base) var(--ease-standard) both;
+  transition: border-radius var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard),
+    border-color var(--dur-fast) var(--ease-standard);
+}
+.site-header .account-pill:hover { background: var(--header-hover); }
+.site-header .account-pill-avatar {
+  flex: none; display: grid; place-items: center; width: 34px; height: 34px; border-radius: var(--radius-full);
+  background: var(--header-accent); color: var(--header); font: var(--type-caption);
+}
+.site-header .account-pill-name {
+  flex: 1; min-width: 0; max-width: 130px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left;
+  animation: site-header-name-in var(--hdr-slide-ms) var(--ease-standard) var(--hdr-name-delay) both;
+}
+.site-header .account-pill-chevron { flex: none; margin-left: auto; transition: transform var(--dur-fast) var(--ease-standard); }
+@keyframes site-header-pill-grow { from { width: var(--touch-target); } }
+@keyframes site-header-name-in { from { opacity: 0; transform: translateX(-6px); } }
+.site-header .account-menu.is-open .account-pill {
+  border-bottom-color: transparent; border-bottom-left-radius: 0; border-bottom-right-radius: 0; background: var(--header-panel);
+}
+.site-header .account-menu.is-open .account-pill-chevron { transform: rotate(180deg); }
+
+.site-header .account-menu-list {
+  position: absolute; top: 100%; right: 0; z-index: 40; width: 210px; padding: 0 0 var(--space-xs);
+  background: var(--header-panel); color: var(--header-fg);
+  border: 1px solid var(--header-line); border-top: 0; border-radius: 0 0 16px 16px; box-shadow: var(--shadow-menu);
+  visibility: hidden; clip-path: inset(0 -48px 100% -48px);
+  transition: clip-path var(--dur-fast) var(--ease-standard), visibility 0s linear var(--dur-fast);
+}
+.site-header .account-menu.is-open .account-menu-list {
+  visibility: visible; clip-path: inset(0 -48px -48px -48px);
+  transition: clip-path var(--dur-fast) var(--ease-standard), visibility 0s;
+}
+.site-header .account-menu-list ul { margin: 0; padding: 0; list-style: none; }
+.site-header .account-menu.is-open .account-menu-list li {
+  animation: site-header-menu-item var(--hdr-menu-item-ms) var(--ease-standard)
+    calc(var(--hdr-menu-delay) + var(--i, 0) * var(--hdr-menu-stagger)) both;
+}
+@keyframes site-header-menu-item { from { opacity: 0; transform: translateY(-6px); } }
+.site-header .account-menu-list :is(a, button) {
+  display: flex; align-items: center; width: 100%; min-height: var(--touch-target); margin: 0; padding: 0 var(--space-md);
+  border: 0; background: none; color: var(--header-fg-soft); font: var(--type-nav-link); text-align: left; text-decoration: none;
+  cursor: pointer; transition: color var(--dur-fast) var(--ease-standard), background-color var(--dur-fast) var(--ease-standard);
+}
+.site-header .account-menu-list :is(a, button):hover, .site-header .account-menu-list a[aria-current="page"] {
+  background: var(--header-hover); color: var(--header-fg);
+}
+.site-header .account-menu-list :is(a, button):focus-visible { outline-offset: -3px; }
+.site-header .account-menu-signout { margin-top: var(--space-xxs); padding-top: var(--space-xxs); border-top: 1px solid var(--header-line); }
+.site-header .account-menu-list .account-menu-signout button { color: var(--header-danger); }
+.site-header .account-menu-list .account-menu-signout button:disabled { opacity: 0.7; cursor: progress; }
+
+/* Tablet: the Categories label and the name step back, so the search keeps its room. */
+@media (max-width: 1024px) {
+  .site-header .category-toggle { padding: 0 10px; }
+  .site-header .category-toggle-label {
+    position: absolute; width: 1px; height: 1px; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap;
+  }
+  .site-header .account-pill { width: var(--touch-target); padding: 0 4px; animation: none; }
+  .site-header .account-pill :is(.account-pill-name, .account-pill-chevron) { display: none; }
+  .site-header .account-menu-list { border-top-left-radius: 16px; }
+  .site-header .category-panel-inner { grid-template-columns: 240px minmax(0, 1fr); }
+  .site-header .category-panel-featured { display: none; }
+}
+
+/* Phone: the search moves under the first row; the header keeps its height while scrolling. */
 @media (max-width: 768px) {
-  .site-header-top { grid-template-columns: 1fr auto; grid-template-areas: "logo actions" "search search"; }
-  .site-header .site-search { justify-self: stretch; }
-  .site-header .site-search-field { flex: 1; width: auto; min-width: 0; }
+  .site-header, .site-header-bar, .site-header.is-compact .site-header-bar { height: auto; }
+  .site-header-inner {
+    display: grid; grid-template-columns: auto auto minmax(0, 1fr); grid-template-areas: "logo categories actions" "search search search";
+    gap: var(--space-xs) var(--space-sm); padding: 10px var(--space-md);
+  }
+  .site-header .site-logo { grid-area: logo; }
+  .site-header .category-menu { grid-area: categories; }
+  .site-header .site-search { grid-area: search; max-width: none; margin: 0; }
+  .site-header .site-actions { grid-area: actions; justify-self: end; margin: 0; }
+  .site-header .site-search-kbd { display: none; }
+  .site-header .site-search .ui-input { padding-right: 14px; }
+  .site-header .site-search-hint { right: 14px; }
+  .site-header .category-panel { max-height: calc(100vh - 128px); }
+  .site-header .category-panel-inner { grid-template-columns: minmax(0, 1fr); gap: var(--space-md); padding: var(--space-md); }
 }
 @media (max-width: 480px) {
-  .site-header-inner { padding: 0 var(--space-md); }
-  .site-header .category-menu-panel { padding: var(--space-sm) var(--space-md) var(--space-md); }
-  /* Room for logo, profile icon, Logout and cart on one line at 375px. */
-  .site-header-top { column-gap: var(--space-sm); }
+  .site-header-inner { column-gap: var(--space-xs); }
   .site-header .site-actions { gap: var(--space-xxs); }
-  .site-header #logout { padding: 0 var(--space-sm); }
+  .site-header .category-toggle { justify-content: center; padding: 0; }
+  .site-header .category-toggle-chevron { display: none; }
 }
+
+/* Reduced motion: no header animation or transition at all; everything shows its final state. */
 @media (prefers-reduced-motion: reduce) {
-  .site-header .account-menu-list, .site-header a#user-name.account-icon, .site-header .category-menu-chevron { transition: none; }
+  .site-header *, .site-header-bar, .site-header-scrim { animation: none !important; transition: none !important; }
 }

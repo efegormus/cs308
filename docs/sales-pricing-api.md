@@ -72,6 +72,19 @@ cancellation time.
 the product list and paging, list price changes, creating, scheduling, cancelling and
 listing campaigns, overlapping rates and the status calculation.
 
+## Products without a price stay hidden (SCRUM-83)
+
+A new product has a list price of 0 until the sales manager sets one. A product with `Price = 0` is
+not sold or shown:
+
+- `ProductPricing.Query` leaves it out by default, so product lists and detail, the legacy catalog,
+  wishlist reads and the customer dashboard never return it.
+- Adding it to the cart or the wishlist is refused (404, as for an unknown product). A cart line that
+  already holds one is reported as unavailable (409), and checkout rejects it.
+- Only the sales manager's `GET /api/sales/products` asks for `includeUnpriced`, so the screen can list
+  the products that still need a price. Those rows have `listPrice` 0.
+- `PUT /api/sales/products/{id}/price` (price above 0) makes the product visible at once.
+
 ## Wishlist discount notifications (SCRUM-85)
 
 When `POST /api/sales/discounts` creates a campaign, `WishlistDiscountNotifier` looks up the active

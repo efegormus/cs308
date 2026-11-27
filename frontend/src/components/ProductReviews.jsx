@@ -7,6 +7,7 @@ import { useRequest } from "../lib/useRequest.js";
 import { starRow } from "../lib/stars.js";
 import { ErrorState, LoadingState } from "./RequestStates.js";
 import Button from "./ui/Button.jsx";
+import Input from "./ui/Input.jsx";
 import "../styles/reviews.css";
 
 function Reviews({ productId, account, authReady }) {
@@ -70,10 +71,10 @@ function Reviews({ productId, account, authReady }) {
       {own && !own.eligible && <p>You can rate or comment after your purchase has been delivered.</p>}
       {own && (own.canRate || own.canComment) && <form onSubmit={send} className="review-form">
         <h3>Rate / Comment</h3>
-        {own.canRate && <><label htmlFor="review-rating">Rating</label><select id="review-rating" value={rating} onChange={e => setRating(e.target.value)} disabled={busy}>
+        {own.canRate && <Input select label="Rating" id="review-rating" value={rating} onChange={e => setRating(e.target.value)} disabled={busy}>
           <option value="">Choose stars (optional)</option>{[1,2,3,4,5].map(n => <option key={n} value={n}>{n} {n === 1 ? "star" : "stars"}</option>)}
-        </select></>}
-        {own.canComment && <><label htmlFor="review-comment">Comment (optional)</label><textarea id="review-comment" maxLength={2000} value={comment} onChange={e => setComment(e.target.value)} disabled={busy} /></>}
+        </Input>}
+        {own.canComment && <Input multiline label="Comment (optional)" id="review-comment" maxLength={2000} value={comment} onChange={e => setComment(e.target.value)} disabled={busy} />}
         <p>Ratings appear immediately. Comments appear publicly after product manager approval.</p>
         {validation && <p role="alert">{validation}</p>}
         <Button type="submit" className="review-submit" disabled={busy}>{busy ? "Submitting…" : "Submit review"}</Button>

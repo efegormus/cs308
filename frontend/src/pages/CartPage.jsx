@@ -94,7 +94,7 @@ export default function CartPage() {
 
   return (
     <div className="route-page catalog-page cart-page">
-      <title>Cart | Online Store</title>
+      <title>Cart | Siesta</title>
       <main id="main-content">
         <h1>Your cart</h1>
         <div aria-busy={status === "loading"}>
