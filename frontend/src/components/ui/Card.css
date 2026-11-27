@@ -4,3 +4,9 @@
   box-sizing: border-box; display: flex; flex-direction: column; padding: var(--space-lg);
   background: var(--surface); color: var(--fg); border-radius: var(--radius-product); box-shadow: var(--shadow-product);
 }
+/* Form card (DESIGN.md token form-card): login, register and the profile cards. */
+.ui-card--form {
+  padding: var(--space-form-card-y) var(--space-xxl);
+  border: 1px solid var(--line); border-radius: var(--radius-card); box-shadow: var(--shadow);
+}
+@media (max-width: 480px) { .ui-card--form { padding: 28px var(--space-lg); } }

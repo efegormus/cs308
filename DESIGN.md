@@ -781,13 +781,13 @@ Motion is listed under "Motion and reduced motion".
 ### Customer profile [Uyarlandı]
 
 The customer's `/profile` page (SCRUM-103), where name, tax ID and home address are corrected. It is built
-from the login and register parts (`.auth-page`, `useAuthForm`) and keeps their sizes for now: a 28px title and a
-48px button with 6px corners, like login, not the `heading-lg` and 44px targets (see Migration status).
+from the login and register parts (`.auth-page`, `useAuthForm`): a `heading-lg` (32px) title and the shared 44px
+`Button` with 4px corners, as on login (SCRUM-134).
 
 - **Layout.** One column up to 420px (`--form-max`): the title, one line of `--muted` text, then two form cards in
   one form, "Account" and "Invoice and delivery", 24px apart, and one full-width "Save changes" button under them.
-  Each card is the form card (`--surface`, 1px `--line`, `--shadow`, 10px corners, padding 36px 32px; 28px 20px up
-  to 480px) with a `heading-sm` title.
+  Each card is the shared `Card` with `variant="form"` (`--surface`, 1px `--line`, `--shadow`, 10px corners, padding
+  36px 32px; 28px 20px up to 480px) with a `heading-sm` title.
 - **Email.** Shown read-only for reference: `--bg` fill and `--muted` text in the normal input frame, with the note
   "Email cannot be changed here." in `body-sm` `--muted` under it.
 - **Incomplete-profile note.** A legacy account without a tax ID or home address sees "Add your tax ID and home
@@ -1070,7 +1070,7 @@ the dark theme too.
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
 | Catalog and purchase font | Poppins / Open Sans | Arial | `products.css` |
-| Page title | 32px 600, line height 1.2 | Login, register and profile 28px; home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
+| Page title | 32px 600, line height 1.2 | Login, register and profile match (SCRUM-134); home `clamp(24px, 3vw, 30px)`; catalog browser default (1.8rem up to 480px) | `auth.css`, `home.css`, `products.css` |
 | Product card title | 20px 600 Poppins | Matches | `products.css` |
 | Price | 24px 500 Poppins | Product card matches; 1.2rem bold Arial (product page, wishlist); 1.2rem bold (purchase total) | `products.css`, `purchases.css` |
 | Order card title | 20px | 1.1rem | `orders.css` |
@@ -1081,9 +1081,9 @@ the dark theme too.
 
 | Item | Target | Current | File |
 | --- | --- | --- | --- |
-| Primary button height | 44px | `Button` 44px, used by the header search and the product card; 48px (login, register, profile); padding-based elsewhere (about 40px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
-| Primary button corners | 4px | `Button` 4px; 6px (login); 0.4rem (6.4px) | `components/ui/Button.css`; `auth.css`; `cart.css`, `add-to-cart.css` |
-| Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login: ring glow and spotlight, fill unchanged | `components/ui/Button.css`; `auth.css` |
+| Primary button height | 44px | `Button` 44px, used by the header search, the product card, login, register and profile; padding-based elsewhere (about 40px) | `components/ui/Button.css`; `cart.css`, `add-to-cart.css` |
+| Primary button corners | 4px | `Button` 4px (header search, product card, login, register, profile); 0.4rem (6.4px) | `components/ui/Button.css`; `cart.css`, `add-to-cart.css` |
+| Primary button hover | Fill `--accent-hover` (light) | `Button` matches; login, register and profile add their ring glow and spotlight on top | `components/ui/Button.css`; `auth.css` |
 | Secondary button | 44px, 4px corners | Padding 0.75rem 1rem, 0.4rem corners | `products.css` |
 | Header | White, at least 64px, 1px `--line` bottom, two rows | Matches | `site-header.css`, `Header.jsx` |
 | Header content | Logo, API categories with mega menu, search, account, cart count | Matches | `Header.jsx`, `CategoryMenu.jsx` |
@@ -1095,7 +1095,7 @@ the dark theme too.
 | Modal | Form card over `--backdrop`, focus kept inside, Escape and veil close | `Modal` matches (SCRUM-134); no page uses it yet | `components/ui/Modal.jsx`, `Modal.css` |
 | Toast | `--surface` card, 3px tone line, 44px close, 5s, polite live region | `Toast` matches (SCRUM-134); no page uses it yet | `components/ui/Toast.jsx`, `Toast.css` |
 | Admin panel | Menu, KPI cards, `Table`, review approval | Matches (SCRUM-124) | `pages/AdminPanelPage.jsx`, `components/admin/`, `components/ui/Table.js`, `styles/admin.css` |
-| Customer profile | Form cards, neutral note, 32px title and 44px button | Cards and note match; title 28px and button 48px with 6px corners, as on login (SCRUM-103) | `pages/ProfilePage.jsx`, `styles/profile.css`, `auth.css` |
+| Customer profile | Form cards, neutral note, 32px title and 44px button | Matches: `Card` (form), `Input` and `Button` (SCRUM-134) | `pages/ProfilePage.jsx`, `styles/profile.css`, `auth.css` |
 | Purchase card | `--surface`, `--line` | Hard-coded `white`, `#dce0e6`, 0.6rem | `purchases.css` |
 | Purchase input | 44px, 6px, `--field-line` | `Input` matches, used by the header search; purchase inputs: padding 0.75rem, 0.3rem, `#9ba9b9` | `components/ui/Input.css`; `purchases.css` |
 | Purchase message | `--danger-bg` / `--danger-fg` for errors | Hard-coded `#e8f0fa`, `#ffebea`, `#7c231d` | `purchases.css` |
